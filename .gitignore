@@ -1,0 +1,10 @@
+# Ignore nextflow cache and logs
+./nextflow*
+work/ 
+.nextflow*
+.vscode/
+results/
+work/
+test/vep/
+bin/*.o
+bin/*.e
