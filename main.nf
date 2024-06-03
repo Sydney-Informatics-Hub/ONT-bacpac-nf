@@ -21,19 +21,19 @@ nextflow.enable.dsl=2
 // Each of these is a separate .nf script saved in modules/ directory
 // See https://training.nextflow.io/basic_training/modules/#importing-modules 
 include { check_input } from './modules/check_input'
-include { processOne } from './modules/process1'
-include { processTwo } from './modules/process2' 
+include { concat_fastqs } from './modules/concat_fq'
+include { porechop } from './modules/porechop' 
 
 // Print a header for your pipeline 
 log.info """\
 
 =======================================================================================
-Name of the pipeline - nf 
+O N T - B A C P A C - nf 
 =======================================================================================
 
-Created by <YOUR NAME> 
-Find documentation @ https://sydney-informatics-hub.github.io/Nextflow_DSL2_template_guide/
-Cite this pipeline @ INSERT DOI
+Created by TODO NAME 
+Find documentation @ TODO INSERT LINK
+Cite this pipeline @ TODO INSERT DOI
 
 =======================================================================================
 Workflow run parameters 
@@ -51,7 +51,7 @@ workDir     : ${workflow.workDir}
 
 def helpMessage() {
     log.info"""
-  Usage:  nextflow run main.nf --input <samples.tsv> 
+  Usage:  nextflow run main.nf --input <path to directory> 
 
   Required Arguments:
 
@@ -80,20 +80,25 @@ if ( params.help || params.input == false ){
 
 // If none of the above are a problem, then run the workflow
 } else {
-	
-	// DEFINE CHANNELS 
-	// See https://www.nextflow.io/docs/latest/channel.html#channels
-	// See https://training.nextflow.io/basic_training/channels/ 
 
-	// VALIDATE INPUT SAMPLES 
-	check_input(Channel.fromPath(params.input, checkIfExists: true))
+	// VALIDATE INPUT DIRECTORY 
+	check_input(params.input)
 
-	// PROCESS 1
-	// See https://training.nextflow.io/basic_training/processes/#inputs 
-	processOne(check_input.out.samplesheet)
+	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
+	unzipped_fq_dirs = check_input.out.unzipped
+    .flatten()
+    .map { path ->
+        def unzip_dir = path.toString()  // Ensure path is a string
+        def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
+        [barcode, unzip_dir]  // Return a list containing the directory name and path
+    }
+    //.view()
+
+	// CONCATENATE FQS PER SAMPLE
+	concat_fastqs(unzipped_fq_dirs)
 	
-	// PROCESS 2 USING OUTPUT OF PROCESS 1 
-	processTwo(processOne.out.File)
+	// PORECHOP NANOPORE ADAPTERS 
+	porechop(concat_fastqs.out.concat_fq)
 }}
 
 // Print workflow execution summary 
