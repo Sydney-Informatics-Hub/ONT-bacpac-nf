@@ -12,7 +12,7 @@ process porechop {
   script: 
   """
   porechop --input ${concat_fq} \\
-    --threads 2 \\
+    --threads 4 \\
     --output ${barcode}_trimmed.fastq.gz
     """
 }
