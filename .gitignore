@@ -8,3 +8,4 @@ work/
 test/vep/
 bin/*.o
 bin/*.e
+dataset/
