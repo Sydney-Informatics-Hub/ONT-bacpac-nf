@@ -7,12 +7,12 @@ process porechop {
 	tuple val(barcode), path(concat_fq)
     
   output:
-  path '*_trimmed.fastq.gz' , emit: trimmed_fq
+  path '*' , emit: trimmed_fq
 
   script: 
   """
   porechop --input ${concat_fq} \\
-    --threads 4 \\
+    --threads ${task.cpus} \\
     --output ${barcode}_trimmed.fastq.gz
     """
 }
