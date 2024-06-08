@@ -10,6 +10,7 @@ process nanoplot_summary {
 
   script: 
   """
+  # THIS ISNT FUNCTIONAL
   NanoPlot \\
     --summary ${params.input}/sequencing_summary*.txt \\
     --loglength \\

@@ -23,7 +23,9 @@ nextflow.enable.dsl=2
 include { check_input } from './modules/check_input'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { concat_fastqs } from './modules/concat_fq'
-include { porechop } from './modules/porechop' 
+include { porechop } from './modules/run_porechop' 
+include { pycoqc_summary } from './modules/run_pycoqc'
+include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_amrfinderplus } from './modules/get_amrfinderplus'
 include { get_plassembler } from './modules/get_plassembler'
@@ -113,8 +115,9 @@ if ( params.help || params.input == false ){
 	check_input(params.input)
 
   // QC SUMMARY OF RAW INPUTS 
-  // TODO THIS CURRENTLY DOESN'T FUNCTION
+  // TODO THESE MODULES DON'T FUNCTION
   nanoplot_summary(params.input)
+  pycoqc_summary(params.input)
 
 	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
 	unzipped_fq_dirs = check_input.out.unzipped
