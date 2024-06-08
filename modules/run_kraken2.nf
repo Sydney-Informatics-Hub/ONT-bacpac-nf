@@ -1,5 +1,5 @@
 process kraken2 {
-   tag "DETECTING POSSIBLE CONTAMINATION: TODO ADD TAG"
+  tag "DETECTING POSSIBLE CONTAMINATION: ${barcode}"
 
   input:
   tuple val(barcode), path(trimmed_fq)
@@ -10,12 +10,13 @@ process kraken2 {
 
   script: 
   """
-  kraken2 --output ${barcode}/${barcode}_k2_out.txt \\
+  kraken2 \\
     --db ${kraken2_db} \\
     --report ${barcode}/${barcode}.k2report \\
     --report-minimizer-data \\
     --minimum-hit-groups ${trimmed_fq} \\
-    --threads ${task.cpus}
+    --threads ${task.cpus} \\
+    --output ${barcode}/${barcode}_k2_out.txt 
   
   # Is this necessary? It is not automated in the bash scripts 
   #extract_kraken_reads.py \

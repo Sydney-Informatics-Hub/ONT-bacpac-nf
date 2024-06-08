@@ -21,7 +21,6 @@ nextflow.enable.dsl=2
 // Each of these is a separate .nf script saved in modules/ directory
 // See https://training.nextflow.io/basic_training/modules/#importing-modules 
 include { check_input } from './modules/check_input'
-include { nanoplot_summary } from './modules/run_nanoplot'
 include { concat_fastqs } from './modules/concat_fq'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
@@ -137,15 +136,15 @@ if ( params.help || params.input == false ){
 
   // SCREEN FOR CONTAMINANTS 
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	kraken2(porechop.out.trimmed_fq)
+	kraken2(porechop.out.trimmed_fq, get_kraken2.out.kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	flye_assembly(porechop.out.trimmed_fq)
+	//flye_assembly(porechop.out.trimmed_fq)
 
   // ASSEMBLE GENOME WITH UNICYCLER
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	unicycler_assembly(porechop.out.trimmed_fq)
+	//unicycler_assembly(porechop.out.trimmed_fq)
 }
 
 // Print workflow execution summary 

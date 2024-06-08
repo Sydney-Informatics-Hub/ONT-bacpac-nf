@@ -19,6 +19,28 @@ module load nextflow/24.04.1
 bash test/run_test.sh
 ```
 
+### Developer notes
+
+Please use this structure for modules and saves these files as `run_process.nf`: 
+```
+process process_name {
+  tag "ADD A TAG THAT CAPTURES TASK LEVEL INFO"
+  container '<link to container>'
+
+  input:
+	//tuple val(barcode), path <input>
+
+  output:
+  path("*"), emit: process_out
+
+  script: 
+  """
+  # EXPLAIN THE PROCESS 
+  ADD CODE 
+  """
+}
+```
+
 ## Component tools 
 
 ## Additional notes
