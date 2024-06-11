@@ -21,6 +21,19 @@ bash test/run_test.sh
 
 ### Developer notes
 
+Ensure you use the following when contributing to this code base 
+* Break down tasks into modules, with distinct functions
+* Clearly define input and output channels with descrptive names 
+* Add comments within your code to explain the logic and purpose of complex sections
+* Use configuration files to manage parameters, separating code from configuration
+* Provide sensible default values 
+* Design modules to fail early if prerequisites are not met or if an error occurs 
+* Implement comprehensive Groovy [logging](https://www.sentinelone.com/blog/getting-started-quickly-groovy-logging/) with `log.info`
+* Specify resource requirements for each process 
+* Use dynamic resource handling to adjust resource requests based on input data size, where possible 
+* Use Singularity containers
+* Exploit parallelism by designing processes to run concurrently wherever possible 
+
 Please use this structure for modules and saves these files as `run_process.nf`: 
 ```
 process process_name {
