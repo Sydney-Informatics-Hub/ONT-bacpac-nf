@@ -6,7 +6,7 @@ process porechop {
 	tuple val(barcode), path(concat_fq)
     
   output:
-  path '*' , emit: trimmed_fq
+	tuple val(barcode),  path("*") , emit: trimmed_fq
 
   script: 
   """

@@ -97,9 +97,11 @@ if ( params.help || params.input == false ){
     // Only download kraken2 if existing db not already provided 
     if (!params.kraken2_db){
       get_kraken2()
+      kraken2_db = get_kraken2.out.kraken2_db
 
     } else { 
       log.info "Using existing kraken db ${params.kraken2_db}"
+      kraken2_db = params.kraken2_db
     }
 
     // Only download bakta if existing db not already provided 
@@ -115,8 +117,8 @@ if ( params.help || params.input == false ){
 
   // QC SUMMARY OF RAW INPUTS 
   // TODO THESE MODULES DON'T FUNCTION
-  nanoplot_summary(params.input)
-  pycoqc_summary(params.input)
+  //nanoplot_summary(params.input)
+  //pycoqc_summary(params.input)
 
 	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
 	unzipped_fq_dirs = check_input.out.unzipped
@@ -133,14 +135,15 @@ if ( params.help || params.input == false ){
 	
 	// PORECHOP NANOPORE ADAPTERS 
 	porechop(concat_fastqs.out.concat_fq)
-
+  //.view()
+  
   // SCREEN FOR CONTAMINANTS 
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	kraken2(porechop.out.trimmed_fq, get_kraken2.out.kraken2_db)
+	kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	//flye_assembly(porechop.out.trimmed_fq)
+	flye_assembly(porechop.out.trimmed_fq)
 
   // ASSEMBLE GENOME WITH UNICYCLER
   // TODO THIS CURRENTLY DOESN'T FUNCTION
