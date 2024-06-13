@@ -35,6 +35,7 @@ Ensure you use the following when contributing to this code base
 * Use dynamic resource handling to adjust resource requests based on input data size, where possible 
 * Use Singularity containers
 * Exploit parallelism by designing processes to run concurrently wherever possible 
+* Consult the [benchmarking results](https://unisyd.sharepoint.com/:x:/r/teams/SydneyInformaticsHub2/Shared%20Documents/1%20SIH%20Central%20Document%20Repository/Projects/1%20JIRA%20projects/PIPE-4747%20Francisca%20Samsing%20-%20Genomics%20in%20a%20backpack/benchmarks.xlsx?d=w5d9c945ea94248d796ee4d816de39d01&csf=1&web=1&e=nmOpmZ) to optimise process resource requirements
 
 Please use this structure for modules and saves these files as `run_process.nf`: 
 ```
@@ -43,7 +44,7 @@ process process_name {
   container '<link to container>'
 
   input:
-	//tuple val(barcode), path <input>
+	tuple val(barcode), path <input>
 
   output:
   path("*"), emit: process_out
