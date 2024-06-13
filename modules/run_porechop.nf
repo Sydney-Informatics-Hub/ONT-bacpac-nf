@@ -13,5 +13,5 @@ process porechop {
   porechop --input ${concat_fq} \\
     --threads ${task.cpus} \\
     --output ${barcode}_trimmed.fastq.gz
-    """
+  """
 }
