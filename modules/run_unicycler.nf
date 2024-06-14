@@ -1,9 +1,9 @@
 process unicycler_assembly {
   tag "ASSEMBLING GENOME: ${barcode}"
+  container 'quay.io/biocontainers/unicycler:0.4.8--py38h8162308_3'
 
   input:
   tuple val(barcode), path(trimmed_fq)
-  path(kraken2_db)
 
   output:
   tuple val(barcode), path("*"), emit: unicycler_assembly
@@ -11,7 +11,8 @@ process unicycler_assembly {
   script: 
   """
   unicycler \
-    --long ${trimmed_fq} \
-    --threads ${task.cpus} \
+    --long ${trimmed_fq} \\
+    --threads ${task.cpus} \\
+    --out ${barcode}_unicycler_assembly
   """
 }

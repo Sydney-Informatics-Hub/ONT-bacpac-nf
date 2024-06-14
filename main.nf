@@ -31,12 +31,15 @@ include { get_plassembler } from './modules/get_plassembler'
 include { get_kraken2 } from './modules/get_kraken2'
 include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
+include { flye_assembly } from './modules/run_flye'
+include { unicycler_assembly } from './modules/run_unicycler'
+include { tricycler_ }
 
 // Print a header for your pipeline 
 log.info """\
 
 =======================================================================================
-O N T - B A C P A C - nf 
+O N T - B A C P A C K - nf 
 =======================================================================================
 
 Created by TODO NAME 
@@ -147,7 +150,9 @@ if ( params.help || params.input == false ){
 
   // ASSEMBLE GENOME WITH UNICYCLER
   // TODO THIS CURRENTLY DOESN'T FUNCTION
-	//unicycler_assembly(porechop.out.trimmed_fq)
+	unicycler_assembly(porechop.out.trimmed_fq)
+
+  // 
 }
 
 // Print workflow execution summary 
