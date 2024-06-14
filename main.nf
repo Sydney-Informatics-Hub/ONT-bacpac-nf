@@ -1,25 +1,9 @@
 #!/usr/bin/env nextflow
 
-/// To use DSL-2 will need to include this
+// To use DSL-2 will need to include this
 nextflow.enable.dsl=2
 
-// =================================================================
-// main.nf is the pipeline script for a nextflow pipeline
-// Should contain the following sections:
-	// Process definitions
-    // Channel definitions
-    // Workflow structure
-	// Workflow summary logs 
-
-// Examples are included for each section. Remove them and replace
-// with project-specific code. For more information see:
-// https://www.nextflow.io/docs/latest/index.html.
-//
-// ===================================================================
-
 // Import processes or subworkflows to be run in the workflow
-// Each of these is a separate .nf script saved in modules/ directory
-// See https://training.nextflow.io/basic_training/modules/#importing-modules 
 include { check_input } from './modules/check_input'
 include { concat_fastqs } from './modules/concat_fq'
 include { porechop } from './modules/run_porechop' 
@@ -33,7 +17,7 @@ include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
 include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
-//include { trycycler_cluster } from './modules/run_trycycler_cluster'
+include { trycycler_cluster } from './modules/run_trycycler_cluster'
 //include { trycycler_classify } from './modules/run_trycycler_classify'
 //include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 //include { check_consensus } from './modules/check_trycycler'
@@ -168,7 +152,15 @@ if ( params.help || params.input == false ){
   // TODO THIS CURRENTLY DOESN'T FUNCTION
 	unicycler_assembly(porechop.out.trimmed_fq)
 
-  // 
+  // CLUSTER CONTIGS WITH TRYCYCLER 
+  combined_assemblies = unicycler_assembly.out.unicycler_assembly
+                .join(flye_assembly.out.flye_assembly, by:0)
+                .join(porechop.out.trimmed_fq, by:0)
+                .map { barcode, unicycler_assembly, flye_assembly, trimmed_fq ->
+                  tuple(barcode, unicycler_assembly, flye_assembly, trimmed_fq)}
+                //.view()
+                
+  trycycler_cluster(combined_assemblies)
 }
 
 // Print workflow execution summary 
