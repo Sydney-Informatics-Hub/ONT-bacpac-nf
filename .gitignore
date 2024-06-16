@@ -9,3 +9,4 @@ test/vep/
 bin/*.o
 bin/*.e
 dataset/
+run_test.*
