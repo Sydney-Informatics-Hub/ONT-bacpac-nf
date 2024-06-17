@@ -18,7 +18,7 @@ include { kraken2 } from './modules/run_kraken2'
 include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
-//include { trycycler_classify } from './modules/run_trycycler_classify'
+include { classify_trycycler } from './modules/run_trycycler_classify'
 //include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 //include { check_consensus } from './modules/check_trycycler'
 //include { trycycler_msa } from './modules/run_trycycler_msa'
@@ -161,6 +161,10 @@ if ( params.help || params.input == false ){
                 //.view()
                 
   trycycler_cluster(combined_assemblies)
+  trycycler_cluster.out.trycycler_cluster.view()
+
+  // CLASSIFY CONTIGS WITH TRYCYCLER
+  classify_trycycler(trycycler_cluster.out.trycycler_cluster)
 }
 
 // Print workflow execution summary 
