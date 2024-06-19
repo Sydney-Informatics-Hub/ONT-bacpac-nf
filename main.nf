@@ -94,27 +94,27 @@ if ( params.help || params.input == false ){
 } else {
 
   // DOWNLOAD DATABASES  
-  //get_amrfinderplus()
-  //get_plassembler()
-  //get_ncbi()
+  get_amrfinderplus()
+  get_plassembler()
+  get_ncbi()
   
     // Only download kraken2 if existing db not already provided 
-    //if (!params.kraken2_db){
-    //  get_kraken2()
-    //  kraken2_db = get_kraken2.out.kraken2_db
+    if (!params.kraken2_db){
+      get_kraken2()
+      kraken2_db = get_kraken2.out.kraken2_db
 
-    //} else { 
-    //  log.info "Using existing kraken db ${params.kraken2_db}"
-    //  kraken2_db = params.kraken2_db
-    //}
+    } else { 
+      log.info "Using existing kraken db ${params.kraken2_db}"
+      kraken2_db = params.kraken2_db
+    }
 
     // Only download bakta if existing db not already provided 
-    //if (!params.bakta_db){
-    //  get_bakta()
+    if (!params.bakta_db){
+      get_bakta()
 
-    //} else { 
-    //  log.info "Using existing kraken db ${params.bakta_db}"
-    //}
+    } else { 
+      log.info "Using existing kraken db ${params.bakta_db}"
+    }
 
 	// VALIDATE INPUT DIRECTORY 
 	check_input(params.input)
@@ -142,14 +142,12 @@ if ( params.help || params.input == false ){
   //.view()
   
   // SCREEN FOR CONTAMINANTS 
-	//kraken2(porechop.out.trimmed_fq, kraken2_db)
+	kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
-  // TODO THIS CURRENTLY DOESN'T FUNCTION
 	flye_assembly(porechop.out.trimmed_fq)
 
   // ASSEMBLE GENOME WITH UNICYCLER
-  // TODO THIS CURRENTLY DOESN'T FUNCTION
 	unicycler_assembly(porechop.out.trimmed_fq)
 
   // CLUSTER CONTIGS WITH TRYCYCLER 
@@ -164,6 +162,24 @@ if ( params.help || params.input == false ){
 
   // CLASSIFY CONTIGS WITH TRYCYCLER
   classify_trycycler(trycycler_cluster.out.trycycler_cluster)
+
+  // RECONCILE CONTIGS WITH TRYCYCLER
+  // Flatten the structure to emit each cluster directory as a separate tuple
+contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
+                      .join(porechop.out.trimmed_fq, by: 0)
+                      .flatMap { barcode, reconcile_contigs, trimmed_fq ->
+                        if (reconcile_contigs instanceof List) {
+                          reconcile_contigs.collect { cluster_dir ->
+                            tuple(barcode, cluster_dir, trimmed_fq)
+                          }
+                        } else {
+                          [tuple(barcode, reconcile_contigs, trimmed_fq)]
+                        }
+                      }
+                      //.view()
+
+  trycycler_reconcile(contigs_to_reconcile)
+
 }
 
 // Print workflow execution summary 
