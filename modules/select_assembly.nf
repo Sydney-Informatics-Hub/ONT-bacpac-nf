@@ -1,4 +1,4 @@
-process check_consensus {
+process flye_or_consesnsus {
   tag "SELECTING THE BEST ASSEMBLY: ${barcode}"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
