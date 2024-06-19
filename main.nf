@@ -19,7 +19,7 @@ include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
-//include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
+include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 //include { check_consensus } from './modules/check_trycycler'
 //include { trycycler_msa } from './modules/run_trycycler_msa'
 //include { trycycler_partition } from './modules/run_trycycler_partition'
@@ -31,7 +31,8 @@ include { classify_trycycler } from './modules/run_trycycler_classify'
 //include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosome'
 //include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 //include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
-//include { abricate_amr_virulence } from './modules/run_abricate_amr_virulence'
+//include { abricate_virulence } from './modules/run_abricate_virulence'
+//include { amrfinderplus } from './modules/run_amrfinderplus'
 //include { phylogeny } from './modules/run_phylogeny'
 //include { multiqc_report } from './modules/run_multiqc'
 
@@ -93,27 +94,27 @@ if ( params.help || params.input == false ){
 } else {
 
   // DOWNLOAD DATABASES  
-  get_amrfinderplus()
-  get_plassembler()
-  get_ncbi()
+  //get_amrfinderplus()
+  //get_plassembler()
+  //get_ncbi()
   
     // Only download kraken2 if existing db not already provided 
-    if (!params.kraken2_db){
-      get_kraken2()
-      kraken2_db = get_kraken2.out.kraken2_db
+    //if (!params.kraken2_db){
+    //  get_kraken2()
+    //  kraken2_db = get_kraken2.out.kraken2_db
 
-    } else { 
-      log.info "Using existing kraken db ${params.kraken2_db}"
-      kraken2_db = params.kraken2_db
-    }
+    //} else { 
+    //  log.info "Using existing kraken db ${params.kraken2_db}"
+    //  kraken2_db = params.kraken2_db
+    //}
 
     // Only download bakta if existing db not already provided 
-    if (!params.bakta_db){
-      get_bakta()
+    //if (!params.bakta_db){
+    //  get_bakta()
 
-    } else { 
-      log.info "Using existing kraken db ${params.bakta_db}"
-    }
+    //} else { 
+    //  log.info "Using existing kraken db ${params.bakta_db}"
+    //}
 
 	// VALIDATE INPUT DIRECTORY 
 	check_input(params.input)
@@ -141,8 +142,7 @@ if ( params.help || params.input == false ){
   //.view()
   
   // SCREEN FOR CONTAMINANTS 
-  // TODO THIS CURRENTLY DOESN'T FUNCTION
-	kraken2(porechop.out.trimmed_fq, kraken2_db)
+	//kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
   // TODO THIS CURRENTLY DOESN'T FUNCTION
@@ -161,7 +161,6 @@ if ( params.help || params.input == false ){
                 //.view()
                 
   trycycler_cluster(combined_assemblies)
-  trycycler_cluster.out.trycycler_cluster.view()
 
   // CLASSIFY CONTIGS WITH TRYCYCLER
   classify_trycycler(trycycler_cluster.out.trycycler_cluster)

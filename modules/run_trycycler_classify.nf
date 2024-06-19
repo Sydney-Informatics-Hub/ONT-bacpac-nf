@@ -6,7 +6,7 @@ process classify_trycycler {
   tuple val(barcode), path(trycycler_cluster)
 
   output:
-  tuple val(barcode), path('*'), emit: classified_contigs
+  tuple val(barcode), path("*"), emit: classified_contigs
 
   script: 
   """
