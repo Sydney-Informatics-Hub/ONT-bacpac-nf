@@ -20,7 +20,7 @@ include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
-//include { check_consensus } from './modules/check_trycycler'
+//include { check_consensus } from './modules/select_assembly'
 //include { trycycler_msa } from './modules/run_trycycler_msa'
 //include { trycycler_partition } from './modules/run_trycycler_partition'
 //include { trycycler_consensus} from './modules/run_trycycler_consensus'
@@ -164,8 +164,7 @@ if ( params.help || params.input == false ){
   classify_trycycler(trycycler_cluster.out.trycycler_cluster)
 
   // RECONCILE CONTIGS WITH TRYCYCLER
-  // Flatten the structure to emit each cluster directory as a separate tuple
-contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
+  contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
                       .join(porechop.out.trimmed_fq, by: 0)
                       .flatMap { barcode, reconcile_contigs, trimmed_fq ->
                         if (reconcile_contigs instanceof List) {
