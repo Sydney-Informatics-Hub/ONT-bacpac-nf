@@ -59,7 +59,7 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
             mkdir_folder="mkdir -p "+sample_id+"_discarded"
             os.system(mkdir_folder)
 
-            mv_contigs_discarded="cp "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_discarded/"
+            mv_contigs_discarded="cp -r "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_discarded/"
             os.system(mv_contigs_discarded)
         
         # CASE 2 (Good) : If a contig is assembled by both assemblers, one contig per assembler 
@@ -67,7 +67,7 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
             mkdir_folder="mkdir -p "+sample_id+"_for_reconciliation/"
             os.system(mkdir_folder)
             
-            mv_good_contigs="cp "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_for_reconciliation/"
+            mv_good_contigs="cp -r "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_for_reconciliation/"
             os.system(mv_good_contigs)
 
         # CASE 3 (Avoid): One or more assemblers have no contig representation in the cluster
@@ -75,7 +75,7 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
             mkdir_folder="mkdir -p "+sample_id+"_discarded/"
             os.system(mkdir_folder)
 
-            mv_contigs_discarded="cp "+sample_id+"_cluster/"+cluster_id+" "+sample_id+"_discarded/"
+            mv_contigs_discarded="cp -r "+sample_id+"_cluster/"+cluster_id+" "+sample_id+"_discarded/"
             os.system(mv_contigs_discarded)
 
         # CASE 4 (Avoid): Single contig cluster
@@ -83,7 +83,7 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
             mkdir_folder="mkdir -p results/"+sample_id+"_discarded/"
             os.system(mkdir_folder)
 
-            mv_contigs_discarded="cp "+sample_id+"_cluster/"+cluster_id+" "+sample_id+"_discarded/"
+            mv_contigs_discarded="cp -r "+sample_id+"_cluster/"+cluster_id+" "+sample_id+"_discarded/"
             os.system(mv_contigs_discarded)
     
     return 
