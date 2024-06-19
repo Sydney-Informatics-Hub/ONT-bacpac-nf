@@ -1,5 +1,5 @@
 process classify_trycycler {
-  tag "CLUSTERING CONTIGS: ${barcode}"  
+  tag "CLASSIFYING CONTIGS: ${barcode}"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:

@@ -20,10 +20,6 @@
 #
 #########################################################
 
-# Description: Classify Trycycler clusters for downstream evaluation and analysis
-# CLEANED
-
-
 import os
 import sys
 import subprocess
@@ -36,7 +32,8 @@ number_of_assemblers = 2
 
 def get_contigs_clusters(data_clusters,number_of_assemblies):
     """
-    This function categorises the trycycler clusters such that only a particular category with single copy contig representation from all assemblers is marked for reconcilation step
+    Categorise trycycler clusters such that only a particular category with single copy 
+    contig representation from all assemblers is marked for reconciliation step
     """
 
     each_cluster=data_clusters.split("_cluster")
@@ -67,10 +64,10 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
         
         # CASE 2 (Good) : If a contig is assembled by both assemblers, one contig per assembler 
         elif len(cluster_id_array) == int(number_of_assemblies):
-            mkdir_folder="mkdir -p "+sample_id+"_for_reconcilation/"
+            mkdir_folder="mkdir -p "+sample_id+"_for_reconciliation/"
             os.system(mkdir_folder)
             
-            mv_good_contigs="cp "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_for_reconcilation/"
+            mv_good_contigs="cp "+sample_id+"_cluster/"+cluster_id+" " +sample_id+"_for_reconciliation/"
             os.system(mv_good_contigs)
 
         # CASE 3 (Avoid): One or more assemblers have no contig representation in the cluster
@@ -94,7 +91,6 @@ def get_contigs_clusters(data_clusters,number_of_assemblies):
 
 def main():
     number_of_assemblies=number_of_assemblers
-
 
     # Generate cluster detail files for downstream 
     out_cluster_flag=sample_id+"_cluster/cluster_flag_file.txt"
