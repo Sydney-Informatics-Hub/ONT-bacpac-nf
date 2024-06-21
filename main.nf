@@ -20,7 +20,7 @@ include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
-//include { check_consensus } from './modules/select_assembly'
+include { select_assembly } from './modules/select_assembly'
 //include { trycycler_msa } from './modules/run_trycycler_msa'
 //include { trycycler_partition } from './modules/run_trycycler_partition'
 //include { trycycler_consensus} from './modules/run_trycycler_consensus'
@@ -178,6 +178,16 @@ if ( params.help || params.input == false ){
                       //.view()
 
   trycycler_reconcile(contigs_to_reconcile)
+
+  select_in = trycycler_reconcile.out.reconciled
+              .groupTuple(by:[0])
+              .join(flye_assembly.out.flye_assembly, by:0)
+              .join(kraken2.out.kraken2_screen, by:0)
+              .map { barcode, reconciled, flye_assembly, k2_report ->
+                  tuple(barcode, reconciled, flye_assembly, k2_report)}
+              .view()
+
+//select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
 }
 
