@@ -7,7 +7,7 @@ process kraken2 {
   path kraken2_db 
 
   output:
-  tuple val(barcode), path("*"), emit: kraken2_screen
+  tuple val(barcode), path("*.k2report"), emit: kraken2_screen
 
   script:
   """

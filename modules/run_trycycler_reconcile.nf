@@ -6,8 +6,8 @@ process trycycler_reconcile {
   tuple val(barcode), path(reconcile_contigs), path(trimmed_fq)
 
   output: 
-  tuple val(barcode), path("cluster*_reconciled/2_all_seqs.fasta")
-
+  tuple val(barcode), path("cluster*_reconciled/"), emit: reconciled, optional: true
+   
   script: 
   """
   # TODO add appropriate error handling to collect error message printed to screen
@@ -22,7 +22,9 @@ process trycycler_reconcile {
       --min_1kbp_identity 10 \\
       --max_add_seq 2500
 
-  # Move output from input directory to _reconciled output directory
-  mv ${reconcile_contigs}/2_all_seqs.fasta ${reconcile_contigs}_reconciled/2_all_seqs.fasta
+  if [ -f "${reconcile_contigs}/2_all_seqs.fasta" ]; then
+        # Move output from input directory to _reconciled output directory
+        mv ${reconcile_contigs}/2_all_seqs.fasta ${reconcile_contigs}_reconciled/2_all_seqs.fasta
+  fi
   """
 }

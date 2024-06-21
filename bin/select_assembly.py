@@ -26,14 +26,14 @@ import os
 import sys
 from pathlib import Path
 
-def get_species_GenomeSizePlusChrNumber_dic(species):
+def get_species_GenomeSizePlusChrNumber_dic(species,ncbi_lookup):
     
     ### Generate a dictionary with a reference bacterial species as key and genome-size and number of Chromosomes as value
 
     species_GenomeSizePlusChrNumber_dic={}
 
     # This file is the output of the process 'modules/get_ncbi.nf' 
-    file_ncbi="ncbi_genome_lookup.txt"   
+    file_ncbi=ncbi_lookup
     file_ncbi=open("%s"%file_ncbi)
     data_ncbi=file_ncbi.readlines()
     file_in.close()
@@ -48,11 +48,12 @@ def get_species_GenomeSizePlusChrNumber_dic(species):
             return species_GenomeSizePlusChrNumber_dic
     return species_GenomeSizePlusChrNumber_dic
 
-def get_dominant_species(sample_id):
+def get_dominant_species(ncbi_lookup,sample_id,k2_report):
     
     ### Using the kraken2 taxanomy report for a sample, identify the dominant taxa (species) with highest read % assigned to it
 
-    file_path=sample_id+".k2report"
+    #file_path=sample_id+".k2report"
+    file_path=k2_report
     file_in=open("%s"%file_path)
     data_in=file_in.readlines()
     file_in.close()
@@ -74,12 +75,12 @@ def get_dominant_species(sample_id):
 
     return species
 
-def get_all_chromosomal_contigs_using_GenomeSize(genomeSize,sample_id,species):
+def get_all_chromosomal_contigs_using_GenomeSize(genomeSize,sample_id,species,flye_assembly):
     
     ### Flye assembly: Iterate over the assembled genome to identify the contigs which represent chromsomes using reference genome sizes
 
     # This is from the output of flye assembly
-    flye_assembly_file=sample_id+"_flye_assembly/assembly_info.txt"
+    flye_assembly_file=flye_assembly+"/assembly_info.txt"
     file_in=open("%s"%flye_assembly_file)
     data_in=file_in.readlines()
     file_in.close()
@@ -105,18 +106,20 @@ def get_all_chromosomal_contigs_using_GenomeSize(genomeSize,sample_id,species):
 
     return chromosomal_contigs_array
 
-def which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id):
+def which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id,reconciled_clusters_directory):
 
     ### Identify if the Trycycler-consensus option can be pursued or do we need to fall back to using Flye-only assembly
 
     # Define the path
-    path_to_check = sample_id+"_cluster"
+    #path_to_check = sample_id+"_cluster"
+    #path_to_check = reconciled_clusters_directory
 
     # List directories in the path
-    directories = [d for d in os.listdir(path_to_check) if os.path.isdir(os.path.join(path_to_check, d))]
+    #directories = [d for d in os.listdir(path_to_check) if os.path.isdir(os.path.join(path_to_check, d))]
 
     # Filter directories that match the pattern "cluster_*"
-    cluster_directories = [d for d in directories if d.startswith("cluster_")]
+    #cluster_directories = [d for d in directories if d.startswith("cluster_")]
+    cluster_directories = reconciled_clusters_directory
 
     # Sort the cluster directories
     cluster_directories.sort()
@@ -130,7 +133,8 @@ def which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id
         for eachCluster in listA:
             for eachChrContig in chromosomal_contigs_array:
 
-                check_fasta="grep '"+eachChrContig+"' "+sample_id+"_cluster/"+eachCluster+"/2_all_seqs.fasta"
+                #check_fasta="grep '"+eachChrContig+"' "+sample_id+"_cluster/"+eachCluster+"/2_all_seqs.fasta"
+                check_fasta="grep '"+eachChrContig+"' "+eachCluster+"/2_all_seqs.fasta"
 
                 if os.system(check_fasta)==0:
                     cluster_contigs_array.append(eachChrContig)
@@ -152,19 +156,21 @@ def which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id
 
     return out_array
 
-def make_final_clusters_folder(clusterID_clusterContigs_dic,sample_id):
+def make_final_clusters_folder(clusterID_clusterContigs_dic,sample_id,reconciled_clusters_directory):
     
-    ### Move all non-chromsomal contigs to a separate directory
+    ### Move all chromsomal contigs to a separate directory
     
     # Define the path
-    path_to_check = sample_id+"_cluster"
+    # path_to_check = sample_id+"_cluster"
 
     # List directories in the path
-    directories = [d for d in os.listdir(path_to_check) if os.path.isdir(os.path.join(path_to_check, d))]
+    # directories = [d for d in os.listdir(path_to_check) if os.path.isdir(os.path.join(path_to_check, d))]
 
     # Filter directories that match the pattern "cluster_*"
-    cluster_directories = [d for d in directories if d.startswith("cluster_")]
+    #cluster_directories = [d for d in directories if d.startswith("cluster_")]
 
+
+    cluster_directories = reconciled_clusters_directory
     # Sort the cluster directories
     cluster_directories.sort()
 
@@ -290,23 +296,30 @@ def main():
     """
 
     sample_id = sys.argv[1]
+    reconciled_clusters_directory = sys.argv[2]
+    flye_assembly = sys.argv[3]
+    k2_report = sys.argv[4]
+    ncbi_lookup = sys.argv[5]
+
 
     ### 1. Identify and separate out all contigs from clusters which add on to genome-size of a species
     # These are marked as chromosomal-contigs which are retained for downstream annotation.  
 
     # Retreive the most abundant species from kraken2
-    species=get_dominant_species(sample_id)
+    species=get_dominant_species(ncbi_lookup,sample_id,k2_report)
 
     # Generate a dictionary with a reference bacterial species as key and "Genome-size with number-of-Chromosomes" as value
-    species_GenomeSizePlusChrNumber_dic=get_species_GenomeSizePlusChrNumber_dic(species)
+    species_GenomeSizePlusChrNumber_dic=get_species_GenomeSizePlusChrNumber_dic(species,ncbi_lookup)
 
     # Use only ninety perecent of genome size to avoid additional (non-chromosomal) contigs to be included 
     genomeSize=float(species_GenomeSizePlusChrNumber_dic[species])*1000000 
     NinetyPercentGenomeSize=genomeSize-(genomeSize*0.1)
 
     # Identify chromosoml contigs from the assembly 
-    chromosomal_contigs_array=get_all_chromosomal_contigs_using_GenomeSize(NinetyPercentGenomeSize,sample_id,species)
+    chromosomal_contigs_array=get_all_chromosomal_contigs_using_GenomeSize(NinetyPercentGenomeSize,sample_id,species,flye_assembly)
 
+
+    
     # Check if chromosomal contigs pass reconcilation 
         # Yes: To continue with Trycycler 
         # No": Continue with Flye Chromosomes
@@ -314,9 +327,10 @@ def main():
     ### 2. Check if we need to follow the consensus assembly path or fall back to Flye-only assembly 
     
     # Decide whether Consensus or Flye
-    out_array=which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id)
+    out_array=which_chromosomalContigs_ConsensusOrFlye(chromosomal_contigs_array,sample_id,reconciled_clusters_directory)
     clusterID_clusterContigs_dic=out_array[0]
     which_CHR_flag=out_array[1]
+
 
     # Make a final folder with clusters to be carries for further analysis 
     make_final_clusters_folder(clusterID_clusterContigs_dic,sample_id)
@@ -329,6 +343,7 @@ def main():
         sys.exit(0)
     else:
         sys.exit(1)
+
 
     return
 
