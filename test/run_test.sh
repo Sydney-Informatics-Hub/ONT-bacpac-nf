@@ -20,8 +20,10 @@ module load singularity
 
 # Define inputs 
 in=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/dataset/testing
+k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
 
 # Run pipeline 
 nextflow run main.nf \
   --input ${in} \
+  --kraken2_db ${k2db} \
   -resume
