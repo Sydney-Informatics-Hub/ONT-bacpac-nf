@@ -7,13 +7,13 @@ process select_assembly {
   path(ncbi_lookup)
 
   output:
-  tuple val(barcode), path("*"), emit: best_assembly
+  tuple val(barcode), path("${barcode}_final"), path("${barcode}_discarded"), emit: assembly_output, optional: true
 
   script: 
   """
   select_assembly.py \\
     ${barcode} \\
-    ${reconciled} \\
+    ${reconciled.join(' ')} \\
     ${flye_assembly} \\
     ${kraken2_report} \\
     ${ncbi_lookup}
