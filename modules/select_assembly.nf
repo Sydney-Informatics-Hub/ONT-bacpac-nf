@@ -7,7 +7,7 @@ process select_assembly {
   path(ncbi_lookup)
 
   output:
-  tuple val(barcode), path("${barcode}_final"), path("${barcode}_discarded"), emit: assembly_output, optional: true
+  tuple val(barcode), path("${barcode}_final"), path("${barcode}_discarded"), emit: conesus_best, optional: true
 
   script: 
   """

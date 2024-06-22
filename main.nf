@@ -104,7 +104,7 @@ if ( params.help || params.input == false ){
       kraken2_db = get_kraken2.out.kraken2_db
 
     } else { 
-      log.info "Using existing kraken db ${params.kraken2_db}"
+      log.info "FYI: USING EXISTING KRAKEN2 DATABASE ${params.kraken2_db}"
       kraken2_db = params.kraken2_db
     }
 
@@ -113,7 +113,7 @@ if ( params.help || params.input == false ){
       get_bakta()
 
     } else { 
-      log.info "Using existing kraken db ${params.bakta_db}"
+      log.info "FYE: USING EXISTING BAKTA DATABASE ${params.bakta_db}"
     }
 
 	// VALIDATE INPUT DIRECTORY 
@@ -179,6 +179,7 @@ if ( params.help || params.input == false ){
 
   trycycler_reconcile(contigs_to_reconcile)
 
+  // SELECT WHETHER CONSENSUS OR FLYE ASSEMBLY IS BEST QUALITY
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
@@ -189,6 +190,14 @@ if ( params.help || params.input == false ){
 
 select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
+  // IF CONSENSUS IS BEST: RUN MULTIPLE SEQUENCE ALIGNMENT
+  msa_in = select_assembly.out.conesus_best
+                        .filter { it[1].exists() }
+                        .map {barcode, consensus_final, consensus_fail ->
+                          tuple(barcode, consensus_final, consensus_fail)} 
+                        //.view()
+
+  trycycler_msa(msa_in)
 }
 
 // Print workflow execution summary 
