@@ -179,13 +179,13 @@ if ( params.help || params.input == false ){
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  select_in = trycycler_reconcile.out.reconciled
-              .groupTuple(by:[0])
-              .join(flye_assembly.out.flye_assembly, by:0)
-              .join(kraken2.out.kraken2_screen, by:0)
-              .map { barcode, reconciled, flye_assembly, k2_report ->
-                  tuple(barcode, reconciled, flye_assembly, k2_report)}
-              .view()
+  select_in = trycycler_reconcile.out.reconciled_seqs.view()
+              //.groupTuple(by:[0])
+              //.join(flye_assembly.out.flye_assembly, by:0)
+              //.join(kraken2.out.kraken2_screen, by:0)
+              //.map { barcode, reconciled, flye_assembly, k2_report ->
+              //    tuple(barcode, reconciled, flye_assembly, k2_report)}
+              //.view()
 
 //select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
