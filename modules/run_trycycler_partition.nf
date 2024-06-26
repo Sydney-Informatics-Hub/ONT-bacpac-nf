@@ -5,9 +5,12 @@ process trycycler_partition {
   input:
   tuple val(barcode), path(consensus_good), path(trimmed_fq)
 
-  output: 
+  when:
+  consensus_good.exists()
   
-   
+  output: 
+  tuple val(barcode), path("*")
+  
   script: 
   """ 
   # Capture path to reconciled directory
