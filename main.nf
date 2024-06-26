@@ -191,7 +191,7 @@ if ( params.help || params.input == false ){
 select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
   // IF CONSENSUS IS BEST: RUN MULTIPLE SEQUENCE ALIGNMENT
-  msa_in = select_assembly.out.conesus_best
+  msa_in = select_assembly.out.consensus_best
                         .filter { it[1].exists() }
                         .map {barcode, consensus_final, consensus_fail ->
                           tuple(barcode, consensus_final, consensus_fail)} 
