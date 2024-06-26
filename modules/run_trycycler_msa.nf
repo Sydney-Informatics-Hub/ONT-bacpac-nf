@@ -9,7 +9,8 @@ process trycycler_msa {
   consensus_final.exists()
 
   output:
-  tuple val(barcode), path(consensus_final), emit: consensus_msa, optional: true
+  // TODO fix this output to capture stdout and msa fasta separately
+  tuple val(barcode), path("${barcode}_msa/3_msa.fasta"), emit: consensus_msa
 
   script:
   """
