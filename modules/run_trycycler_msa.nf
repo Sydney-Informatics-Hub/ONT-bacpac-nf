@@ -3,10 +3,10 @@ process trycycler_msa {
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
   input:
-  tuple val(barcode), path(consensus_final), path(consensus_fail)
+  tuple val(barcode), path(consensus_good)
 
   when:
-  consensus_final.exists()
+  consensus_good.exists()
 
   output:
   // TODO fix this output to capture stdout and msa fasta separately

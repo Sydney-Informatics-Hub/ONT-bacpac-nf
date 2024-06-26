@@ -22,7 +22,7 @@ include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
-//include { trycycler_partition } from './modules/run_trycycler_partition'
+include { trycycler_partition } from './modules/run_trycycler_partition'
 //include { trycycler_consensus} from './modules/run_trycycler_consensus'
 //include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 //include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
@@ -126,11 +126,11 @@ if ( params.help || params.input == false ){
 
 	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
 	unzipped_fq_dirs = check_input.out.unzipped
-    .flatten()
-    .map { path ->
-        def unzip_dir = path.toString()  // Ensure path is a string
-        def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
-        [barcode, unzip_dir]  // Return a list containing the directory name and path
+                    .flatten()
+                    .map { path ->
+                      def unzip_dir = path.toString()  // Ensure path is a string
+                      def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
+                      [barcode, unzip_dir]  // Return a list containing the directory name and path
     }}
     //.view()
 
@@ -188,16 +188,37 @@ if ( params.help || params.input == false ){
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
               //.view()
 
-select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
+  select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
-  // IF CONSENSUS IS BEST: RUN MULTIPLE SEQUENCE ALIGNMENT
-  msa_in = select_assembly.out.consensus_best
-                        .filter { it[1].exists() }
-                        .map {barcode, consensus_final, consensus_fail ->
-                          tuple(barcode, consensus_final, consensus_fail)} 
-                        //.view()
+  // IF CONSENSUS ASSEMBLY IS BEST...
+  
+  //RUN MULTIPLE SEQUENCE ALIGNMENT
+  msa_in = select_assembly.out.consensus_good
+          .filter { it[1].exists() }
+          .map {barcode, consensus_good->
+            tuple(barcode, consensus_good)} 
+          //.view()
 
   trycycler_msa(msa_in)
+
+  // PARTITION READS 
+  partition_in = select_assembly.out.consensus_good
+                  .filter { it[1].exists() }
+                  .join(porechop.out.trimmed_fq, by: 0)
+                  .map {barcode, consensus_good, trimmed_fq->
+                    tuple(barcode, consensus_good, trimmed_fq)} 
+                  //.view()
+  
+  trycycler_partition(partition_in)
+
+  //conesnsus_in = trycycler_msa.out.consensus_msa
+  //               .join(select_assembly.out.consensus_good, by: 0)
+  //                .join(porechop.out.trimmed_fq, by: 0)
+  //                .map { barcode, consensus_good, consensus_msa, trimmed_fq ->
+  //                  tuple(barcode, consensus_good, consensus_msa, trimmed_fq)}
+  //                .view()
+
+
 }
 
 // Print workflow execution summary 
