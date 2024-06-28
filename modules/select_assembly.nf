@@ -11,6 +11,7 @@ process select_assembly {
   tuple val(barcode), path("${barcode}_discarded"), emit: consensus_discard, optional: true
 
   script: 
+  //TODO double check this is capturing all reconciled clusters
   """
   select_assembly.py \\
     ${barcode} \\

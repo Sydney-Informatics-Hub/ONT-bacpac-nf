@@ -9,12 +9,12 @@ process trycycler_partition {
   consensus_good.exists()
   
   output: 
-  tuple val(barcode), path("*")
+  tuple val(barcode), path("${barcode}_partitioned/4_reads.fastq"), emit: four_reads
   
   script: 
   """ 
   # Capture path to reconciled directory
-  reconciled_dir=\$(ls -d */* | grep 'barcode01_final/cluster_[0-9]*_reconciled')
+  reconciled_dir=\$(ls -d */* | grep 'barcode[0-9]*_final/cluster_[0-9]*_reconciled')
   echo \$reconciled_dir
 
   # Run trycycler partition step: https://github.com/rrwick/Trycycler/wiki/Partitioning-reads

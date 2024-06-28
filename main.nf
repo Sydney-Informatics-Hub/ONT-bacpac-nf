@@ -23,7 +23,7 @@ include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
 include { trycycler_partition } from './modules/run_trycycler_partition'
-//include { trycycler_consensus} from './modules/run_trycycler_consensus'
+include { trycycler_consensus} from './modules/run_trycycler_consensus'
 //include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 //include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 //include { plassembler } from './modules/run_plassembler'
@@ -132,14 +132,13 @@ if ( params.help || params.input == false ){
                       def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
                       [barcode, unzip_dir]  // Return a list containing the directory name and path
     }}
-    //.view()
 
 	// CONCATENATE FQS PER SAMPLE
 	concat_fastqs(unzipped_fq_dirs)
 	
 	// PORECHOP NANOPORE ADAPTERS 
 	porechop(concat_fastqs.out.concat_fq)
-  //.view()
+
   
   // SCREEN FOR CONTAMINANTS 
 	kraken2(porechop.out.trimmed_fq, kraken2_db)
@@ -156,7 +155,6 @@ if ( params.help || params.input == false ){
                 .join(porechop.out.trimmed_fq, by:0)
                 .map { barcode, unicycler_assembly, flye_assembly, trimmed_fq ->
                   tuple(barcode, unicycler_assembly, flye_assembly, trimmed_fq)}
-                //.view()
                 
   trycycler_cluster(combined_assemblies)
 
@@ -175,7 +173,6 @@ if ( params.help || params.input == false ){
                           [tuple(barcode, reconcile_contigs, trimmed_fq)]
                         }
                       }
-                      //.view()
 
   trycycler_reconcile(contigs_to_reconcile)
 
@@ -186,7 +183,6 @@ if ( params.help || params.input == false ){
               .join(kraken2.out.kraken2_screen, by:0)
               .map { barcode, reconciled, flye_assembly, k2_report ->
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
-              //.view()
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
@@ -197,7 +193,6 @@ if ( params.help || params.input == false ){
           .filter { it[1].exists() }
           .map {barcode, consensus_good->
             tuple(barcode, consensus_good)} 
-          //.view()
 
   trycycler_msa(msa_in)
 
@@ -207,18 +202,20 @@ if ( params.help || params.input == false ){
                   .join(porechop.out.trimmed_fq, by: 0)
                   .map {barcode, consensus_good, trimmed_fq->
                     tuple(barcode, consensus_good, trimmed_fq)} 
-                  //.view()
   
   trycycler_partition(partition_in)
 
-  //conesnsus_in = trycycler_msa.out.consensus_msa
-  //               .join(select_assembly.out.consensus_good, by: 0)
-  //                .join(porechop.out.trimmed_fq, by: 0)
-  //                .map { barcode, consensus_good, consensus_msa, trimmed_fq ->
-  //                  tuple(barcode, consensus_good, consensus_msa, trimmed_fq)}
-  //                .view()
+  // BUILD CONSENSUS ASSEMBLY 
+  consensus_in = select_assembly.out.consensus_good
+                .join(trycycler_msa.out.three_msa, by: 0)
+                .join(trycycler_partition.out.four_reads, by:0)
+                .map { barcode, consensus_good, three_msa, four_reads ->
+                  tuple(barcode, consensus_good, three_msa, four_reads)}
 
+  trycycler_consensus(consensus_in)
 
+  // POLISH CONSENSUS ASSEMBLY 
+  
 }
 
 // Print workflow execution summary 

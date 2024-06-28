@@ -10,7 +10,7 @@ process trycycler_msa {
 
   output:
   // TODO fix this output to capture stdout and msa fasta separately
-  tuple val(barcode), path("${barcode}_msa/3_msa.fasta"), emit: consensus_msa
+  tuple val(barcode), path("${barcode}_msa/3_msa.fasta"), emit: three_msa
 
   script:
   """
