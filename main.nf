@@ -24,9 +24,9 @@ include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
 include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
-//include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
-//include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
-//include { plassembler } from './modules/run_plassembler'
+include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
+include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
+include { plassembler } from './modules/run_plassembler'
 //include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 //include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosome'
 //include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
@@ -113,7 +113,7 @@ if ( params.help || params.input == false ){
       get_bakta()
 
     } else { 
-      log.info "FYE: USING EXISTING BAKTA DATABASE ${params.bakta_db}"
+      log.info "FYI: USING EXISTING BAKTA DATABASE ${params.bakta_db}"
     }
 
 	// VALIDATE INPUT DIRECTORY 
@@ -139,7 +139,6 @@ if ( params.help || params.input == false ){
 	// PORECHOP NANOPORE ADAPTERS 
 	porechop(concat_fastqs.out.concat_fq)
 
-  
   // SCREEN FOR CONTAMINANTS 
 	kraken2(porechop.out.trimmed_fq, kraken2_db)
 
@@ -198,10 +197,10 @@ if ( params.help || params.input == false ){
 
   // PARTITION READS 
   partition_in = select_assembly.out.consensus_good
-                  .filter { it[1].exists() }
-                  .join(porechop.out.trimmed_fq, by: 0)
-                  .map {barcode, consensus_good, trimmed_fq->
-                    tuple(barcode, consensus_good, trimmed_fq)} 
+                .filter { it[1].exists() }
+                .join(porechop.out.trimmed_fq, by: 0)
+                .map {barcode, consensus_good, trimmed_fq->
+                  tuple(barcode, consensus_good, trimmed_fq)} 
   
   trycycler_partition(partition_in)
 
@@ -214,8 +213,57 @@ if ( params.help || params.input == false ){
 
   trycycler_consensus(consensus_in)
 
-  // POLISH CONSENSUS ASSEMBLY 
+  // POLISH CONSENSUS ASSEMBLY
+  consensus_polish_in = trycycler_partition.out.four_reads
+                        .join(trycycler_consensus.out.consensus_consensus, by:0)
+                        .map { barcode, four_reads, consensus_consensus ->
+                          tuple(barcode, four_reads, consensus_consensus)}  
+
+  medaka_polish_consensus(consensus_polish_in)
+
+  // IF CONSENSUS FAILS, WE REVERT TO FLYE ASSEMBLY AS NEXT BEST THING...
+  // TODO refine this, probably more complicated than it needs to be
+  good_barcodes = select_assembly.out.consensus_good
+                  .map { barcode, consensus_good -> barcode }
+                  .collect()
+
+  filtered_discard = select_assembly.out.consensus_discard
+                    .map { barcode, consensus_discard -> barcode }
+                    .filter { barcode -> !good_barcodes.get().contains(barcode) }
+
+  flye_polish_in = filtered_discard
+                  .join(flye_assembly.out.flye_assembly, by: 0)
+                  .join(porechop.out.trimmed_fq, by: 0)
+                  .map { barcode, flye_assembly, trimmed_fq -> tuple(barcode, flye_assembly, trimmed_fq) }
+                  
+  medaka_polish_flye(flye_polish_in)
+
+  // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
+  plassembler_in = porechop.out.trimmed_fq
+                  .join(flye_assembly.out.flye_assembly, by: 0)
+                  .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
+                  
+  plassembler(plassembler_in, get_plassembler.out.plassembler_db)
+
+  // ANNOTATE PLASMID FEATURES (BUSCO)
+  busco_plasmids_in = plassembler.out.plasmids
+
+  //busco_annotation_plasmids()
+
+  // ANNOTATE CHROMOSOME FEATURES (BUSCO)
+
+  // ANNOTATE PLASMID FEATURES (BATKA)
   
+  // ANNOTATE CHROMOSOME FEATURES (BAKTA)  
+
+  // ANNOTATE VIRULENCE GENES 
+
+  // ANNOTATE AMR GENES 
+
+  // CONSTRUCT PHYLOGENETIC TREE
+
+  // SUMMARISE RUN WITH MULTIQC REPORT
+
 }
 
 // Print workflow execution summary 
