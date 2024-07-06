@@ -29,7 +29,7 @@ include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 include { plassembler } from './modules/run_plassembler'
 //include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 //include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosome'
-//include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
+include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 //include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
 //include { abricate_virulence } from './modules/run_abricate_virulence'
 //include { amrfinderplus } from './modules/run_amrfinderplus'
@@ -245,16 +245,17 @@ if ( params.help || params.input == false ){
                   
   plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
+  // ANNOTATE PLASMID FEATURES (BATKA)
+  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
+
+  // ANNOTATE CHROMOSOME FEATURES (BAKTA)  
+
   // ANNOTATE PLASMID FEATURES (BUSCO)
-  busco_plasmids_in = plassembler.out.plasmids
+  //busco_plasmids_in = plassembler.out.plasmids
 
   //busco_annotation_plasmids()
 
   // ANNOTATE CHROMOSOME FEATURES (BUSCO)
-
-  // ANNOTATE PLASMID FEATURES (BATKA)
-  
-  // ANNOTATE CHROMOSOME FEATURES (BAKTA)  
 
   // ANNOTATE VIRULENCE GENES 
 
