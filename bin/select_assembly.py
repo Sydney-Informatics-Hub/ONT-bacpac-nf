@@ -51,7 +51,15 @@ def get_all_chromosomal_contigs_using_genome_size(genomeSize, sample_id, species
     accumulated_genome_size = 0
     chromosomal_contigs_array = []
 
+    # Flag set to "1" when accumulated genome size equals/exceeds expected genomeSize 
+    all_chromosomal_ctgs_accumulated_flag="0"           # Changes by ND
+
     for eachContig in data_in[1:]:
+
+        
+        if all_chromosomal_ctgs_accumulated_flag=="1":  # Changes by ND
+            return chromosomal_contigs_array
+
         sp1 = eachContig.split("\t")
         contigID = sp1[0].strip()
         length = float(sp1[1].strip())
@@ -59,7 +67,9 @@ def get_all_chromosomal_contigs_using_genome_size(genomeSize, sample_id, species
         accumulated_genome_size += length
 
         if accumulated_genome_size > genomeSize:
-            break
+            #break                                      # Changes by ND 
+            all_chromosomal_ctgs_accumulated_flag="1"   # Changes by ND 
+
         chromosomal_contigs_array.append(contigID)
 
     return chromosomal_contigs_array
