@@ -11,7 +11,7 @@ include { pycoqc_summary } from './modules/run_pycoqc'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_amrfinderplus } from './modules/get_amrfinderplus'
-include { get_plassembler } from './modules/get_plassembler'
+//include { get_plassembler } from './modules/get_plassembler'
 include { get_kraken2 } from './modules/get_kraken2'
 include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
@@ -26,10 +26,10 @@ include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
-include { plassembler } from './modules/run_plassembler'
+//include { plassembler } from './modules/run_plassembler'
 //include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 //include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosome'
-include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
+//include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 //include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
 //include { abricate_virulence } from './modules/run_abricate_virulence'
 //include { amrfinderplus } from './modules/run_amrfinderplus'
@@ -95,7 +95,7 @@ if ( params.help || params.input == false ){
 
   // DOWNLOAD DATABASES  
   get_amrfinderplus()
-  get_plassembler()
+  //get_plassembler()
   get_ncbi()
   
     // Only download kraken2 if existing db not already provided 
@@ -185,68 +185,137 @@ if ( params.help || params.input == false ){
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
+  //select_assembly.out.consensus_good.view() 
+  //select_assembly.out.consensus_discard.view()
+ 
+
   // IF CONSENSUS ASSEMBLY IS BEST...
   
-  //RUN MULTIPLE SEQUENCE ALIGNMENT
-  msa_in = select_assembly.out.consensus_good
-          .filter { it[1].exists() }
-          .map {barcode, consensus_good->
-            tuple(barcode, consensus_good)} 
+  //RUN MULTIPLE SEQUENCE ALIGNMENT (OLD)
+  //msa_in = select_assembly.out.consensus_good
+  //        .filter { it[1].exists() }
+  //        .map {barcode, consensus_good->
+  //          tuple(barcode, consensus_good)} 
+  // 	    .view()
 
-  trycycler_msa(msa_in)
 
-  // PARTITION READS 
+  // MULTIPLE SEQUENCE ALIGNMENT
+  // CONSENSUS APPROACH : Check if file Consensus.txt excists
+  msa_in_consensus = select_assembly.out.consensus_good
+          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
+          .flatMap { tuple ->
+            def barcode = tuple[0]
+            def consensus_file = tuple[1]
+            def final_path = tuple[2]
+            if (final_path instanceof List) {
+                // If final_path is a list, return a stream of separate tuples
+                final_path.collect { path ->
+                    [barcode, consensus_file, path]
+                }
+            } else {
+                // If final_path is not a list, return a single-element list with the original tuple
+                [[barcode, consensus_file, final_path]]
+            }
+          }
+     //     .view()
+
+
+  trycycler_msa(msa_in_consensus)
+
+  //PARTITION READS (OLD) 
+  //partition_in = select_assembly.out.consensus_good
+  //              .filter { it[1].exists() }
+  //              .join(porechop.out.trimmed_fq, by: 0)
+  //              .map {barcode, consensus_good, trimmed_fq->
+  //                tuple(barcode, consensus_good, trimmed_fq)} 
+ //		.view()
+
   partition_in = select_assembly.out.consensus_good
-                .filter { it[1].exists() }
-                .join(porechop.out.trimmed_fq, by: 0)
-                .map {barcode, consensus_good, trimmed_fq->
-                  tuple(barcode, consensus_good, trimmed_fq)} 
-  
+          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
+          .join(porechop.out.trimmed_fq, by: 0)
+	  .map { barcode, consensus_file, final_path, trimmed_fq ->
+            tuple(barcode, consensus_file, final_path, trimmed_fq)
+          }
+   //     .view()
+ 
   trycycler_partition(partition_in)
 
-  // BUILD CONSENSUS ASSEMBLY 
-  consensus_in = select_assembly.out.consensus_good
-                .join(trycycler_msa.out.three_msa, by: 0)
-                .join(trycycler_partition.out.four_reads, by:0)
-                .map { barcode, consensus_good, three_msa, four_reads ->
-                  tuple(barcode, consensus_good, three_msa, four_reads)}
+  consensus_in = trycycler_partition.out.four_reads
+  	.view()
 
-  trycycler_consensus(consensus_in)
+
+  //consensus_in = trycycler_partition.out.four_reads
+          //.filter { it[1].exists() }  // Ensure the correct path is checked for existence
+  //        .flatMap { tuple ->
+  //          def barcode = tuple[0]
+  //          def final_path = tuple[1]
+  //          if (final_path instanceof List) {
+  //              // If final_path is a list, return a stream of separate tuples
+  //              final_path.collect { path ->
+  //                  [barcode, path]
+  //              }
+  //          } else {
+                // If final_path is not a list, return a single-element list with the original tuple
+  //              [[barcode, final_path]]
+  //          }
+  //        }
+    //      .view()
+
+
+
+
+  // BUILD CONSENSUS ASSEMBLY 
+  //consensus_in = select_assembly.out.consensus_good
+  //              .join(trycycler_msa.out.three_msa, by: 0)
+  //              .join(trycycler_partition.out.four_reads, by:0)
+  //              .map { barcode, consensus_file, consensus_good, three_msa, four_reads ->
+  //                tuple(barcode, consensus_file, consensus_good, three_msa, four_reads)}
+  // 		.view()
+
+
+  //trycycler_consensus(consensus_in)
 
   // POLISH CONSENSUS ASSEMBLY
-  consensus_polish_in = trycycler_partition.out.four_reads
-                        .join(trycycler_consensus.out.consensus_consensus, by:0)
-                        .map { barcode, four_reads, consensus_consensus ->
-                          tuple(barcode, four_reads, consensus_consensus)}  
+  //consensus_polish_in = trycycler_partition.out.four_reads
+  //                      .join(trycycler_consensus.out.consensus_consensus, by:0)
+  //                      .map { barcode, four_reads, consensus_consensus ->
+  //                        tuple(barcode, four_reads, consensus_consensus)}  
 
-  medaka_polish_consensus(consensus_polish_in)
+  //medaka_polish_consensus(consensus_polish_in)
 
-  // IF CONSENSUS FAILS, WE REVERT TO FLYE ASSEMBLY AS NEXT BEST THING...
-  // TODO refine this, probably more complicated than it needs to be
-  good_barcodes = select_assembly.out.consensus_good
-                  .map { barcode, consensus_good -> barcode }
-                  .collect()
+  
+  // FLYE-ONLY ASSEMBLY (OLD) 
+  //filtered_discard = select_assembly.out.consensus_discard
+  //                 .map { barcode, consensus_discard -> barcode }
+  //                  .filter { barcode -> !good_barcodes.get().contains(barcode) }
 
+  
   filtered_discard = select_assembly.out.consensus_discard
-                    .map { barcode, consensus_discard -> barcode }
-                    .filter { barcode -> !good_barcodes.get().contains(barcode) }
+          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
+          .map { barcode, consensus_file, final_path ->
+            tuple(barcode,consensus_file, final_path)
+          }
+  //    .view()
 
   flye_polish_in = filtered_discard
                   .join(flye_assembly.out.flye_assembly, by: 0)
                   .join(porechop.out.trimmed_fq, by: 0)
-                  .map { barcode, flye_assembly, trimmed_fq -> tuple(barcode, flye_assembly, trimmed_fq) }
-                  
+                  .map { barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq -> tuple(barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq) }
+   		  .view()  
+                
   medaka_polish_flye(flye_polish_in)
 
+
+
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
-  plassembler_in = porechop.out.trimmed_fq
-                  .join(flye_assembly.out.flye_assembly, by: 0)
-                  .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
+  //plassembler_in = porechop.out.trimmed_fq
+  //                .join(flye_assembly.out.flye_assembly, by: 0)
+  //                .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
                   
-  plassembler(plassembler_in, get_plassembler.out.plassembler_db)
+  //plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
   // ANNOTATE PLASMID FEATURES (BATKA)
-  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
+  //bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
 
   // ANNOTATE CHROMOSOME FEATURES (BAKTA)  
 
