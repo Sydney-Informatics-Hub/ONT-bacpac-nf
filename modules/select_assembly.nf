@@ -1,6 +1,6 @@
 process select_assembly {
   tag "SELECTING THE BEST ASSEMBLY: ${barcode}"  
-  //container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:
   tuple val(barcode), path(reconciled), path(flye_assembly), path(kraken2_report)
