@@ -226,10 +226,16 @@ def main():
     separate_ChrAndNonChr_FlyeContigs_toRun_independentAnnotations(sample_id, chromosomal_contigs_array)
     filter_out_ChrContigs_fromFlye_infoFile(sample_id, chromosomal_contigs_array)
 
+    # Create an empty file which differentiates Consensus from Flye-only 
+    touch_cmd_Consensus="touch Consensus.txt"
+    touch_cmd_FlyeOnly="touch FlyeOnly.txt"
+
     if which_CHR_flag == "C":
-        sys.exit(0)
+        #sys.exit(0)
+        os.system(touch_cmd_Consensus)    
     else:
-        sys.exit(1)
+        os.system(touch_cmd_FlyeOnly)
+        #sys.exit(1)
 
 if __name__ == "__main__":
     main()
