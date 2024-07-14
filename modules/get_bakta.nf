@@ -2,7 +2,7 @@ process get_bakta {
   tag "DOWNLOADING BAKTA DB: TODO ADD TAG"
     
   output:
-  path '*' , emit: bakta_db
+  path 'db-light' , emit: bakta_db
 
   script: 
   """
