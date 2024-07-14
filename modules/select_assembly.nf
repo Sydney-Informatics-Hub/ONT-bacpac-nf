@@ -7,9 +7,6 @@ process select_assembly {
   path(ncbi_lookup)
 
   output:
-  //tuple val(barcode), path("${barcode}_final"), emit: consensus_good, optional: true
-  //tuple val(barcode), path("${barcode}_discarded"), emit: consensus_discard, optional: true
-
   tuple val(barcode), path("Consensus.txt"), path("${barcode}_final/*"), emit: consensus_good, optional: true
   tuple val(barcode), path("FlyeOnly.txt"), path("${barcode}_flye_assembly/Chr_contigs/"), emit: consensus_discard, optional: true
 
