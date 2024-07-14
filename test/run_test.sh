@@ -18,8 +18,12 @@
 module load nextflow/24.04.1 
 module load singularity 
 
+export SINGULARITY_CACHEDIR=/scratch/er01/ndes8648/pipeline_work/nextflow/TMPDIR_PATH
+
+
 # Define inputs 
-in=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/dataset/testing
+#in=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/dataset/testing
+in=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/data
 k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
 
 # Run pipeline 
