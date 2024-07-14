@@ -3,15 +3,13 @@ process trycycler_msa {
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
   input:
-  //tuple val(barcode), path(consensus_file), path(consensus_good)
   tuple val(barcode), path(consensus_file), path(reconciled_dir)	
 
   //when:
   //consensus_good.exists()
 
   output:
-  // TODO fix this output to capture stdout and msa fasta separately
-  tuple val(barcode), path("cluster_*_reconciled/3_msa.fasta"), emit: three_msa
+  tuple val(barcode), val("${barcode}_${reconciled_dir}"), path("${barcode}_${reconciled_dir}_msa"), emit: three_msa
 
   script:
   """
@@ -25,7 +23,8 @@ process trycycler_msa {
     --threads ${task.cpus}
   
   # Move the 3_msa.fasta to out directory
-  #mkdir -p ${barcode}_msa
-  #mv ${reconciled_dir}/3_msa.fasta ${barcode}_msa/3_msa.fasta
+  mkdir -p ${barcode}_${reconciled_dir}_msa
+  cp ${reconciled_dir}/3_msa.fasta ${barcode}_${reconciled_dir}_msa/3_msa.fasta  
+
   """
 }
