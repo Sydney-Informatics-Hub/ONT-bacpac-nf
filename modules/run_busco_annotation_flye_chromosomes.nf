@@ -8,6 +8,8 @@ input:
 output:
   tuple val(barcode), path("${barcode}_busco"), emit: busco_annotations
 
+  publishDir { "results/${barcode}" }, mode: 'copy'
+
 script:
   """
   busco \\
