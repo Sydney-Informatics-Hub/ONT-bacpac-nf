@@ -26,5 +26,4 @@ script:
     --threads ${task.cpus}
    
   """
-
 }

@@ -20,7 +20,6 @@ script:
     --prefix ${barcode} \\
     --force \\
     --threads ${task.cpus}
-   
   """
 
 }
