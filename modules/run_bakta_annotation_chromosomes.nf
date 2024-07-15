@@ -9,6 +9,8 @@ input:
 output:
   tuple val(barcode), path("${barcode}_bakta"), emit: bakta_annotations
 
+  publishDir { "results/${barcode}" }, mode: 'copy'
+
 script:
   """
   for dir in ${medaka_consensus}; do  
