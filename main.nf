@@ -29,12 +29,15 @@ include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 //include { plassembler } from './modules/run_plassembler'
 //include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 //include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
+include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
+include { quast_qc_flye_chromosomes } from './modules/run_quast_qc_flye_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
 include { bakta_annotation_flye_chromosomes } from './modules/run_bakta_annotation_flye_chromosomes'
 include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosomes'
 include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotation_flye_chromosomes'
 //include { abricate_virulence } from './modules/run_abricate_virulence'
-//include { amrfinderplus } from './modules/run_amrfinderplus'
+include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
+include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfinderplus_annotation_flye_chromosomes'
 //include { phylogeny } from './modules/run_phylogeny'
 //include { multiqc_report } from './modules/run_multiqc'
 
@@ -266,14 +269,20 @@ if ( params.help || params.input == false ){
 			.map { row ->
                 	     [row[0], row[2]]
                 	 }
+ 
+  // ND
+  // QC CONSENSUS-ASSEMBLY (QUAST)
+  quast_qc_chromosomes(polish_grouped_by_barcode)
 
   bakta_annotation_chromosomes(polish_grouped_by_barcode,get_bakta.out.bakta_db)
 
-
+   
   // ANNOTATE CONSENSUS-CHROMOSOME FEATURES (BUSCO)
   busco_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations) 
 
-
+   
+  // ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES (AMRFINDERPLUS)
+  amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
   
   //ND
   // MEDAKA-POLISH FLYE-ONLY 
@@ -291,6 +300,10 @@ if ( params.help || params.input == false ){
   medaka_polish_flye(flye_polish_in)
 
 
+  //ND
+  // QC FLYE-ONLY ASSEMBLY (QUAST)
+  quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
+
   // ND
   //ANNOTATE FLYE-ONLY CHROMOSOME FEATURES (BAKTA)
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
@@ -298,9 +311,8 @@ if ( params.help || params.input == false ){
   // ANNOTATE FLYE-ONLY-CHROMOSOME FEATURES (BUSCO)
   busco_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations)
 
-
-
-
+  // ANNOTATE FLYE-ONLY AMR-GENES (AMRFINDERPLUS)
+  amrfinderplus_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
 
 
 
@@ -324,7 +336,6 @@ if ( params.help || params.input == false ){
 
   // ANNOTATE VIRULENCE GENES 
 
-  // ANNOTATE AMR GENES 
 
   // CONSTRUCT PHYLOGENETIC TREE
 
