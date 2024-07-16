@@ -74,9 +74,10 @@ def get_available_species_genome_details_dic(assembly_summary_refseq,species_nam
     """
     species_name_noSpaces=species_name.replace(" ","_").strip()
 
+    species_name_for_grep=species_name.replace("_"," ").strip()
     # Pick up Complete Genomes
     #grep_species_lines="grep '"+species_name+"' reference/assembly_summary_refseq.txt"+" |grep 'Complete Genome' > temp_specific_species.txt"
-    grep_species_lines="grep '"+species_name+"' "+assembly_summary_refseq+" |grep 'Complete Genome' > temp_specific_species.txt"
+    grep_species_lines="grep '"+species_name_for_grep+"' "+assembly_summary_refseq+" |grep 'Complete Genome' > temp_specific_species.txt"
 
     # Update: Pick up the single "representative genome"
     #grep_species_lines="grep '"+species_name+"' reference/assembly_summary_refseq.txt"+" |grep 'representative genome' > temp_specific_species.txt"
