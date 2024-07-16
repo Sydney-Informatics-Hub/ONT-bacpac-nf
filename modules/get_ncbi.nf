@@ -3,6 +3,8 @@ process get_ncbi {
     
   output:
   path("ncbi_genome_lookup.txt") , emit: ncbi_lookup
+  path("refseq_summary.txt") , emit: assembly_summary_refseq
+
 
   script: 
   """
