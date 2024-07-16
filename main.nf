@@ -38,7 +38,9 @@ include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotati
 //include { abricate_virulence } from './modules/run_abricate_virulence'
 include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
 include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfinderplus_annotation_flye_chromosomes'
-//include { phylogeny } from './modules/run_phylogeny'
+include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
+include { create_phylogeny_tree_related_files } from './modules/create_phylogeny_tree_related_files'
+include { run_orthofinder } from './modules/run_orthofinder'
 //include { multiqc_report } from './modules/run_multiqc'
 
 // Print a header for your pipeline 
@@ -284,6 +286,9 @@ if ( params.help || params.input == false ){
   // ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
   
+  consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
+  //      .view() 
+
   //ND
   // MEDAKA-POLISH FLYE-ONLY 
   filtered_discard = select_assembly.out.consensus_discard
@@ -314,8 +319,28 @@ if ( params.help || params.input == false ){
   // ANNOTATE FLYE-ONLY AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
 
+  flye_only_processed_samples=amrfinderplus_annotation_flye_chromosomes.out.map { it[0] }.collect()
+ 
+  all_processed_samples = consensus_processed_samples.merge(flye_only_processed_samples)
+    .collect()
+
+  //CREATE a samplesheet.txt for processed samples
+  create_samplesheet_for_processed(all_processed_samples)
+  
+
+  kraken_input_to_create_phylogeny_tree = kraken2.out.map { [it[1]] }
+	.collect()
 
 
+  consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
+  flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
+  all_bakta_input_to_create_phylogeny_tree=consensus_bakta.merge(flye_only_bakta)
+
+
+  // CREATE Phylogeny tree creation (with orthofinder) related files
+  create_phylogeny_tree_related_files(get_ncbi.out.ncbi_lookup,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
+
+  run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   //plassembler_in = porechop.out.trimmed_fq
