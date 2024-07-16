@@ -336,9 +336,12 @@ if ( params.help || params.input == false ){
   flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
   all_bakta_input_to_create_phylogeny_tree=consensus_bakta.merge(flye_only_bakta)
 
-
+ 
+  get_ncbi.out.assembly_summary_refseq
+	.view()
+ 
   // CREATE Phylogeny tree creation (with orthofinder) related files
-  create_phylogeny_tree_related_files(get_ncbi.out.ncbi_lookup,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
+  create_phylogeny_tree_related_files(get_ncbi.out.assembly_summary_refseq,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
 
   run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
 
