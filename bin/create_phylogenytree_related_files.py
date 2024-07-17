@@ -112,6 +112,23 @@ def get_available_species_genome_details_dic(assembly_summary_refseq,species_nam
         gunzip_string="gunzip phylogeny/"+protein_file_name_final
         os.system(gunzip_string)
 
+
+        # ftp string for genome assembly file (abricate)
+        genomic_file_name=assembly_id+"_"+additional_id+"_genomic.fna.gz"
+
+        ftp_string="wget -P phylogeny/"+" "+ftp_base_string+"/"+genomic_file_name
+        os.system(ftp_string)
+
+        sleep_string="sleep 10"
+        os.system(sleep_string)
+
+        genomic_file_name_final=species_name_noSpaces+"_REF_"+genomic_file_name.replace("_genomic","").strip()
+        rename_string="mv phylogeny/"+genomic_file_name+" phylogeny/"+genomic_file_name_final
+        os.system(rename_string)
+
+        gunzip_string="gunzip phylogeny/"+genomic_file_name_final
+        os.system(gunzip_string)
+
     return
 
 
@@ -187,7 +204,7 @@ def main():
     species_list=list(set(sampleID_species_dic.values()))
 
 
-    # (3) Get Reference protein fasta files 
+    # (3) Get Reference protein and genome-assembly fasta files 
     for species_name in species_list:
         file_tt.write("%s\n"%species_name)
         species_name_abbreviation_sp=species_name.split("_")

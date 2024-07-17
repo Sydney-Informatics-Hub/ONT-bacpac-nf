@@ -9,7 +9,7 @@ process create_phylogeny_tree_related_files {
 
   output:
 	path("phylogeny"), emit: phylogeny_folder
-
+	path("sampleID_species_table_mqc.txt"), emit: sampleID_species_table
 
   script: 
   """
