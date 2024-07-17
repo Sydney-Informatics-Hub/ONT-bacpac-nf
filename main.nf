@@ -35,7 +35,11 @@ include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_ch
 include { bakta_annotation_flye_chromosomes } from './modules/run_bakta_annotation_flye_chromosomes'
 include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosomes'
 include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotation_flye_chromosomes'
-//include { abricate_virulence } from './modules/run_abricate_virulence'
+
+include { abricateVFDB_annotation_chromosomes } from './modules/run_abricateVFDB_annotation_chromosomes'
+include { abricateVFDB_annotation_flye_chromosomes } from './modules/run_abricateVFDB_annotation_flye_chromosomes'
+include { abricateVFDB_annotation_reference } from './modules/run_abricateVFDB_annotation_reference'
+
 include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
 include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfinderplus_annotation_flye_chromosomes'
 include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
@@ -43,6 +47,8 @@ include { create_phylogeny_tree_related_files } from './modules/create_phylogeny
 include { run_orthofinder } from './modules/run_orthofinder'
 include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus_annotation_reference'
 include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
+include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
+include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
 
 //include { multiqc_report } from './modules/run_multiqc'
 
@@ -289,6 +295,9 @@ if ( params.help || params.input == false ){
   // ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
   
+  // ANNOTATE CONSENSUS-CHROMOSOME vfdb-GENES (ABRICATE)
+  abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
+
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
   //      .view() 
 
@@ -327,6 +336,10 @@ if ( params.help || params.input == false ){
   all_processed_samples = consensus_processed_samples.merge(flye_only_processed_samples)
     .collect()
 
+  // ANNOTATE FLYE-ONLY-CHROMOSOME vfdb-GENES (ABRICATE)
+  abricateVFDB_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished)
+
+
   //CREATE a samplesheet.txt for processed samples
   create_samplesheet_for_processed(all_processed_samples)
   
@@ -353,23 +366,41 @@ if ( params.help || params.input == false ){
   // ANNOTATE REFERENCE STRAINS FOR  AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,get_amrfinderplus.out.amrfinderplus_db)
 
+  abricateVFDB_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder) 
+
 
   // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
   consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out.map { it[1] }.collect()
-  //      .view()
   flye_only_amrfinderplus_output=amrfinderplus_annotation_flye_chromosomes.out.map { it[1] }.collect()
-  //      .view()
-  
+
   all_samples_amrfinderplus_output = consensus_amrfinderplus_output.merge(flye_only_amrfinderplus_output)
-  	  .view()
   all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
-	  .view()
   
   sampleid_species_table = create_phylogeny_tree_related_files.out.sampleID_species_table
-    .view()
 
   generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,all_references_amrfinderplus_output,sampleid_species_table)
 
+
+  // GENERATE ABRICATE-VFDB gene matrix (FOR PHYLOGENY-AMR HEATMAP)
+  consensus_abricate_output=abricateVFDB_annotation_chromosomes.out.map { it[1] }.collect()
+  flye_only_abricate_output=abricateVFDB_annotation_flye_chromosomes.out.map { it[1] }.collect()
+
+  all_samples_abricate_output = consensus_abricate_output.merge(flye_only_abricate_output)
+  //	.view()
+  all_references_abricate_output = abricateVFDB_annotation_reference.out.abricate_annotations
+  //	.view()
+
+  generate_abricate_gene_matrix(all_samples_abricate_output,all_references_abricate_output,sampleid_species_table)
+
+  // CREATE PHYLOGENY HEATMAP IMAGE
+  run_orthofinder.out.phylogeny_tree
+  //	.view()
+
+  generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix
+  //	.view()
+
+  // GENERATE PHYLOGENY-HEATMAP image
+  create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,generate_abricate_gene_matrix.out.abricate_gene_matrix)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   //plassembler_in = porechop.out.trimmed_fq
