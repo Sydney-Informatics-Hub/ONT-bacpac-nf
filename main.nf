@@ -41,6 +41,9 @@ include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfin
 include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
 include { create_phylogeny_tree_related_files } from './modules/create_phylogeny_tree_related_files'
 include { run_orthofinder } from './modules/run_orthofinder'
+include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus_annotation_reference'
+include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
+
 //include { multiqc_report } from './modules/run_multiqc'
 
 // Print a header for your pipeline 
@@ -338,12 +341,35 @@ if ( params.help || params.input == false ){
 
  
   get_ncbi.out.assembly_summary_refseq
-	.view()
+  //	.view()
  
-  // CREATE Phylogeny tree creation (with orthofinder) related files
+  // CREATE/ARRANGE Phylogeny tree (with orthofinder) related files
   create_phylogeny_tree_related_files(get_ncbi.out.assembly_summary_refseq,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
 
+  //RUN PHYLOGENY using orthofinder
   run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
+
+
+  // ANNOTATE REFERENCE STRAINS FOR  AMR-GENES (AMRFINDERPLUS)
+  amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,get_amrfinderplus.out.amrfinderplus_db)
+
+
+  // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
+  consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out.map { it[1] }.collect()
+  //      .view()
+  flye_only_amrfinderplus_output=amrfinderplus_annotation_flye_chromosomes.out.map { it[1] }.collect()
+  //      .view()
+  
+  all_samples_amrfinderplus_output = consensus_amrfinderplus_output.merge(flye_only_amrfinderplus_output)
+  	  .view()
+  all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
+	  .view()
+  
+  sampleid_species_table = create_phylogeny_tree_related_files.out.sampleID_species_table
+    .view()
+
+  generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,all_references_amrfinderplus_output,sampleid_species_table)
+
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   //plassembler_in = porechop.out.trimmed_fq

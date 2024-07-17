@@ -7,8 +7,8 @@ input:
   path(phylogeny_folder)
   path(amrfinderplus_db)
 
-//output:
-  //path("amrfinderplus"), emit: amrfinderplus_annotations
+output:
+  path("amrfinderplus_reference/*"), emit: amrfinderplus_annotations
 
   //publishDir { "results/reference" }, mode: 'copy'
 

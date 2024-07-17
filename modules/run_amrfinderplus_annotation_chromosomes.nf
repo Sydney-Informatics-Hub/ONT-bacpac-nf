@@ -7,8 +7,9 @@ input:
   path(amrfinderplus_db)
 
 output:
-  tuple val(barcode), path("amrfinderplus"), emit: amrfinderplus_annotations
-  
+  //tuple val(barcode), path("amrfinderplus"), emit: amrfinderplus_annotations
+  tuple val(barcode), path("amrfinderplus/*"), emit: amrfinderplus_annotations  
+
   publishDir { "results/${barcode}" }, mode: 'copy'
 
 script:
