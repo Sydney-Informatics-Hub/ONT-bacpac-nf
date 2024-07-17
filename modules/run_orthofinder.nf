@@ -6,8 +6,7 @@ input:
   path(phylogeny_folder)
 
   output:
-  //tuple val(barcode), val("${barcode}_${reconciled_dir}"), path("${barcode}_${reconciled_dir}_msa"), emit: three_msa
-  path("phylogeny_tree")
+  path("phylogeny_tree"), emit: phylogeny_tree
 
 
   script:
