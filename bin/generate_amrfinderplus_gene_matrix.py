@@ -32,11 +32,11 @@ def parse_amrfinderplus_result(each_amrfinderplus,sampleID_details_dic,geneSymbo
    
     
     sampleID_raw=str(each_amrfinderplus)
-    if sampleID_raw.find("_REF_")!=-1:
-        sampleID=sampleID_raw.split("_REF_")[0].strip()
-    else:
-        sampleID=sampleID_raw.split(".txt")[0].strip()
-
+    #if sampleID_raw.find("_REF_")!=-1:
+    #    sampleID=sampleID_raw.split("_REF_")[0].strip()
+    #else:
+       # sampleID=sampleID_raw.split(".txt")[0].strip()
+    sampleID=sampleID_raw.split(".txt")[0].strip()
 
     file_amr=open("%s"%each_amrfinderplus)
     data_amr=file_amr.readlines()

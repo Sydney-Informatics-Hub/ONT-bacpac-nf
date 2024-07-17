@@ -7,8 +7,8 @@ process generate_amrfinderplus_gene_matrix {
         path(all_references_folder_amrfinderplus_output)
   	path(sampleid_species_table)
 
-  //output:
-  //	path("phylogeny"), emit: phylogeny_folder
+  output:
+  	path("amrfinderplus_output.txt"), emit: amrfinderplus_gene_matrix
   //	path("sampleID_species_table_mqc.txt"), emit: sampleID_species_table
 
   script: 
