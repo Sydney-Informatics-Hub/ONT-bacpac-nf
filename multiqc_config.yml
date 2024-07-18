@@ -26,9 +26,11 @@ fn_clean_exts:
   - ".txt"
   - ".k2report"
   - "_allfiles-cat_nr.fastq"
+  - "_busco"
 
 fn_clean_trim:
-  - "short_summary.specific.bacteria_odb10.BUSCO_"
+  #- "short_summary.specific.bacteria_odb10.BUSCO_"
+  - "short_summary.specific.bacteria_odb10."  
 
 # Hide columns (W)
 table_columns_visible:
