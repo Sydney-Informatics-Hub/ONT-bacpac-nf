@@ -8,6 +8,7 @@ input:
 
 output:
   tuple val(barcode), path("${barcode}_bakta"), emit: bakta_annotations    
+  tuple val(barcode), path("${barcode}_bakta/*.txt"), emit: bakta_annotations_multiqc
 
   publishDir { "results/${barcode}" }, mode: 'copy'
 
