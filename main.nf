@@ -50,7 +50,7 @@ include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinde
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
 
-//include { multiqc_report } from './modules/run_multiqc'
+include { multiqc_report } from './modules/run_multiqc'
 
 // Print a header for your pipeline 
 log.info """\
@@ -87,7 +87,8 @@ def helpMessage() {
 
   Optional Arguments:
 
-  --outDir	Specify path to output directory. 
+  --outDir		Specify path to output directory.
+  --multiqc_config	Configure multiqc reports
 	
 """.stripIndent()
 }
@@ -425,6 +426,23 @@ if ( params.help || params.input == false ){
   // CONSTRUCT PHYLOGENETIC TREE
 
   // SUMMARISE RUN WITH MULTIQC REPORT
+
+  kraken2_required_for_multiqc = kraken2.out.kraken2_screen.map { it[1] }.collect()
+
+  quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc.map { it[1] }.collect()
+  	.merge(quast_qc_flye_chromosomes.out.quast_qc_multiqc.map { it[1] }.collect())	
+  	.view()
+
+  busco_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc.map { it[1] }.collect()
+        .merge(bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc.map { it[1] }.collect())
+        .view()
+
+  bakta_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations.map { it[1] }.collect()
+        .merge(busco_annotation_flye_chromosomes.out.busco_annotations.map { it[1] }.collect())
+	//.view()
+  
+  multiqc_config_file = params.multiqc_config
+  multiqc_report(multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,busco_required_for_multiqc)
 
 }
 
