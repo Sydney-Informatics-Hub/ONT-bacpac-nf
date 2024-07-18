@@ -4,15 +4,15 @@ process multiqc_report
   container 'quay.io/biocontainers/multiqc:1.21--pyhdfd78af_0'
 
   input:
+  path(pycoqc)
+  path(nanoplot)
   path(multiqc_config_file)
   path(kraken2)
   path(quast)
   path(bakta)
   path(busco)
 
-
   //output:
-  //tuple val(barcode), val("${barcode}_${reconciled_dir}"), path("${barcode}_${reconciled_dir}_msa"), emit: three_msa
 
   script:
   """
