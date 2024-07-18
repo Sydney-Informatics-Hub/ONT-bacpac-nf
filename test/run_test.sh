@@ -27,6 +27,7 @@ in=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/da
 k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
 
 multiqc=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/multiqc_config.yml
+sequencing_summary_file_path=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/
 
 
 # Run pipeline 
@@ -34,4 +35,5 @@ nextflow run main.nf \
   --input ${in} \
   --kraken2_db ${k2db} \
   -resume \
-  --multiqc_config ${multiqc}
+  --multiqc_config ${multiqc} \
+  --sequencing_summary ${sequencing_summary_file_path}
