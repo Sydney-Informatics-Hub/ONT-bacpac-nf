@@ -11,7 +11,7 @@ include { pycoqc_summary } from './modules/run_pycoqc'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_amrfinderplus } from './modules/get_amrfinderplus'
-//include { get_plassembler } from './modules/get_plassembler'
+include { get_plassembler } from './modules/get_plassembler'
 include { get_kraken2 } from './modules/get_kraken2'
 include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
@@ -26,9 +26,9 @@ include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
-//include { plassembler } from './modules/run_plassembler'
-//include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
-//include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
+include { plassembler } from './modules/run_plassembler'
+include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
+include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
 include { quast_qc_flye_chromosomes } from './modules/run_quast_qc_flye_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
@@ -89,6 +89,7 @@ def helpMessage() {
 
   --outDir		Specify path to output directory.
   --multiqc_config	Configure multiqc reports
+  --sequencing_summary	Sequencing summary log from sequencer
 	
 """.stripIndent()
 }
@@ -114,7 +115,7 @@ if ( params.help || params.input == false ){
 
   // DOWNLOAD DATABASES  
   get_amrfinderplus()
-  //get_plassembler()
+  get_plassembler()
   get_ncbi()
   
     // Only download kraken2 if existing db not already provided 
@@ -139,9 +140,11 @@ if ( params.help || params.input == false ){
 	check_input(params.input)
 
   // QC SUMMARY OF RAW INPUTS 
-  // TODO THESE MODULES DON'T FUNCTION
-  //nanoplot_summary(params.input)
-  //pycoqc_summary(params.input)
+  // INPUT FILE PROVIDED BY THE SEQUENCING CONSORTIUM 
+  sequencing_summary_file_path = params.sequencing_summary
+
+  nanoplot_summary(sequencing_summary_file_path)
+  pycoqc_summary(sequencing_summary_file_path)
 
 	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
 	unzipped_fq_dirs = check_input.out.unzipped
@@ -354,8 +357,8 @@ if ( params.help || params.input == false ){
   all_bakta_input_to_create_phylogeny_tree=consensus_bakta.merge(flye_only_bakta)
 
  
-  get_ncbi.out.assembly_summary_refseq
-  //	.view()
+
+  // CONSTRUCT PHYLOGENETIC TREE
  
   // CREATE/ARRANGE Phylogeny tree (with orthofinder) related files
   create_phylogeny_tree_related_files(get_ncbi.out.assembly_summary_refseq,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
@@ -404,28 +407,27 @@ if ( params.help || params.input == false ){
   create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,generate_abricate_gene_matrix.out.abricate_gene_matrix)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
-  //plassembler_in = porechop.out.trimmed_fq
-  //                .join(flye_assembly.out.flye_assembly, by: 0)
-  //                .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
+  plassembler_in = porechop.out.trimmed_fq
+                  .join(flye_assembly.out.flye_assembly, by: 0)
+                  .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
                   
-  //plassembler(plassembler_in, get_plassembler.out.plassembler_db)
+  plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
   // ANNOTATE PLASMID FEATURES (BATKA)
-  //bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
+  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
 
 
   // ANNOTATE PLASMID FEATURES (BUSCO)
-  //busco_plasmids_in = plassembler.out.plasmids
-
-  //busco_annotation_plasmids()
-
-
-  // ANNOTATE VIRULENCE GENES 
+  busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
+  busco_annotation_plasmids(busco_plasmids_in)
 
 
   // CONSTRUCT PHYLOGENETIC TREE
 
   // SUMMARISE RUN WITH MULTIQC REPORT
+
+  nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
+  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary
 
   kraken2_required_for_multiqc = kraken2.out.kraken2_screen.map { it[1] }.collect()
 
@@ -440,9 +442,14 @@ if ( params.help || params.input == false ){
   bakta_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations.map { it[1] }.collect()
         .merge(busco_annotation_flye_chromosomes.out.busco_annotations.map { it[1] }.collect())
 	//.view()
+
+  bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations.map { it[1] }.collect()
+  
+  busco_plasmids_required_for_multiqc = busco_annotation_plasmids.out.busco_annotations.map { it[1] }.collect()
+  
   
   multiqc_config_file = params.multiqc_config
-  multiqc_report(multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,busco_required_for_multiqc)
+  multiqc_report(pycoqc_required_for_multiqc,nanoplot_required_for_multiqc,multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,bakta_plasmids_required_for_multiqc,busco_required_for_multiqc,busco_plasmids_required_for_multiqc)
 
 }
 
