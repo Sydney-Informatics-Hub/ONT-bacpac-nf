@@ -8,6 +8,7 @@ input:
 
 output:
   tuple val(barcode), path("${barcode}_quast"), emit: quast_qc
+  tuple val(barcode), path("${barcode}_quast/${barcode}.tsv"), emit: quast_qc_multiqc
 
   publishDir { "results/${barcode}" }, mode: 'copy'
 
@@ -20,7 +21,9 @@ script:
   quast.py \\
         --output-dir ${barcode}_quast \\
         -l ${barcode} \\
-        concatenated_consensus.fasta 
+        concatenated_consensus.fasta
+
+  mv ${barcode}_quast/report.tsv ${barcode}_quast/${barcode}.tsv 
   """
 
 }
