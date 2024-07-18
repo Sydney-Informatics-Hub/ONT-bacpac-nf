@@ -28,7 +28,7 @@ k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
 
 multiqc=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/multiqc_config.yml
 sequencing_summary_file_path=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/
-
+pycoqc_header_file_path=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/pycoqc_report_header.txt
 
 # Run pipeline 
 nextflow run main.nf \
@@ -36,4 +36,5 @@ nextflow run main.nf \
   --kraken2_db ${k2db} \
   -resume \
   --multiqc_config ${multiqc} \
-  --sequencing_summary ${sequencing_summary_file_path}
+  --sequencing_summary ${sequencing_summary_file_path} \
+  --pycoqc_header_file ${pycoqc_header_file_path}

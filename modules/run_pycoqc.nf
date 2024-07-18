@@ -6,7 +6,7 @@ process pycoqc_summary {
   path(sequencing_summary_file_path)
 
   output:
-  path("*"), emit: pycoqc_summary
+  path("pycoQC_output.html"), emit: pycoqc_summary
 
   script: 
   """

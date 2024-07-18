@@ -7,7 +7,10 @@ nextflow.enable.dsl=2
 include { check_input } from './modules/check_input'
 include { concat_fastqs } from './modules/concat_fq'
 include { porechop } from './modules/run_porechop' 
+
 include { pycoqc_summary } from './modules/run_pycoqc'
+include { parse_required_pycoqc_segments } from './modules/parse_required_pycoqc_segments'
+
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_amrfinderplus } from './modules/get_amrfinderplus'
@@ -145,6 +148,9 @@ if ( params.help || params.input == false ){
 
   nanoplot_summary(sequencing_summary_file_path)
   pycoqc_summary(sequencing_summary_file_path)
+  
+  parse_required_pycoqc_segments(pycoqc_summary.out.pycoqc_summary,params.pycoqc_header_file)
+
 
 	// READ SUBDIRECTORIES FROM UNZIPPED_INPUTS
 	unzipped_fq_dirs = check_input.out.unzipped
@@ -443,10 +449,12 @@ if ( params.help || params.input == false ){
   bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations.map { it[1] }.collect()
   
   busco_plasmids_required_for_multiqc = busco_annotation_plasmids.out.busco_annotations.map { it[1] }.collect()
-  
+ 
+  phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
+ 
   
   multiqc_config_file = params.multiqc_config
-  multiqc_report(pycoqc_required_for_multiqc,nanoplot_required_for_multiqc,multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,bakta_plasmids_required_for_multiqc,busco_required_for_multiqc,busco_plasmids_required_for_multiqc)
+  multiqc_report(pycoqc_required_for_multiqc,nanoplot_required_for_multiqc,multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,bakta_plasmids_required_for_multiqc,busco_required_for_multiqc,busco_plasmids_required_for_multiqc,parse_required_pycoqc_segments.out.pycoQC_mqc,phylogeny_heatmap_plot_required_for_multiqc)
 
 }
 
