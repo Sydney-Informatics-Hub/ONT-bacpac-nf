@@ -421,9 +421,6 @@ if ( params.help || params.input == false ){
   busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
   busco_annotation_plasmids(busco_plasmids_in)
 
-
-  // CONSTRUCT PHYLOGENETIC TREE
-
   // SUMMARISE RUN WITH MULTIQC REPORT
 
   nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
