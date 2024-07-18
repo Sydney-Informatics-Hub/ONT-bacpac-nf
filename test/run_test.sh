@@ -26,8 +26,12 @@ export SINGULARITY_CACHEDIR=/scratch/er01/ndes8648/pipeline_work/nextflow/TMPDIR
 in=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/data
 k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
 
+multiqc=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/multiqc_config.yml
+
+
 # Run pipeline 
 nextflow run main.nf \
   --input ${in} \
   --kraken2_db ${k2db} \
-  -resume
+  -resume \
+  --multiqc_config ${multiqc}
