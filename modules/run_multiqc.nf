@@ -10,7 +10,9 @@ process multiqc_report
   path(kraken2)
   path(quast)
   path(bakta)
+  path(bakta_plasmids)
   path(busco)
+  path(busco_plasmids)
 
   //output:
 

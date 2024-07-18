@@ -1,5 +1,4 @@
 process plassembler {
-  // TODO plassembler will output an empty fasta file if no plasmids are detected. Is there a better way to handle this?
   tag "DETECTING PLASMIDS AND OTHER MOBILE ELEMENTS: ${barcode}"
   container 'quay.io/gbouras13/plassembler:1.6.2'
 
