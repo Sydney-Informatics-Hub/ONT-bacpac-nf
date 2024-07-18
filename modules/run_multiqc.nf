@@ -12,7 +12,7 @@ process multiqc_report
   path(bakta)
   path(bakta_plasmids)
   path(busco)
-  path(busco_plasmids)
+  //path(busco_plasmids)
   path(pycoqc_subsetted_graphs)
   path(phylogeny_heatmap_plot)
 

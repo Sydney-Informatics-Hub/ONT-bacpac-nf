@@ -1,6 +1,6 @@
 process parse_required_pycoqc_segments {
   tag "PARSE REQUIRED PYCOQC PLOTS from pycoqc output"  
-  //container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:
         path(complete_pycoqc_output)

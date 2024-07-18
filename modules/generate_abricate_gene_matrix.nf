@@ -1,6 +1,6 @@
 process generate_abricate_gene_matrix {
   tag "GENERATE ABRICATE gene_matrix for Phylogeny-heatmap image"  
-  //container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:
         path(abricate_output_all_samples)

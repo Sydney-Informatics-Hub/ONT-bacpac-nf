@@ -1,6 +1,6 @@
 process generate_amrfinderplus_gene_matrix {
   tag "GENERATE AMRFIDNERPLUS gene_matrix for Phylogeny-heatmap image"  
-  //container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:
         path(amrfinderplus_output_all_samples)
