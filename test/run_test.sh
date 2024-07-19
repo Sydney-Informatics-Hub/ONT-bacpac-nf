@@ -1,40 +1,33 @@
 #!/bin/bash
 
-#PBS -P tj48 
-#PBS -l walltime=04:00:00
+#PBS -P <PROJECT> 
+#PBS -l walltime=10:00:00
 #PBS -l ncpus=1
 #PBS -l mem=5GB
 #PBS -W umask=022
 #PBS -q copyq
 #PBS -l wd
-#PBS -l storage=gdata/er01+scratch/er01
+#PBS -l storage=scratch/<PROJECT>
 #PBS -l jobfs=100GB
 
-## RUN FROM PROJECT DIRECTORY
-## BEFORE RUNNING, INITIATE INTERACTIVE SESSION: 
-#### qsub -I -P tj48 -q normal -lmem=190gb,ncpus=48,storage=scratch/er01+scratch/tj48
+## RUN FROM PROJECT DIRECTORY WITH: bash test/run_test.sh
 
 # Load version of nextflow with plug-in functionality enabled 
 module load nextflow/24.04.1 
 module load singularity 
 
-export SINGULARITY_CACHEDIR=/scratch/er01/ndes8648/pipeline_work/nextflow/TMPDIR_PATH
-
-
 # Define inputs 
-#in=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/dataset/testing
-in=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/data
-k2db=/scratch/er01/gs5517/workflowDev/ONT-bacpac-nf/test/kraken2_db
-
-multiqc=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/multiqc_config.yml
-sequencing_summary_file_path=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/
-pycoqc_header_file_path=/scratch/er01/ndes8648/pipeline_work/nextflow/PIPE-4747/github_repos/debug/ONT-bacpac-nf/pycoqc_report_header.txt
+in= #path to your input directory
+k2db= #path to predownloaded kraken2 database
+multiqc_config= #path to multiqc config.yml
+sequencing_summary= #path to sequencing summary file from ONT run 
+pycoqc_header= #path to pycoQC header file .txt
 
 # Run pipeline 
 nextflow run main.nf \
   --input ${in} \
   --kraken2_db ${k2db} \
-  -resume \
-  --multiqc_config ${multiqc} \
-  --sequencing_summary ${sequencing_summary_file_path} \
-  --pycoqc_header_file ${pycoqc_header_file_path}
+  --multiqc_config ${multiqc_config} \
+  --sequencing_summary ${sequencing_summary} \
+  --pycoqc_header_file ${pycoqc_header} \
+  -resume 
