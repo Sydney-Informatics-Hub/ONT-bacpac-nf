@@ -1,6 +1,7 @@
 process kraken2 {
   tag "DETECTING POSSIBLE CONTAMINATION: ${barcode}"
   container 'quay.io/biocontainers/kraken2:2.1.3--pl5321hdcf5f25_0'
+  publishDir "${params.outdir}/taxonomy_phylogeny/${barcode}", mode: 'symlink'
 
   input:
   tuple val(barcode), path(trimmed_fq)

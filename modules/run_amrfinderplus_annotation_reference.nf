@@ -8,7 +8,7 @@ input:
   path(amrfinderplus_db)
 
 output:
-  path("amrfinderplus_reference/*"), emit: amrfinderplus_annotations
+  path("amrfinderplus_reference/*"), emit: amrfinderplus_annotations, optional: true
 
   //publishDir { "results/reference" }, mode: 'copy'
 

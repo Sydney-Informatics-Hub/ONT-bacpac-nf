@@ -1,6 +1,7 @@
 process bakta_annotation_chromosomes {
   tag "ANNOTATING Consensus WITH BATKA: ${barcode}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
+  publishDir "${params.outdir}/annotations/${barcode}_chromosomes", mode: 'symlink'
 
 input:
   tuple val(barcode), path(medaka_consensus)
@@ -9,8 +10,6 @@ input:
 output:
   tuple val(barcode), path("${barcode}_bakta"), emit: bakta_annotations
   tuple val(barcode), path("${barcode}_bakta/*.txt"), emit: bakta_annotations_multiqc
-
-  publishDir { "results/${barcode}" }, mode: 'copy'
 
 script:
   """

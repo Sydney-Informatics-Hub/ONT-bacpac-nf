@@ -210,6 +210,7 @@ ONT-BACPAC-nf
 ├── results
     ├── assemblies
     ├── annotations
+    ├── raw_qc
     ├── report
     ├── resistance_virulence_genes
     ├── taxonomy_phylogeny

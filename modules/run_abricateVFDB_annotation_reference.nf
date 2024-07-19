@@ -6,7 +6,7 @@ input:
   path(phylogeny_folder)
 
 output:
-  path("abricate/*"), emit: abricate_annotations
+  path("abricate/*"), emit: abricate_annotations, optional: true
 
   //publishDir { "results/reference" }, mode: 'copy'
 
