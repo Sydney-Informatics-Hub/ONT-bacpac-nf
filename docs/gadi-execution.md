@@ -102,8 +102,120 @@ See scripts and instructions [here](https://github.com/Sydney-Informatics-Hub/Bi
 
 ### Execute the workflow
 
+This workflow executes different tools for each step as containers. This means you do not have to download and install anything before executing the pipeline. Containers will be pulled during execution. Allow Nextflow to download and save your containers to a cache directory: 
+
+```bash
+# Create a cache directory for singularity containers
+mkdir /scratch/<PROJECT>/singularity_cache
+
+# Set the cache directory as an environment variable
+export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache
+```
+
+Confirm that the cache directory has been set: 
+
+```bash
+echo $NXF_SINGULARITY_CACHEDIR
+```
+
+To avoid having to reset this variable before each run, you could add the export command to your `.bashrc` file: 
+  
+```bash
+# Add the following line to your .bashrc file
+echo 'export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache' >> ~/.bashrc
+
+# Reload your .bashrc file to apply the changes
+source ~/.bashrc
+```
+
+A template run script has been provided in this repository at `test/run_test.sh`. It will need to be modified to suit your specific project requirements.
+
+Replace `<PROJECT>` with your project code in the following lines of the script: 
+
+* `#PBS -P <PROJECT>`
+* `#PBS -l storage=scratch/<PROJECT>`
+
+Define paths to the workflow input variables: 
+
+* `in=/scratch/<PROJECT>/data`
+* `k2db=/scratch/<PROJECT>/databases/kraken2_db`
+* `multiqc_config=/scratch/<PROJECT>/ONT-bacpac-nf/assets/multiqc_config.yml`
+* `pycoqc_header_file=/scratch/<PROJECT>/ONT-bacpac-nf/assets/pycoqc_report_header.txt`
+* `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
+
+This is the structure of the run script saved in `test/run_test.sh`:
+
+```bash
+#!/bin/bash
+
+#PBS -P <PROJECT> 
+#PBS -l walltime=10:00:00
+#PBS -l ncpus=1
+#PBS -l mem=5GB
+#PBS -W umask=022
+#PBS -q copyq
+#PBS -l wd
+#PBS -l storage=scratch/<PROJECT>
+#PBS -l jobfs=100GB
+
+## RUN FROM PROJECT DIRECTORY: bash test/run_test.sh
+
+# Load version of nextflow with plug-in functionality enabled 
+module load nextflow/24.04.1 
+module load singularity 
+
+# Define inputs 
+in= #path to your input directory
+k2db= #path to predownloaded kraken2 database
+multiqc_config= #path to multiqc config.yml
+sequencing_summary= #path to sequencing summary file from ONT run 
+pycoqc_header= #path to pycoQC header file .txt
+
+# Run pipeline 
+nextflow run main.nf \
+  --input ${in} \
+  --kraken2_db ${k2db} \
+  --multiqc_config ${multiqc_config} \
+  --sequencing_summary ${sequencing_summary} \
+  --pycoqc_header_file ${pycoqc_header} \
+  -resume 
+```
+
+To execute the pipeline and observe its progress, please run the following command: 
+
+```bash
+bash test/run_test.sh
+```
+
+You can also run the pipeline with the following command: 
+
+```bash
+qsub test/run_test.sh
+```
+
 ### Monitor your execution
 
+If you execute the pipeline using the bash method above, rather than the qsub method, progress updates will be printed to the screen. Many tasks run by this pipeline are executed as jobs by the job scheduler. If you'd like to track the progress of these jobs, you can run: 
+
+```bash
+qstat -Esw
+```
+
 ### Examine the results
+
+Results are currently output to the `results` directory. Outputs have been arranged into the following structure: 
+
+```
+ONT-BACPAC-nf
+├── results
+    ├── assemblies
+    ├── annotations
+    ├── report
+    ├── resistance_virulence_genes
+    ├── taxonomy_phylogeny
+    └── runInfo
+```
+
+Intermediate files that are not of interest in downstream work but may be useful for troubleshooting are available in the `work/` directory. You can check which work directory corresponds to which process by looking at the `.trace.txt` file in `results/runInfo` directory. 
 
 ### Troubleshooting errors 
