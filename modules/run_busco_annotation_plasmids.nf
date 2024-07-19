@@ -7,15 +7,15 @@ input:
   tuple val(barcode), path(bakta_annotations)
 
 output:
-  tuple val(barcode), path("${barcode}_plasmids_busco/short_summary.specific.*_busco.txt"), emit: busco_annotations
-
-  publishDir { "results/${barcode}" }, mode: 'copy'
+  //tuple val(barcode), path("${barcode}_plasmids_busco/short_summary.specific.*_busco.txt"), emit: busco_annotations
+  tuple val(barcode), path("${barcode}_*"), emit: busco_annotations
 
 script:
   """
   busco \\
-    -f -i ${bakta_annotations}/${barcode}_plasmids.faa \
-    -m proteins --lineage_dataset bacteria_odb10 \\
+    -f -i ${barcode}_bakta/${barcode}_plasmids.faa \\
+    -m proteins \\
+    --lineage_dataset bacteria_odb10 \\
     --out ${barcode}_plasmids_busco
   """
 

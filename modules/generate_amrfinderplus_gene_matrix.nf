@@ -3,9 +3,9 @@ process generate_amrfinderplus_gene_matrix {
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:
-        path(amrfinderplus_output_all_samples)
-        path(all_references_folder_amrfinderplus_output)
-  	path(sampleid_species_table)
+  path(amrfinderplus_output_all_samples)
+  path(all_references_folder_amrfinderplus_output)
+  path(sampleid_species_table)
 
   output:
   	path("amrfinderplus_output.txt"), emit: amrfinderplus_gene_matrix

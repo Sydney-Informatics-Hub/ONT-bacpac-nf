@@ -10,8 +10,6 @@ output:
   tuple val(barcode), path("${barcode}_quast"), emit: quast_qc
   tuple val(barcode), path("${barcode}_quast/${barcode}.tsv"), emit: quast_qc_multiqc
 
-  publishDir { "results/${barcode}" }, mode: 'copy'
-
 script:
   """
 

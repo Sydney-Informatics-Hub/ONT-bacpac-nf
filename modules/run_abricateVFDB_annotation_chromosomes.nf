@@ -9,7 +9,6 @@ input:
 
 output:
   tuple val(barcode), path("abricate/*"), emit: abricate_annotations, optional: true 
-  //publishDir { "results/${barcode}" }, mode: 'copy'
 
 script:
   """

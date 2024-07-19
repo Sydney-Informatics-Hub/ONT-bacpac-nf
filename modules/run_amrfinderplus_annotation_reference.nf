@@ -10,8 +10,6 @@ input:
 output:
   path("amrfinderplus_reference/*"), emit: amrfinderplus_annotations, optional: true
 
-  //publishDir { "results/reference" }, mode: 'copy'
-
 script:
   """
   mkdir -p amrfinderplus_reference

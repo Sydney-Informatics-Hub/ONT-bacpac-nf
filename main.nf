@@ -65,7 +65,7 @@ Cite this pipeline @ TODO INSERT DOI
 Workflow run parameters 
 =======================================================================================
 input       : ${params.input}
-results     : ${params.outDir}
+results     : ${params.outdir}
 workDir     : ${workflow.workDir}
 =======================================================================================
 
@@ -85,7 +85,7 @@ def helpMessage() {
 
   Optional Arguments:
 
-  --outDir		Specify path to output directory.
+  --outdir		Specify path to output directory.
   --multiqc_config	Configure multiqc reports
   --sequencing_summary	Sequencing summary log from sequencer
 	
@@ -335,22 +335,28 @@ if ( params.help || params.input == false ){
                                             .map { [it[1]] }
 	                                          .collect()
 
+  consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations
+                  .map { [it[1]] }.collect()
 
-  consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
-  flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
-  all_bakta_input_to_create_phylogeny_tree=consensus_bakta.merge(flye_only_bakta)
+  flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations
+                  .map { [it[1]] }.collect()
+  all_bakta_input_to_create_phylogeny_tree=consensus_bakta
+                  .merge(flye_only_bakta)
 
   // CONSTRUCT PHYLOGENETIC TREE
  
   // CREATE/ARRANGE Phylogeny tree (with orthofinder) related files
-  create_phylogeny_tree_related_files(get_ncbi.out.assembly_summary_refseq,kraken_input_to_create_phylogeny_tree,all_bakta_input_to_create_phylogeny_tree) 
+  create_phylogeny_tree_related_files(get_ncbi.out.assembly_summary_refseq,
+                                      kraken_input_to_create_phylogeny_tree,
+                                      all_bakta_input_to_create_phylogeny_tree) 
 
   //RUN PHYLOGENY using orthofinder
   run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
 
 
   // ANNOTATE REFERENCE STRAINS FOR  AMR-GENES (AMRFINDERPLUS)
-  amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,get_amrfinderplus.out.amrfinderplus_db)
+  amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,
+                                    get_amrfinderplus.out.amrfinderplus_db)
 
   abricateVFDB_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder) 
 
@@ -369,10 +375,11 @@ if ( params.help || params.input == false ){
 
   all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
   
-  sampleid_species_table = create_phylogeny_tree_related_files.out.sampleID_species_table
+  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
 
-  generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,all_references_amrfinderplus_output,sampleid_species_table)
-
+  generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,
+                                      all_references_amrfinderplus_output,
+                                      barcode_species_table)
 
   // GENERATE ABRICATE-VFDB gene matrix (FOR PHYLOGENY-AMR HEATMAP)
   consensus_abricate_output=abricateVFDB_annotation_chromosomes.out
@@ -388,15 +395,18 @@ if ( params.help || params.input == false ){
 
   all_references_abricate_output = abricateVFDB_annotation_reference.out.abricate_annotations
 
-  generate_abricate_gene_matrix(all_samples_abricate_output,all_references_abricate_output,sampleid_species_table)
+  generate_abricate_gene_matrix(all_samples_abricate_output,
+                                all_references_abricate_output,
+                                barcode_species_table)
 
   // CREATE PHYLOGENY HEATMAP IMAGE
-  run_orthofinder.out.phylogeny_tree
-
-  generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix
+  //run_orthofinder.out.phylogeny_tree
+  //generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix
 
   // GENERATE PHYLOGENY-HEATMAP image
-  create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,generate_abricate_gene_matrix.out.abricate_gene_matrix)
+  create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,
+                                    generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
+                                    generate_abricate_gene_matrix.out.abricate_gene_matrix)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   plassembler_in = porechop.out.trimmed_fq
@@ -409,27 +419,28 @@ if ( params.help || params.input == false ){
   bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
 
   // ANNOTATE PLASMID FEATURES (BUSCO)
-  busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
+  // This is currently not in use as we don't feel busco completeness is a good measure for plasmids
+  //busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
   //busco_annotation_plasmids(busco_plasmids_in)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
-
   nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
   pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary
 
-  kraken2_required_for_multiqc = kraken2.out.kraken2_screen.map { it[1] }.collect()
+  kraken2_required_for_multiqc = kraken2.out.kraken2_screen
+                                .map { it[1] }.collect()
 
   quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc
                               .map { it[1] }.collect()
   	                          .merge(quast_qc_flye_chromosomes.out.quast_qc_multiqc
                               .map { it[1] }.collect())	
 
-  busco_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
+  bakta_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
                               .map { it[1] }.collect()
                               .merge(bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc
                               .map { it[1] }.collect())
 
-  bakta_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
+  busco_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
                               .map { it[1] }.collect()
                               .merge(busco_annotation_flye_chromosomes.out.busco_annotations
                               .map { it[1] }.collect())
@@ -437,11 +448,10 @@ if ( params.help || params.input == false ){
   bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations
                               .map { it[1] }.collect()
   
-  //busco_plasmids_required_for_multiqc = busco_annotation_plasmids.out.busco_annotations.map { it[1] }.collect()
- 
   phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
  
   multiqc_config_file = params.multiqc_config
+
   multiqc_report(pycoqc_required_for_multiqc,
                   nanoplot_required_for_multiqc,
                   multiqc_config_file,
@@ -466,7 +476,7 @@ Duration    : ${workflow.duration}
 Success     : ${workflow.success}
 workDir     : ${workflow.workDir}
 Exit status : ${workflow.exitStatus}
-results     : ${params.outDir}
+results     : ${params.outdir}
 
 =======================================================================================
   """

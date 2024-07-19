@@ -8,8 +8,6 @@ input:
 output:
   path("abricate/*"), emit: abricate_annotations, optional: true
 
-  //publishDir { "results/reference" }, mode: 'copy'
-
 script:
   """
   db_name='vfdb'

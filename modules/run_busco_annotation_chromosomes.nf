@@ -9,9 +9,6 @@ input:
 output:
   tuple val(barcode), path("${barcode}_busco/short_summary.specific.*_busco.txt"), emit: busco_annotations
 
-  publishDir { "results/${barcode}" }, mode: 'copy'
-
-
 script:
   """
   busco \\
