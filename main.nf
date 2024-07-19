@@ -36,11 +36,9 @@ include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_ch
 include { bakta_annotation_flye_chromosomes } from './modules/run_bakta_annotation_flye_chromosomes'
 include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosomes'
 include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotation_flye_chromosomes'
-
 include { abricateVFDB_annotation_chromosomes } from './modules/run_abricateVFDB_annotation_chromosomes'
 include { abricateVFDB_annotation_flye_chromosomes } from './modules/run_abricateVFDB_annotation_flye_chromosomes'
 include { abricateVFDB_annotation_reference } from './modules/run_abricateVFDB_annotation_reference'
-
 include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
 include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfinderplus_annotation_flye_chromosomes'
 include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
@@ -50,7 +48,6 @@ include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus
 include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
-
 include { multiqc_report } from './modules/run_multiqc'
 
 // Print a header for your pipeline 
@@ -215,7 +212,6 @@ if ( params.help || params.input == false ){
 
   // IF CONSENSUS ASSEMBLY IS BEST...
 
-  //ND
   // MULTIPLE SEQUENCE ALIGNMENT
   // CONSENSUS APPROACH : Check if file Consensus.txt exists
   msa_in_consensus = select_assembly.out.consensus_good
@@ -238,7 +234,6 @@ if ( params.help || params.input == false ){
   trycycler_msa(msa_in_consensus)
   trycycler_msa_out =  trycycler_msa.out.three_msa
 
-  //ND
   // TRYCYCLER PARTITIONING READS
   partition_in = select_assembly.out.consensus_good
           .filter { it[1].exists() }  // Ensure the correct path is checked for existence
@@ -249,8 +244,6 @@ if ( params.help || params.input == false ){
 
   trycycler_partition(partition_in)
 
-
-  //ND 
   // TRYCYCLER CONSENSUS
   partition_out_raw = trycycler_partition.out.four_reads
 
@@ -268,20 +261,13 @@ if ( params.help || params.input == false ){
 
   trycycler_consensus(consensus_in)
 
-  // ND
   // MEDAKA POLISH CONSENSUS ASSEMBLY
   consensus_polish_in = partition_out
                         .join(trycycler_consensus.out.consensus_consensus, by:1)
-                        //.map { barcode, four_reads, consensus_consensus ->
-                        //  tuple(barcode, four_reads, consensus_consensus)}  
-			.map { row ->
-                     	[row[1], row[0], row[2], row[4]]
-		              }
+			                  .map { row ->[row[1], row[0], row[2], row[4]]}
 
   medaka_polish_consensus(consensus_polish_in)
 
-
-  // ND
   //ANNOTATE CONSENSUS-CHROMOSOME FEATURES (BAKTA) 
   polish_grouped_by_barcode = medaka_polish_consensus.out.consensus_polished
 			.groupTuple(by:[0])
@@ -289,16 +275,14 @@ if ( params.help || params.input == false ){
                 	     [row[0], row[2]]
                 	 }
  
-  // ND
   // QC CONSENSUS-ASSEMBLY (QUAST)
   quast_qc_chromosomes(polish_grouped_by_barcode)
 
+  // ANNOTATE GENE FEATURES (BAKTA)
   bakta_annotation_chromosomes(polish_grouped_by_barcode,get_bakta.out.bakta_db)
 
-   
   // ANNOTATE CONSENSUS-CHROMOSOME FEATURES (BUSCO)
   busco_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations) 
-
    
   // ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
@@ -307,9 +291,7 @@ if ( params.help || params.input == false ){
   abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
 
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
-  //      .view() 
 
-  //ND
   // MEDAKA-POLISH FLYE-ONLY 
   filtered_discard = select_assembly.out.consensus_discard
           .filter { it[1].exists() }  // Ensure the correct path is checked for existence
@@ -324,12 +306,9 @@ if ( params.help || params.input == false ){
    
   medaka_polish_flye(flye_polish_in)
 
-
-  //ND
   // QC FLYE-ONLY ASSEMBLY (QUAST)
   quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
 
-  // ND
   //ANNOTATE FLYE-ONLY CHROMOSOME FEATURES (BAKTA)
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
 
@@ -339,28 +318,27 @@ if ( params.help || params.input == false ){
   // ANNOTATE FLYE-ONLY AMR-GENES (AMRFINDERPLUS)
   amrfinderplus_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations,get_amrfinderplus.out.amrfinderplus_db)
 
-  flye_only_processed_samples=amrfinderplus_annotation_flye_chromosomes.out.map { it[0] }.collect()
+  flye_only_processed_samples=amrfinderplus_annotation_flye_chromosomes.out
+                              .map { it[0] }.collect()
  
-  all_processed_samples = consensus_processed_samples.merge(flye_only_processed_samples)
-    .collect()
+  all_processed_samples = consensus_processed_samples
+                          .merge(flye_only_processed_samples)
+                          .collect()
 
   // ANNOTATE FLYE-ONLY-CHROMOSOME vfdb-GENES (ABRICATE)
   abricateVFDB_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished)
 
-
   //CREATE a samplesheet.txt for processed samples
   create_samplesheet_for_processed(all_processed_samples)
   
-
-  kraken_input_to_create_phylogeny_tree = kraken2.out.map { [it[1]] }
-	.collect()
+  kraken_input_to_create_phylogeny_tree = kraken2.out
+                                            .map { [it[1]] }
+	                                          .collect()
 
 
   consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
   flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations.map { [it[1]] }.collect()
   all_bakta_input_to_create_phylogeny_tree=consensus_bakta.merge(flye_only_bakta)
-
- 
 
   // CONSTRUCT PHYLOGENETIC TREE
  
@@ -378,10 +356,17 @@ if ( params.help || params.input == false ){
 
 
   // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
-  consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out.map { it[1] }.collect()
-  flye_only_amrfinderplus_output=amrfinderplus_annotation_flye_chromosomes.out.map { it[1] }.collect()
+  consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out
+                                  .map { it[1] }
+                                  .collect()
 
-  all_samples_amrfinderplus_output = consensus_amrfinderplus_output.merge(flye_only_amrfinderplus_output)
+  flye_only_amrfinderplus_output=amrfinderplus_annotation_flye_chromosomes.out
+                                  .map { it[1] }
+                                  .collect()
+
+  all_samples_amrfinderplus_output = consensus_amrfinderplus_output
+                                    .merge(flye_only_amrfinderplus_output)
+
   all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
   
   sampleid_species_table = create_phylogeny_tree_related_files.out.sampleID_species_table
@@ -390,22 +375,25 @@ if ( params.help || params.input == false ){
 
 
   // GENERATE ABRICATE-VFDB gene matrix (FOR PHYLOGENY-AMR HEATMAP)
-  consensus_abricate_output=abricateVFDB_annotation_chromosomes.out.map { it[1] }.collect()
-  flye_only_abricate_output=abricateVFDB_annotation_flye_chromosomes.out.map { it[1] }.collect()
+  consensus_abricate_output=abricateVFDB_annotation_chromosomes.out
+                            .map { it[1] }
+                            .collect()
 
-  all_samples_abricate_output = consensus_abricate_output.merge(flye_only_abricate_output)
-  //	.view()
+  flye_only_abricate_output=abricateVFDB_annotation_flye_chromosomes.out
+                            .map { it[1] }
+                            .collect()
+
+  all_samples_abricate_output = consensus_abricate_output
+                                .merge(flye_only_abricate_output)
+
   all_references_abricate_output = abricateVFDB_annotation_reference.out.abricate_annotations
-  //	.view()
 
   generate_abricate_gene_matrix(all_samples_abricate_output,all_references_abricate_output,sampleid_species_table)
 
   // CREATE PHYLOGENY HEATMAP IMAGE
   run_orthofinder.out.phylogeny_tree
-  //	.view()
 
   generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix
-  //	.view()
 
   // GENERATE PHYLOGENY-HEATMAP image
   create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,generate_abricate_gene_matrix.out.abricate_gene_matrix)
@@ -420,7 +408,6 @@ if ( params.help || params.input == false ){
   // ANNOTATE PLASMID FEATURES (BATKA)
   bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
 
-
   // ANNOTATE PLASMID FEATURES (BUSCO)
   busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
   //busco_annotation_plasmids(busco_plasmids_in)
@@ -432,27 +419,39 @@ if ( params.help || params.input == false ){
 
   kraken2_required_for_multiqc = kraken2.out.kraken2_screen.map { it[1] }.collect()
 
-  quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc.map { it[1] }.collect()
-  	.merge(quast_qc_flye_chromosomes.out.quast_qc_multiqc.map { it[1] }.collect())	
-  	.view()
+  quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc
+                              .map { it[1] }.collect()
+  	                          .merge(quast_qc_flye_chromosomes.out.quast_qc_multiqc
+                              .map { it[1] }.collect())	
 
-  busco_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc.map { it[1] }.collect()
-        .merge(bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc.map { it[1] }.collect())
-        .view()
+  busco_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
+                              .map { it[1] }.collect()
+                              .merge(bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc
+                              .map { it[1] }.collect())
 
-  bakta_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations.map { it[1] }.collect()
-        .merge(busco_annotation_flye_chromosomes.out.busco_annotations.map { it[1] }.collect())
-	//.view()
+  bakta_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
+                              .map { it[1] }.collect()
+                              .merge(busco_annotation_flye_chromosomes.out.busco_annotations
+                              .map { it[1] }.collect())
 
-  bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations.map { it[1] }.collect()
+  bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations
+                              .map { it[1] }.collect()
   
   //busco_plasmids_required_for_multiqc = busco_annotation_plasmids.out.busco_annotations.map { it[1] }.collect()
  
   phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
  
-  
   multiqc_config_file = params.multiqc_config
-  multiqc_report(pycoqc_required_for_multiqc,nanoplot_required_for_multiqc,multiqc_config_file,kraken2_required_for_multiqc,quast_required_for_multiqc,bakta_required_for_multiqc,bakta_plasmids_required_for_multiqc,busco_required_for_multiqc,parse_required_pycoqc_segments.out.pycoQC_mqc,phylogeny_heatmap_plot_required_for_multiqc)
+  multiqc_report(pycoqc_required_for_multiqc,
+                  nanoplot_required_for_multiqc,
+                  multiqc_config_file,
+                  kraken2_required_for_multiqc,
+                  quast_required_for_multiqc,
+                  bakta_required_for_multiqc,
+                  bakta_plasmids_required_for_multiqc,
+                  busco_required_for_multiqc,
+                  parse_required_pycoqc_segments.out.pycoQC_mqc,
+                  phylogeny_heatmap_plot_required_for_multiqc)
 
 }
 
