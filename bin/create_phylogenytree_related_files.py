@@ -137,7 +137,7 @@ def main():
         present_sampleid = str(present_sampleid_k2path).split('/')[-1].split('.')[0]
         sampleID_species_dic = get_dominant_species(present_sampleid, present_sampleid_k2path, sampleID_species_dic, nr_species_list)
 
-    output_sampleID_species_table_path = "sampleID_species_table_mqc.txt"
+    output_sampleID_species_table_path = "barcode_species_table_mqc.txt"
     with open(output_sampleID_species_table_path, "w") as file_out:
         header = "sampleID\tSpecies"
         file_out.write(f"{header}\n")

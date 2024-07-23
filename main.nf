@@ -463,7 +463,6 @@ if ( params.help || params.input == false ){
                   busco_required_for_multiqc,
                   parse_required_pycoqc_segments.out.pycoQC_mqc,
                   phylogeny_heatmap_plot_required_for_multiqc)
-
 }
 
 // Print workflow execution summary 
