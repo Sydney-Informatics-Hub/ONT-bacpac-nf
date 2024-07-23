@@ -7,8 +7,7 @@ library(ggtree)
 library(ape)
 library(conflicted)
 
-
-Sys.setenv(FONTCONFIG_PATH = tempdir())
+Sys.setenv(FONTCONFIG_CACHE = "~/.cache/fontconfig")
 
 # Get command-line arguments
 args <- commandArgs(trailingOnly = TRUE)
@@ -17,11 +16,6 @@ phylogeny_tree_base_path <- args[1]
 amrfinderplus_gene_matrix <- args[2]
 abricate_gene_matrix <- args[3]
 
-# Set conflict preferences
-conflict_prefer("filter", "dplyr")
-conflict_prefer("lag", "dplyr")
-conflict_prefer("map", "purrr")
-conflict_prefer("where", "dplyr")
 
 # Open a PNG graphics device
 png(filename = "combined_plot_mqc.png", width = 2000, height = 800)
@@ -37,14 +31,10 @@ tree <- read.tree(full_path)
 
 ## Heatmap for AMR genes
 # Read first heatmap data 
-#heatmap_data1 <- read.table("results/amrfinderplus_output.txt", header = TRUE, sep = "\t", row.names = 1)
 heatmap_data1 <- read.table(amrfinderplus_gene_matrix, header = TRUE, sep = "\t", row.names = 1)
 
 # Read second heatmap data
-#heatmap_data2 <- read.table("results/abricate_vfdb_output.txt", header = TRUE, sep = "\t", row.names = 1)
 heatmap_data2 <- read.table(abricate_gene_matrix, header = TRUE, sep = "\t", row.names = 1)
-
-
 
 # Format ids
 format_row_names <- function(data) {
@@ -104,7 +94,12 @@ if (has_data1 && has_data2) {
 # Plot the tree without tip labels
 plotTree(tree, plot=FALSE)
 obj <- get("last_plot.phylo", envir=.PlotPhyloEnv)
-plotTree(tree, lwd=1, ylim=c(0, obj$y.lim[2]*1.05), xlim=c(0, obj$x.lim[2]*1.2), ftype="off")
+#plotTree(tree, lwd=1, ylim=c(0, obj$y.lim[2]*1.05), xlim=c(0, obj$x.lim[2]*1.2), ftype="off")
+xlim_adjusted <- max(obj$x.lim) * 2.5  # Increase xlim to ensure space for heatmap
+ylim_adjusted <- max(obj$y.lim) * 1.3  # Increase ylim to ensure space for column labels
+
+plotTree(tree, lwd=1, ylim=c(0, ylim_adjusted), xlim=c(0, xlim_adjusted), ftype="off")
+
 
 # Retrieve the plotting details
 obj <- get("last_plot.phylo", envir=.PlotPhyloEnv)
