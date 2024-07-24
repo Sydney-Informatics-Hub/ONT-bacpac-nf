@@ -1,5 +1,5 @@
 process create_phylogeny_tree_related_files {
-  tag "CREATE files needed for phylogeny tree with orthofinder step"  
+  tag "PREPARING INPUTS FOR PHYLOGENETIC TREE"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:

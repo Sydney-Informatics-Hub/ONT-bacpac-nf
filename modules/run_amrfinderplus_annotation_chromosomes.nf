@@ -1,5 +1,5 @@
 process amrfinderplus_annotation_chromosomes {
-  tag "ANNOTATING Consensus WITH AMRFINDERPLUS: ${barcode}"
+  tag "DETECTING AMR GENES: ${barcode}"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
 
 input:

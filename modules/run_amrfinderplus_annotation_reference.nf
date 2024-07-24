@@ -1,6 +1,5 @@
-process amrfinderplus_annotation_reference
-  {
-  tag "ANNOTATING reference WITH AMRFINDERPLUS"
+process amrfinderplus_annotation_reference {
+    tag "DETECTING AMR GENES IN REFERENCE GENOME"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
 
 input:

@@ -1,5 +1,5 @@
 process abricateVFDB_annotation_reference {
-  tag "ANNOTATING reference WITH ABRICATE-VFDB"
+  tag "DETECTING VIRULENCE GENES IN REFERENCE GENOME"
   container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
 
 input:

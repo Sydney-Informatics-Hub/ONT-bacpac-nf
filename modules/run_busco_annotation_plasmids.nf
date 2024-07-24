@@ -1,5 +1,5 @@
 process busco_annotation_plasmids {
-  tag "ANNOTATING PLASMIDS WITH BUSCO: ${barcode}"
+  tag "EVALUATING PLASMID COMPLETENESS: ${barcode}"
   container 'quay.io/biocontainers/busco:5.6.1--pyhdfd78af_0'
   publishDir "${params.outdir}/assemblies/${barcode}_plasmids", mode: 'symlink'
 

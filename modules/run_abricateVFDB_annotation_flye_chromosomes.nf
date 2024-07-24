@@ -1,5 +1,5 @@
 process abricateVFDB_annotation_flye_chromosomes {
-   tag "ANNOTATING Flye-ONLY WITH ABRICATE vfdb: ${barcode}"
+   tag "ANNOTATING FLYE ASSEMBLY WITH ABRICATE VFDB: ${barcode}"
    container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
 
 input:

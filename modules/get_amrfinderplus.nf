@@ -1,5 +1,5 @@
 process get_amrfinderplus {
-  tag "UPDATING AMRFINDERPLUS DATABASE: TODO ADD TAG"
+  tag "UPDATING AMRFINDERPLUS DATABASE"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
 
     

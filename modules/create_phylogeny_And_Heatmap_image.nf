@@ -1,6 +1,6 @@
 process create_phylogeny_And_Heatmap_image {
-	tag "CREATE AN IMAGE with phylogeny tree and AMR/Virulenc gene-heatmap"
-  container ' oras://community.wave.seqera.io/library/bioconductor-ggtree_r-ape_r-phytools_r-tidyverse:bd310f2405bed388'  
+	tag "PLOTTING PHYLOGENETIC TREE WITH AMR AND VIRULENCE GENES"
+  container 'oras://community.wave.seqera.io/library/bioconductor-ggtree_r-ape_r-phytools_r-tidyverse:bd310f2405bed388'  
 
   input:
   path(phylogeny_tree_base_path)

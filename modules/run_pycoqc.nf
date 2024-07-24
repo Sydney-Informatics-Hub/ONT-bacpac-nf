@@ -1,5 +1,5 @@
 process pycoqc_summary {
-  tag "EVALUATING RAW READ QC"
+  tag "EVALUATING RAW READ QC: ${params.input}"
   container 'quay.io/biocontainers/pycoqc:2.5.2--py_0'
   publishDir "${params.outdir}/raw_qc", mode: 'symlink'
   

@@ -1,7 +1,7 @@
 process bakta_annotation_chromosomes {
   tag "ANNOTATING Consensus WITH BATKA: ${barcode}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
-  publishDir "${params.outdir}/annotations/${barcode}_chromosomes", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
 
 input:
   tuple val(barcode), path(medaka_consensus)
