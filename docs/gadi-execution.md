@@ -208,13 +208,12 @@ Results are currently output to the `results` directory. Outputs have been arran
 ```
 ONT-BACPAC-nf
 ├── results
-    ├── assemblies
     ├── annotations
-    ├── raw_qc
-    ├── report
-    ├── resistance_virulence_genes
-    ├── taxonomy_phylogeny
-    └── runInfo
+    ├── assemblies
+    ├── quality_control
+    
+    ├── run_info
+    └── taxonomy
 ```
 
 Intermediate files that are not of interest in downstream work but may be useful for troubleshooting are available in the `work/` directory. You can check which work directory corresponds to which process by looking at the `.trace.txt` file in `results/runInfo` directory. 
