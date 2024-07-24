@@ -16,7 +16,8 @@ process multiqc_report {
   path(pycoqc_subsetted_graphs)
   path(phylogeny_heatmap_plot)
 
-  //output:
+  output:
+  path ("*"), emit: multiqc
 
   script:
   """
