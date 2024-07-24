@@ -14,7 +14,7 @@ script:
   """
   mkdir -p amrfinderplus
 
-  amrfinder -p ${bakta_annotations}/${barcode}.faa \\
+  amrfinder -p ${barcode}_bakta/${barcode}_chr.faa \\
     -d ${amrfinderplus_db}/latest > amrfinderplus/${barcode}.txt
 
   """
