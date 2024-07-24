@@ -7,14 +7,14 @@ process medaka_polish_consensus {
   tuple val(barcode), val(cluster_id), path(consensus_partition), path(consensus_consensus)  
 
   output:
-  tuple val(barcode), val(cluster_id), path("medaka_consensus/${cluster_id}"), emit: consensus_polished, optional: true
+  tuple val(barcode), val(cluster_id), path("${cluster_id}_polished"), emit: consensus_polished, optional: true
 
   script:
   """
   medaka_consensus \\
 		-i ${consensus_partition}/4_reads.fastq \\
 		-d ${consensus_consensus}/7_final_consensus.fasta \\
-		-o medaka_consensus/${cluster_id} \\
+		-o ${cluster_id}_polished \\
 		-t ${task.cpus}
   """
 }

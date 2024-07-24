@@ -1,7 +1,8 @@
 process create_phylogeny_tree_related_files {
   tag "PREPARING INPUTS FOR PHYLOGENETIC TREE"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
-
+  publishDir "${params.outdir}/taxonomy", mode: 'symlink'
+  
   input:
   path(assembly_summary_refseq)
   path(kraken2_reports)
@@ -13,6 +14,7 @@ process create_phylogeny_tree_related_files {
 
   script: 
   """
+  mv ${bakta_results} ${}
   create_phylogenytree_related_files.py \\
     ${assembly_summary_refseq} \\
     ${kraken2_reports} \\

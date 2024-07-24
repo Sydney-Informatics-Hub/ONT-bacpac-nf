@@ -1,7 +1,8 @@
 process generate_abricate_gene_matrix {
   tag "GENERATING ABRICATE GENE MATRIX FOR ALL SAMPLES: ${params.input}"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
-
+  publishDir "${params.outdir}/taxonomy", mode: 'symlink'
+  
   input:
         path(abricate_output_all_samples)
         path(all_references_folder_abricate_output)

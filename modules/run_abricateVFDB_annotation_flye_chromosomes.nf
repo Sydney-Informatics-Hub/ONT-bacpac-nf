@@ -1,7 +1,8 @@
 process abricateVFDB_annotation_flye_chromosomes {
    tag "ANNOTATING FLYE ASSEMBLY WITH ABRICATE VFDB: ${barcode}"
    container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
-
+  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  
 input:
   tuple val(barcode), path(medaka_flye)
 

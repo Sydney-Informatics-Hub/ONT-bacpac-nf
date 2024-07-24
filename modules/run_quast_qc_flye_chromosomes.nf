@@ -1,7 +1,7 @@
 process quast_qc_flye_chromosomes {
   tag "EVALUATING GENOME QUALITY: ${barcode}"
   container 'quay.io/biocontainers/quast:5.2.0--py39pl5321h2add14b_1'
-  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  publishDir "${params.outdir}/quality_control", mode: 'symlink'
 
 input:
   tuple val(barcode), path(medaka_flye)

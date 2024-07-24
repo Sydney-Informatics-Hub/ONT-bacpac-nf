@@ -1,7 +1,8 @@
 process amrfinderplus_annotation_flye_chromosomes {
   tag "DETECTING AMR GENES: ${barcode}"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
-
+  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  
 input:
   tuple val(barcode), path(bakta_annotations)
   path(amrfinderplus_db)
