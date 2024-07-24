@@ -1,5 +1,5 @@
 process select_assembly {
-  tag "SELECTING THE BEST ASSEMBLY: ${barcode}"  
+  tag "EVALUATING CONSENSUS ASSEMBLY QUALITY: ${barcode}"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:

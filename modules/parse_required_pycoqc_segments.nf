@@ -1,5 +1,5 @@
 process parse_required_pycoqc_segments {
-  tag "PARSE REQUIRED PYCOQC PLOTS from pycoqc output"  
+  tag "EXTRACTING PYCOQC PLOTS FOR MULTIQC"  
   container 'depot.galaxyproject.org/singularity/python:3.8.3'
 
   input:

@@ -14,7 +14,7 @@ process medaka_polish_flye {
   medaka_consensus \\
 	 -i ${trimmed_fq} \\
 	 -d ${flye_chr_assembly}/flyeChromosomes.fasta \\
-	 -o ${barcode}_medaka_flye \\
+	 -o ${barcode}_polished \\
 	 -t ${task.cpus}
   """
 }

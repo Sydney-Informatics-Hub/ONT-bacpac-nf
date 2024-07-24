@@ -1,5 +1,5 @@
 process get_kraken2 {
-  tag "DOWNLOADING KRAKEN2 DB: TODO ADD TAG"
+  tag "DOWNLOADING KRAKEN2 DATABASE"
     
   output:
   path 'kraken2_db' , emit: kraken2_db

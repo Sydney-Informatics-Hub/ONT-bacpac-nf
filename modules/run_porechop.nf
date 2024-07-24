@@ -1,5 +1,5 @@
 process porechop {
-  tag "TRIMMING ADAPTERS: ${barcode}"
+  tag "TRIMMING ADAPTERS FROM RAW READS: ${barcode}"
   container 'quay.io/biocontainers/porechop:0.2.4--py39h1f90b4d_6'
 
   input:

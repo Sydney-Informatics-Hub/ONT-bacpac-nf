@@ -203,19 +203,7 @@ qstat -Esw
 
 ### Examine the results
 
-Results are currently output to the `results` directory. Outputs have been arranged into the following structure: 
-
-```
-ONT-BACPAC-nf
-├── results
-    ├── assemblies
-    ├── annotations
-    ├── raw_qc
-    ├── report
-    ├── resistance_virulence_genes
-    ├── taxonomy_phylogeny
-    └── runInfo
-```
+Results are currently output to the `results` directory. See [interpreting-results.md](./docs/interpreting-results.md) for a summary of the outputs. 
 
 Intermediate files that are not of interest in downstream work but may be useful for troubleshooting are available in the `work/` directory. You can check which work directory corresponds to which process by looking at the `.trace.txt` file in `results/runInfo` directory. 
 

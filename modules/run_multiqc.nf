@@ -1,7 +1,7 @@
-process multiqc_report 
-  {
-  tag "MULTIQC FOR ALL SAMPLES"
+process multiqc_report {
+  tag "GENERATING SUMMARY REPORT"
   container 'quay.io/biocontainers/multiqc:1.21--pyhdfd78af_0'
+  publishDir "${params.outdir}/report", mode: 'symlink'
 
   input:
   path(pycoqc)
@@ -16,7 +16,8 @@ process multiqc_report
   path(pycoqc_subsetted_graphs)
   path(phylogeny_heatmap_plot)
 
-  //output:
+  output:
+  path ("*"), emit: multiqc
 
   script:
   """

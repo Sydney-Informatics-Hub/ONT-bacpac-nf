@@ -1,5 +1,5 @@
 process get_ncbi {
-  tag "DOWNLOADING NCBI LOOKUP: TODO ADD TAG"
+  tag "DOWNLOADING NCBI LOOKUP TABLE"
     
   output:
   path("ncbi_genome_lookup.txt") , emit: ncbi_lookup
