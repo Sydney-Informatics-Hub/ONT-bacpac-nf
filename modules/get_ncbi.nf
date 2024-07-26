@@ -1,5 +1,7 @@
 process get_ncbi {
   tag "DOWNLOADING NCBI LOOKUP TABLE"
+  
+  container 'quay.io/biocontainers/aria2:1.36.0'
     
   output:
   path("ncbi_genome_lookup.txt") , emit: ncbi_lookup
