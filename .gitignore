@@ -8,3 +8,7 @@ work/
 test/vep/
 bin/*.o
 bin/*.e
+data*/
+run_test.*
+data/
+test/kraken2_db
