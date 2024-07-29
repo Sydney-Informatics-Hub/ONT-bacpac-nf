@@ -1,10 +1,10 @@
 process nanoplot_summary {
-  tag "SUMMARISING RAW OUTPUT FROM ONT RUN: ${params.input}"
+  tag "SUMMARISING RAW OUTPUT FROM ONT RUN: ${params.sequencing_summary}"
   container 'quay.io/biocontainers/nanoplot:1.42.0--pyhdfd78af_0'
   publishDir "${params.outdir}/quality_control", mode: 'symlink'
   
   input:
-  path(sequencing_summary_file_path)
+  path(sequencing_summary)
 
   output:
   path("*"), emit: nanoplot_summary
@@ -12,7 +12,7 @@ process nanoplot_summary {
   script: 
   """
   NanoPlot \\
-    --summary ${sequencing_summary_file_path}/sequencing_summary*.txt \\
+    --summary ${params.sequencing_summary} \\
     --loglength \\
     -o nanoplot_summary
   """
