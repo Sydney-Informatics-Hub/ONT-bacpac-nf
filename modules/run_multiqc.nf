@@ -6,13 +6,12 @@ process multiqc_report {
   input:
   path(pycoqc)
   path(nanoplot)
-  path(multiqc_config_file)
+  path(multiqc_config)
   path(kraken2)
   path(quast)
   path(bakta)
   path(bakta_plasmids)
   path(busco)
-  //path(busco_plasmids)
   path(pycoqc_subsetted_graphs)
   path(phylogeny_heatmap_plot)
 
@@ -39,7 +38,7 @@ process multiqc_report {
         cp "\${dir}" "\${new_path}"    
   done
 
-  multiqc -c ${multiqc_config_file} .	
+  multiqc -c ${params.multiqc_config} .	
   """
 
 }

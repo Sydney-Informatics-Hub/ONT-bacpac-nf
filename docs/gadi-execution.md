@@ -139,8 +139,6 @@ Define paths to the workflow input variables:
 
 * `in=/scratch/<PROJECT>/data`
 * `k2db=/scratch/<PROJECT>/databases/kraken2_db`
-* `multiqc_config=/scratch/<PROJECT>/ONT-bacpac-nf/assets/multiqc_config.yml`
-* `pycoqc_header_file=/scratch/<PROJECT>/ONT-bacpac-nf/assets/pycoqc_report_header.txt`
 * `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
 
 This is the structure of the run script saved in `test/run_test.sh`:
@@ -167,17 +165,13 @@ module load singularity
 # Define inputs 
 in= #path to your input directory
 k2db= #path to predownloaded kraken2 database
-multiqc_config= #path to multiqc config.yml
 sequencing_summary= #path to sequencing summary file from ONT run 
-pycoqc_header= #path to pycoQC header file .txt
 
 # Run pipeline 
 nextflow run main.nf \
   --input ${in} \
   --kraken2_db ${k2db} \
-  --multiqc_config ${multiqc_config} \
   --sequencing_summary ${sequencing_summary} \
-  --pycoqc_header_file ${pycoqc_header} \
   -resume 
 ```
 
