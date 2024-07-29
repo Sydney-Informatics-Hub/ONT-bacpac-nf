@@ -451,11 +451,11 @@ if ( params.help || params.input == false ){
   
   phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
  
-  multiqc_config_file = params.multiqc_config
+  multiqc_config = params.multiqc_config
 
   multiqc_report(pycoqc_required_for_multiqc,
                   nanoplot_required_for_multiqc,
-                  multiqc_config_file,
+                  multiqc_config,
                   kraken2_required_for_multiqc,
                   quast_required_for_multiqc,
                   bakta_required_for_multiqc,
