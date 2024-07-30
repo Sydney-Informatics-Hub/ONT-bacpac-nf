@@ -1,6 +1,6 @@
 process create_phylogeny_tree_related_files {
   tag "PREPARING INPUTS FOR PHYLOGENETIC TREE"  
-  container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'python:3.8'
   publishDir "${params.outdir}/taxonomy", mode: 'symlink'
   
   input:

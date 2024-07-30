@@ -1,7 +1,7 @@
 process check_input {
   //TODO see comment in ../bin/inputchecker.py to speed up unzipping and concatenating into 2 processes step 1: 1 per cohort, step 2: 1 per sample
   tag "VALIDATING INPUT DIRECTORY: ${input.fileName}"
-  container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'python:3.8'
 
   input:
 	path input
