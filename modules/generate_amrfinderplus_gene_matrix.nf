@@ -1,6 +1,6 @@
 process generate_amrfinderplus_gene_matrix {
   tag "GENERATING AMRFINDERPLUS GENE MATRIX FOR ALL SAMPLES: ${params.input}"  
-  container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'python:3.8'
   publishDir "${params.outdir}/taxonomy", mode: 'symlink'
   
   input:

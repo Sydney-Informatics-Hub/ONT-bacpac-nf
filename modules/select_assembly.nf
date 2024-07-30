@@ -1,6 +1,6 @@
 process select_assembly {
   tag "EVALUATING CONSENSUS ASSEMBLY QUALITY: ${barcode}"  
-  container 'depot.galaxyproject.org/singularity/python:3.8.3'
+  container 'python:3.8'
 
   input:
   tuple val(barcode), path(reconciled), path(flye_assembly), path(kraken2_report)
