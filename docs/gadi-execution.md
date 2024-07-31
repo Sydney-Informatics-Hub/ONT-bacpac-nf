@@ -117,6 +117,7 @@ export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/nextflow_singularity_cache
 Confirm that the cache directory has been set: 
 
 ```bash
+echo $SINGULARITY_CACHEDIR
 echo $NXF_SINGULARITY_CACHEDIR
 ```
 
