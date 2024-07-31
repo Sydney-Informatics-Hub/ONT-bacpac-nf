@@ -105,11 +105,13 @@ See scripts and instructions [here](https://github.com/Sydney-Informatics-Hub/Bi
 This workflow executes different tools for each step as containers. This means you do not have to download and install anything before executing the pipeline. Containers will be pulled during execution. Allow Nextflow to download and save your containers to a cache directory: 
 
 ```bash
-# Create a cache directory for singularity containers
+# Create the following cache directories for singularity containers
 mkdir /scratch/<PROJECT>/singularity_cache
+mkdir /scratch/<PROJECT>/nextflow_singularity_cache
 
 # Set the cache directory as an environment variable
-export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache
+export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache
+export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/nextflow_singularity_cache
 ```
 
 Confirm that the cache directory has been set: 
