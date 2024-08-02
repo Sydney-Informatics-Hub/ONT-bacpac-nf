@@ -2,6 +2,8 @@ process trycycler_cluster {
   tag "CLUSTERING CONTIGS: ${barcode}"
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
+  errorStrategy 'ignore' // Ignore the error status
+
   input:
   tuple val(barcode), path(unicycler_assembly), path(flye_assembly), path(trimmed_fq)
 
@@ -15,6 +17,6 @@ process trycycler_cluster {
     --reads ${barcode}_trimmed.fastq.gz \\
     --out_dir ${barcode}_cluster \\
     --min_contig_len ${params.trycycler_min_contig_length} \\
-    --threads ${task.cpus}
+    --threads ${task.cpus}  || true
   """
 }
