@@ -15,6 +15,7 @@
 # Load version of nextflow with plug-in functionality enabled 
 module load nextflow/24.04.1 
 module load singularity 
+module load R/4.3.1
 
 # Define inputs 
 #in= #path to your input directory
