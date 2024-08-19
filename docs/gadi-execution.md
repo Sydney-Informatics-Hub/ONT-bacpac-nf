@@ -100,6 +100,20 @@ Once Rclone is installed, follow [these instructions](https://sydney-informatics
 
 See scripts and instructions [here](https://github.com/Sydney-Informatics-Hub/Bio-toolkit/tree/main/Data-movement) for transferring files between RDS and Gadi.
 
+### Prepare the samplesheet (optional)
+
+If you would prefer to specify selected samples to run through this workflow you can use a samplesheet as input, rather than a directory. You can use it to specify which files you would like to process and can specify this choice in your run command with `--samplesheet` rather than `input_directory`. 
+
+The samplesheet should be a CSV file with the following structure: 
+
+| #barcode,batch,file_path                      |
+| --------------------------------------------- |
+barcode01,batch1,/path/to/dataset/barcode01.zip |
+barcode03,batch2,/path/to/dataset/barcode03.zip |
+barcode10,batch1,/path/to/dataset/barcode10.zip | 
+
+See an example of a samplesheet [here](../assets/samplesheet.csv). Keep in mind your header will need to be the same as the example, including the prefixed hash (#). 
+
 ### Execute the workflow
 
 This workflow executes different tools for each step as containers. This means you do not have to download and install anything before executing the pipeline. Containers will be pulled during execution. Allow Nextflow to download and save your containers to a cache directory: 
@@ -140,11 +154,12 @@ Replace `<PROJECT>` with your project code in the following lines of the script:
 
 Define paths to the workflow input variables: 
 
-* `in=/scratch/<PROJECT>/data`
+* `input_directory=/scratch/<PROJECT>/data` (option 1)
+* `samplesheet=/scratch/<PROJECT>/data/samplesheet.csv` (option 2)
 * `k2db=/scratch/<PROJECT>/databases/kraken2_db`
 * `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
 
-This is the structure of the run script saved in `test/run_test.sh`:
+This is the structure of the run script saved in `test/run_test.sh` on all files in a directory:
 
 ```bash
 #!/bin/bash
@@ -166,13 +181,49 @@ module load nextflow/24.04.1
 module load singularity 
 
 # Define inputs 
-in= #path to your input directory
+input_directory= #path to your input directory
+samplesheet= #path to samplesheet
 k2db= #path to predownloaded kraken2 database
 sequencing_summary= #path to sequencing summary file from ONT run 
 
 # Run pipeline 
 nextflow run main.nf \
-  --input ${in} \
+  --input_directory ${in} \
+  --kraken2_db ${k2db} \
+  --sequencing_summary ${sequencing_summary} \
+  -resume 
+```
+
+This is the structure of the run script saved in `test/run_test.sh` on selected files specified in a samplesheet:
+
+```bash
+#!/bin/bash
+
+#PBS -P <PROJECT> 
+#PBS -l walltime=10:00:00
+#PBS -l ncpus=1
+#PBS -l mem=5GB
+#PBS -W umask=022
+#PBS -q copyq
+#PBS -l wd
+#PBS -l storage=scratch/<PROJECT>
+#PBS -l jobfs=100GB
+
+## RUN FROM PROJECT DIRECTORY: bash test/run_test.sh
+
+# Load version of nextflow with plug-in functionality enabled 
+module load nextflow/24.04.1 
+module load singularity 
+
+# Define inputs 
+input_directory= #path to your input directory
+samplesheet= #path to samplesheet
+k2db= #path to predownloaded kraken2 database
+sequencing_summary= #path to sequencing summary file from ONT run 
+
+# Run pipeline 
+nextflow run main.nf \
+  --input_directory ${in} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
   -resume 
@@ -205,3 +256,5 @@ Results are currently output to the `results` directory. See [interpreting-resul
 Intermediate files that are not of interest in downstream work but may be useful for troubleshooting are available in the `work/` directory. You can check which work directory corresponds to which process by looking at the `.trace.txt` file in `results/runInfo` directory. 
 
 ### Troubleshooting errors 
+
+* Singularity cache and tmp directories: these can fill up quickly and cause errors. Make sure to clean them out regularly. If your workflow fails and mentions it has run out of disk space, first delete the `tmp` directory in your base directory (where you run the workflow from) and try again. 
