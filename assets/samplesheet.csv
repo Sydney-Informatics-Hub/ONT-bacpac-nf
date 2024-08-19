@@ -1,3 +1,4 @@
-sample,fq1,fq2,platform,library,center
-earlycasualcaiman,./assets/earlycasualcaiman_R1.fastq.gz,./assets/earlycasualcaiman_R2.fastq.gz,illumina,1,nfcoreraredisease
-hugelymodelbat,./assets/hugelymodelbat_R1.fastq.gz,./assets/hugelymodelbat_R2.fastq.gz,illumina,1,nfcoreraredisease
+#barcode,batch,file_path
+barcode01,batch1,/path/to/dataset/barcode01.zip
+barcode03,batch2,/path/to/dataset/barcode03.zip
+barcode10,batch1,/path/to/dataset/barcode10.zip
