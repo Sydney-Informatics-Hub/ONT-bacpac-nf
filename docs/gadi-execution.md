@@ -188,7 +188,7 @@ sequencing_summary= #path to sequencing summary file from ONT run
 
 # Run pipeline 
 nextflow run main.nf \
-  --input_directory ${in} \
+  --input_directory ${input_directory} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
   -resume 
@@ -223,7 +223,7 @@ sequencing_summary= #path to sequencing summary file from ONT run
 
 # Run pipeline 
 nextflow run main.nf \
-  --input_directory ${in} \
+  --input_directory ${input_directory} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
   -resume 
