@@ -17,17 +17,27 @@ module load nextflow/24.04.1
 module load singularity 
 
 # Define inputs 
-#in= #path to your input directory
-#k2db= #path to predownloaded kraken2 database
-#sequencing_summary= #path to sequencing summary file from ONT run 
-#gadi_account= #e.g. aa00
-#gadi_storage= #e.g. scratch/aa00
+input_directory= #path to your input directory
+samplesheet= #path to samplesheet file
+k2db= #path to predownloaded kraken2 database
+sequencing_summary= #path to sequencing summary file from ONT run 
+gadi_account= #e.g. aa00
+gadi_storage= #e.g. scratch/aa00 or scratch/aa00+scratch/bb11 for more than 1 storage space
 
-# Run pipeline 
-nextflow run main.nf \
-	--input ${in} \
-	--kraken2_db ${k2db} \
-	--sequencing_summary ${sequencing_summary} \
-	--gadi_account ${gadi_account} \
-	--gadi_storage ${gadi_storage} \
-	-resume 
+# Unhash this command to run pipeline over whole directory
+#nextflow run main.nf \
+#	--input_directory ${input_directory} \
+#	--kraken2_db ${k2db} \
+#	--sequencing_summary ${sequencing_summary} \
+#	--gadi_account ${gadi_account} \
+#	--gadi_storage ${gadi_storage} \
+#	-resume 
+
+# Unhash this command to run pipeline with samplesheet
+#nextflow run main.nf \
+#	--samplesheet ${samplesheet} \
+#	--kraken2_db ${k2db} \
+#	--sequencing_summary ${sequencing_summary} \
+#	--gadi_account ${gadi_account} \
+#	--gadi_storage ${gadi_storage} \
+#	-resume 
