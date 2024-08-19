@@ -4,15 +4,15 @@ process check_input {
   container 'python:3.8'
 
   input:
-	path input
+	path input_directory
     
   output:
-  path 'unzipped_inputs/*' , emit: unzipped
+  path 'unzipped_fqs/*' , emit: unzipped
 
   script: // This process runs ../bin/inputchecker.py 
   """
 	inputchecker.py \\
     $input \\
-    unzipped_inputs
+    unzipped_fqs
   """
 }
