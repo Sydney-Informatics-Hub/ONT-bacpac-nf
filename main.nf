@@ -6,7 +6,6 @@ nextflow.enable.dsl=2
 // Import processes or subworkflows to be run in the workflow
 include { check_input } from './modules/check_input'
 include { check_samplesheet } from './modules/check_samplesheet'
-include { unzip_fastqs } from './modules/unzip_fqs'
 include { concat_fastqs } from './modules/concat_fq'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
