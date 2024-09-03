@@ -9,6 +9,7 @@ process trycycler_cluster {
 
   output:
   tuple val(barcode), path("*"), emit: trycycler_cluster
+  path("${barcode}_cluster/contigs.phylip"), emit: contigs_phylip 
 
   script: 
   """

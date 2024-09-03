@@ -193,9 +193,18 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
                 .join(porechop.out.trimmed_fq, by:0)
                 .map { barcode, unicycler_assembly, flye_assembly, trimmed_fq ->
                   tuple(barcode, unicycler_assembly, flye_assembly, trimmed_fq)}
-                
+
   trycycler_cluster(combined_assemblies)
 
+  /* Building a tree requires >2 contigs.
+   * Use `contigs.phylip` to check the number of contigs. The number of lines
+   * in a `.phylip` indicates the number of contigs/tips.
+   */ 
+  trycycler_cluster.out.contigs_phylip.map { file ->
+    def lineCount = file.text.readLines().size()
+    return lineCount - 1 // Exclude header
+  }.set { num_trycycler_cluster_contigs }
+ 
   // CLASSIFY CONTIGS WITH TRYCYCLER
   classify_trycycler(trycycler_cluster.out.trycycler_cluster)
 
