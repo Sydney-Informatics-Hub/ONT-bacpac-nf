@@ -35,7 +35,43 @@ We have created a test script in the `test/` directory, called `run_test.sh`. Th
 
 Before running the test script, ensure you have set your singularity cache directory. See below for instructions of how to check and do this.
 
-To execute the test script, run the following command from the base directory of the repository (`ONT-bacpac-nf`): 
+To execute the test script, start a [persistent session](https://opus.nci.org.au/display/Help/Persistent+Sessions) on Gadi with the following command, providing your project code and a name for the session: 
+
+```bash
+persistent-sessions start  -p <project> <name>
+```
+You'll see a ssh command provided on the screen. Enter the session by running that command. For example:
+
+```bash
+ssh <name>.<user>.<project>.ps.gadi.nci.org.au
+```
+
+You'll need to navigate back to the directory where you have cloned the repository. For example: 
+
+```bash
+cd /scratch/<project>/ONT-bacpac-nf
+```
+
+---
+**NOTE ON PERSISTENT SESSIONS**
+
+You can check the status of your persistent session by running the following command: 
+
+```bash
+persistent-sessions list
+```
+
+FYI - you can stop your persistent session by running the following command: 
+
+```bash
+persistent-sessions kill <uuid>
+```
+
+To determine the UUID of the session you want to kill, use the list command as documented above.
+
+---
+
+Run the following command from the base directory of the repository (`ONT-bacpac-nf`): 
 
 ```bash
 bash test/run_test.sh
