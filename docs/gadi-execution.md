@@ -1,11 +1,88 @@
 ## User guide: NCI Gadi execution
 
+* [Quickstart for testing](#quickstart-repository-testing)
 * [Set up the repository](#set-up)
 * [Obtain a copy of your input data](#obtain-required-input-files)
 * [Execute the workflow](#execute-the-workflow)
 * [Monitor your execution](#monitor-your-execution)
 * [Examine the results](#examine-the-results)
 * [Troubleshooting errors](#troubleshooting-errors)
+
+### Quickstart Repository testing 
+
+As we configure the pipeline on Gadi, we are going to be iteratively testing and developing the codebase. Bugs, enhancements, and new features can be tracked in the [issues](https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf/issues) section of the repository's website.
+
+Please add any features or issues you would like to see addressed to the issues section.
+
+After adjustments have been made to the codebase stored remotely on GitHub, we will need to pull the changes to our local workspaces on Gadi in order to test their functionality. 
+
+To do this, navigate to the directory where you have cloned the repository and run the following command: 
+
+```bash
+cd /scratch/<project>/ONT-bacpac-nf
+```
+```bash
+git pull origin main 
+```
+
+Alternatively, you can delete your local copy of the repository and clone it again: 
+
+```bash
+git clone https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf.git
+```
+
+We have created a test script in the `test/` directory, called `run_test.sh`. This script will run the pipeline on all files in a directory **OR** a provided samplesheet. Unhash (i.e. remove the `#` prefixing each line of the command)the relevant command in the script and hash (i.e. prefix each line of the command with `#`) the command you don't want to run. 
+
+Before running the test script, ensure you have set your singularity cache directory. See below for instructions of how to check and do this.
+
+To execute the test script, start a [persistent session](https://opus.nci.org.au/display/Help/Persistent+Sessions) on Gadi with the following command, providing your project code and a name for the session: 
+
+```bash
+persistent-sessions start  -p <project> <name>
+```
+You'll see a ssh command provided on the screen. Enter the session by running that command. For example:
+
+```bash
+ssh <name>.<user>.<project>.ps.gadi.nci.org.au
+```
+
+You'll need to navigate back to the directory where you have cloned the repository. For example: 
+
+```bash
+cd /scratch/<project>/ONT-bacpac-nf
+```
+
+---
+**NOTE ON PERSISTENT SESSIONS**
+
+You can check the status of your persistent session by running the following command: 
+
+```bash
+persistent-sessions list
+```
+
+FYI - you can stop your persistent session by running the following command: 
+
+```bash
+persistent-sessions kill <uuid>
+```
+
+To determine the UUID of the session you want to kill, use the list command as documented above.
+
+---
+
+Run the following command from the base directory of the repository (`ONT-bacpac-nf`): 
+
+```bash
+bash test/run_test.sh
+```
+
+If you'd prefer to leave the job running and avoid potential interruption, you can run the head nextflow run command as a PBS job: 
+
+```bash
+qsub test/run_test.sh
+```
+
 
 ### Set up 
 
@@ -257,4 +334,4 @@ Intermediate files that are not of interest in downstream work but may be useful
 
 ### Troubleshooting errors 
 
-* Singularity cache and tmp directories: these can fill up quickly and cause errors. Make sure to clean them out regularly. If your workflow fails and mentions it has run out of disk space, first delete the `tmp` directory in your base directory (where you run the workflow from) and try again. 
+* Singularity cache and tmp directories: these can fill up quickly and cause errors. Make sure to clean them out regularly. If your workflow fails and mentions it has run out of disk space or hit the inode limit, first delete the `tmp` directory in your base directory (where you run the workflow from) and try again. If that doesn't work, delete the singularity cache directory and the `tmp` directory that sits within the same directory as your cache directory and try again. 

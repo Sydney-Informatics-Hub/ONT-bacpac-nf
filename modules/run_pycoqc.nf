@@ -1,5 +1,5 @@
 process pycoqc_summary {
-  tag "SUMMARISING RAW OUTPUT FROM ONT RUN: ${params.sequencing_summary}"
+  tag "SUMMARISING RAW OUTPUT FROM ONT RUN: ${sequencing_summary.fileName}"
   container 'quay.io/biocontainers/pycoqc:2.5.2--py_0'
   publishDir "${params.outdir}/quality_control", mode: 'symlink'
 
@@ -12,7 +12,7 @@ process pycoqc_summary {
   script: 
   """
   pycoQC \\
-    -f ${params.sequencing_summary} \\
+    --summary_file ${params.sequencing_summary} \\
     -o pycoqc_summary.html
   """
 }
