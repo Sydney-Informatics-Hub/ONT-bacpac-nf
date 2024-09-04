@@ -5,7 +5,8 @@ process busco_annotation_chromosomes {
   
 input:
   tuple val(barcode), path(bakta_annotations)
-
+  path(busco_db)
+  
 output:
   tuple val(barcode), path("${barcode}_busco/short_summary.specific.*.txt"), emit: busco_annotations
 
@@ -13,7 +14,8 @@ script:
   """
   busco \\
     -f -i ${bakta_annotations}/${barcode}_chr.faa \\
-    -m proteins --lineage_dataset bacteria_odb10 \\
-    --out ${barcode}_busco
+    -m proteins \\
+    --lineage_dataset busco_downloads/lineages/bacteria_odb10 \\
+    --out ${barcode}_busco --offline
   """
 }
