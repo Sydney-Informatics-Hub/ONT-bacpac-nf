@@ -12,6 +12,7 @@ include { pycoqc_summary } from './modules/run_pycoqc'
 include { parse_required_pycoqc_segments } from './modules/parse_required_pycoqc_segments'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
+include { get_busco } from './modules/get_busco'
 include { get_amrfinderplus } from './modules/get_amrfinderplus'
 include { get_plassembler } from './modules/get_plassembler'
 include { get_kraken2 } from './modules/get_kraken2'
@@ -65,9 +66,12 @@ Cite this pipeline @ TODO INSERT DOI
 =======================================================================================
 Workflow run parameters 
 =======================================================================================
-input       : ${params.input}
-results     : ${params.outdir}
-workDir     : ${workflow.workDir}
+inputDir           : ${params.input} 
+samplesheet        : ${params.samplesheet}
+sequencing_summary : ${params.sequencing_summary}
+results            : ${params.outdir}
+workDir            : ${workflow.workDir}
+profiles           : ${workflow.profile}
 =======================================================================================
 
 """
@@ -82,14 +86,14 @@ def helpMessage() {
 
   Required Arguments:
 
-  --input_directory   Specify full path and name of directory.
+  --input_directory   Specify full path and name of directory OR
   --samplesheet       Spectify full path and name of samplesheet csv. 
-  
+
   Optional Arguments:
 
   --outdir              Specify path to output directory.
-  --multiqc_config      Configure multiqc reports
-  --sequencing_summary	Sequencing summary log from sequencer
+  --multiqc_config      Configure multiqc reports.
+  --sequencing_summary	Sequencing summary log from sequencer.
 	
 """.stripIndent()
 }
@@ -113,8 +117,16 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
 
   // DOWNLOAD DATABASES  
   get_amrfinderplus()
+  amrfinderplus_db = get_amrfinderplus.out.amrfinderplus_db
+
   get_plassembler()
+  plassembler_db = get_plassembler.out.plassembler_db
+
   get_ncbi()
+  //TODO revise the requirement for this process. We'll need the lookup for the tree, but likely not for select_assembly 
+
+  get_busco()
+  busco_db = get_busco.out.busco_db
   
     // Only download kraken2 if existing db not already provided 
     if (!params.kraken2_db){
@@ -146,7 +158,6 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
           def unzip_dir = path.toString()  // Ensure path is a string
           def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
           [barcode, unzip_dir]}  // Return a list containing the directory name and path
-          .view()
 
   } else { 
       log.info "FYI USING SAMPLESHEET ${params.samplesheet}"
@@ -158,7 +169,6 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
           def unzip_dir = path.toString()  // Ensure path is a string
           def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
           [barcode, unzip_dir]}  // Return a list containing the directory name and path
-          .view()
     }}
 
   // PREPARE INPUTS
@@ -295,7 +305,7 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
   bakta_annotation_chromosomes(polish_grouped_by_barcode,get_bakta.out.bakta_db)
 
   // BUSCO ANNOTATE CONSENSUS-CHROMOSOME FEATURES
-  busco_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations) 
+  busco_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations, get_busco.out.busco_db) 
    
   // AMRFINDERPLUS ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES
   amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,
@@ -329,7 +339,7 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
 
   // BUSCO ANNOTATE FLYE-ONLY-CHROMOSOME FEATURES
-  busco_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations)
+  busco_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations, get_busco.out.busco_db)
 
   // AMRFINDERPLUS ANNOTATE FLYE-ONLY AMR-GENES
   amrfinderplus_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations,
@@ -435,11 +445,6 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
 
   // ANNOTATE PLASMID FEATURES (BATKA)
   bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
-
-  // ANNOTATE PLASMID FEATURES (BUSCO)
-  // This is currently not in use as we don't feel busco completeness is a good measure for plasmids
-  //busco_plasmids_in = bakta_annotation_plasmids.out.bakta_annotations
-  //busco_annotation_plasmids(busco_plasmids_in)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
