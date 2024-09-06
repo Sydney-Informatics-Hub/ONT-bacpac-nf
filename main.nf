@@ -66,7 +66,7 @@ Cite this pipeline @ TODO INSERT DOI
 =======================================================================================
 Workflow run parameters 
 =======================================================================================
-inputDir           : ${params.input} 
+inputDir           : ${params.input_directory} 
 samplesheet        : ${params.samplesheet}
 sequencing_summary : ${params.sequencing_summary}
 results            : ${params.outdir}
@@ -98,16 +98,14 @@ def helpMessage() {
 """.stripIndent()
 }
 
-
-
 // Define workflow structure. Include some input/runtime tests here.
 // See https://www.nextflow.io/docs/latest/dsl2.html?highlight=workflow#workflow
 workflow {
 
-if ( params.help || params.input_directory || params.samplesheet == false ){   
+if ( params.help || (!params.input_directory && !params.samplesheet) || !params.sequencing_summary) {   
 // Invoke the help function above and exit
 	helpMessage()
-	exit 1
+	System.exit(1)
 	// consider adding some extra contigencies here.
 	// could validate path of all input files in list?
 	// could validate indexes for reference exist?
@@ -370,15 +368,6 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
                                             .map { [it[1]] }
 	                                          .collect()
 
-//TODO REMOVE THIS?
-  //CREATE SAMPLESHEET FOR PROCESSED SAMPLES
-  all_processed_samples = flye_only_processed_samples consensus_processed_samples
-                          .ifEmpty([]) // If flye_only_processed_samples is empty, provide an empty list
-                          .merge(consensus_processed_samples)
-                          .collect()
-
-  create_samplesheet_for_processed(all_processed_samples)
-
   consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations
                   .map { [it[1]] }.collect()
 
@@ -527,45 +516,6 @@ multiqc_report(
     parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
     phylogeny_heatmap_plot_required_for_multiqc
 )
-
-  //nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
-  //pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary
-
-  //kraken2_required_for_multiqc = kraken2.out.kraken2_screen
-  //                              .map { it[1] }.collect()
-
-  //quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc
-  //                            .map { it[1] }.collect()
-  //	                          .merge(quast_qc_flye_chromosomes.out.quast_qc_multiqc
-  //                            .map { it[1] }.collect())	
-
-  //bakta_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
-  //                            .map { it[1] }.collect()
-  //                            .merge(bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc
-  //                            .map { it[1] }.collect())
-
-  //busco_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
-  //                            .map { it[1] }.collect()
-  //                            .merge(busco_annotation_flye_chromosomes.out.busco_annotations
-  //                            .map { it[1] }.collect())
-
-  //bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations
-  //                            .map { it[1] }.collect()
-  
-  //phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
- 
-  //multiqc_config = params.multiqc_config
-
-  //multiqc_report(pycoqc_required_for_multiqc,
-  //                nanoplot_required_for_multiqc,
-  //                multiqc_config,
-  //                kraken2_required_for_multiqc,
-  //                quast_required_for_multiqc,
-  //                bakta_required_for_multiqc,
-  //                bakta_plasmids_required_for_multiqc,
-  //                busco_required_for_multiqc,
-  //                parse_required_pycoqc_segments.out.pycoQC_mqc,
-  //                phylogeny_heatmap_plot_required_for_multiqc)
 }
 
 // Print workflow execution summary 

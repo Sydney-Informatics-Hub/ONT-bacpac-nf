@@ -12,7 +12,7 @@ process check_input {
   script: // This process runs ../bin/inputchecker.py 
   """
 	inputchecker.py \\
-    $input \\
+    $input_directory \\
     unzipped_fqs
   """
 }
