@@ -8,8 +8,7 @@ process trycycler_cluster {
   tuple val(barcode), path(unicycler_assembly), path(flye_assembly), path(trimmed_fq)
 
   output:
-  tuple val(barcode), path("*"), emit: trycycler_cluster
-  path("${barcode}_cluster/contigs.phylip"), emit: contigs_phylip 
+  tuple val(barcode), path("*"), path("${barcode}_cluster/contigs.phylip"), emit: trycycler_cluster
 
   script: 
   """

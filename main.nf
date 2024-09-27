@@ -201,13 +201,18 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
    * Use `contigs.phylip` to check the number of contigs. The number of lines
    * in a `.phylip` indicates the number of contigs/tips.
    */ 
-  trycycler_cluster.out.contigs_phylip.map { file ->
-    def lineCount = file.text.readLines().size()
-    return lineCount - 1 // Exclude header
-  }.set { num_trycycler_cluster_contigs }
- 
+  assemblies_with_trycycler_clusters = trycycler_cluster.out.trycycler_cluster 
+    .map { barcode, assemblies, cluster_phylip ->
+        def phylip_lines = cluster_phylip.text.readLines().size() - 1 // Exclude header
+        return [barcode, assemblies, phylip_lines] 
+    }
+    .branch { barcode, assemblies, phylip_lines ->
+        run_trycycler: phylip_lines >= 3 // Enough clusters/contigs
+        skip_trycycler: phylip_lines < 3
+    }
+
   // CLASSIFY CONTIGS WITH TRYCYCLER
-  classify_trycycler(trycycler_cluster.out.trycycler_cluster)
+  classify_trycycler(assemblies_with_trycycler_clusters.run_trycycler)
 
   // RECONCILE CONTIGS WITH TRYCYCLER
   contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
