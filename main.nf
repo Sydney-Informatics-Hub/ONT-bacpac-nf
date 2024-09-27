@@ -172,20 +172,20 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
   
   parse_required_pycoqc_segments(pycoqc_summary.out.pycoqc_summary,params.pycoqc_header_file)
 
-	// CONCATENATE FQS PER SAMPLE
-	concat_fastqs(unzipped_fq_dirs)
-	
-	// PORECHOP NANOPORE ADAPTERS 
-	porechop(concat_fastqs.out.concat_fq)
+  // CONCATENATE FQS PER SAMPLE
+  concat_fastqs(unzipped_fq_dirs)
+  
+  // PORECHOP NANOPORE ADAPTERS 
+  porechop(concat_fastqs.out.concat_fq)
 
   // SCREEN FOR CONTAMINANTS 
-	kraken2(porechop.out.trimmed_fq, kraken2_db)
+  kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
-	flye_assembly(porechop.out.trimmed_fq)
+  flye_assembly(porechop.out.trimmed_fq)
 
   // ASSEMBLE GENOME WITH UNICYCLER
-	unicycler_assembly(porechop.out.trimmed_fq)
+  unicycler_assembly(porechop.out.trimmed_fq)
 
   // CLUSTER CONTIGS WITH TRYCYCLER 
   combined_assemblies = unicycler_assembly.out.unicycler_assembly
@@ -196,7 +196,8 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
 
   trycycler_cluster(combined_assemblies)
 
-  /* Building a tree requires >2 contigs.
+  /* 
+   * Building a tree requires >2 contigs.
    * Use `contigs.phylip` to check the number of contigs. The number of lines
    * in a `.phylip` indicates the number of contigs/tips.
    */ 
@@ -292,7 +293,7 @@ if ( params.help || params.input_directory || params.samplesheet == false ){
 
   medaka_polish_consensus(consensus_polish_in)
 
-  //ANNOTATE VARIOUS CONSENSUS-CHROMOSOME FEATURES  
+  // ANNOTATE VARIOUS CONSENSUS-CHROMOSOME FEATURES  
   polish_grouped_by_barcode = medaka_polish_consensus.out.consensus_polished
 			.groupTuple(by:[0])
 			.map { row -> [row[0], row[2]]}
