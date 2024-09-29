@@ -32,7 +32,7 @@ gadi_storage="scratch/er01" #e.g. scratch/aa00
 #	--sequencing_summary ${sequencing_summary} \
 #	--gadi_account ${gadi_account} \
 #	--gadi_storage ${gadi_storage} \
-#	-resume 
+#	-resume -profile gadi,high_accuracy #you can remove ,high_accuracy if you want to run fast basecalling samples
 
 # Unhash this command to run pipeline with samplesheet
 samplesheet="${in}/samplesheet.csv" #path to samplesheet
@@ -43,3 +43,4 @@ nextflow run main.nf \
 	--gadi_account ${gadi_account} \
 	--gadi_storage ${gadi_storage} \
 	-resume 
+#	-profile gadi,high_accuracy #you can remove ,high_accuracy if you want to run fast basecalling samples
