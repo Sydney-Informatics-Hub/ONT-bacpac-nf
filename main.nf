@@ -251,7 +251,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
               .join(kraken2.out.kraken2_screen, by:0)
               .map { barcode, reconciled, flye_assembly, k2_report ->
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
-	      //.view()
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
@@ -277,7 +276,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           }
           
   trycycler_msa(msa_in_consensus)
-  trycycler_msa_out =  trycycler_msa.out.three_msa
+  trycycler_msa_out = trycycler_msa.out.three_msa
 
   // TRYCYCLER PARTITIONING READS
   partition_in = select_assembly.out.consensus_good
@@ -312,7 +311,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   consensus_polish_in = partition_out
                         .join(trycycler_consensus.out.consensus_consensus, by:1)
 			                  .map { row ->[row[1], row[0], row[2], row[4]]}
-                        //.view()
 
   medaka_polish_consensus(consensus_polish_in)
 
