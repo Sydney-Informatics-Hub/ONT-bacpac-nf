@@ -226,6 +226,13 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         skip_trycycler: phylip_lines < 3
     }
 
+  trycycler_skipped_barcodes =
+    // barcodes with insufficient contigs for trycycler
+    assemblies_with_trycycler_clusters.skip_trycycler
+    .map { barcode, assemblies, phylip_lines -> barcode }
+    .collect()
+
+  // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
   // CLASSIFY CONTIGS WITH TRYCYCLER
   classify_trycycler(assemblies_with_trycycler_clusters.run_trycycler)
 
@@ -244,7 +251,16 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  // SELECT WHETHER CONSENSUS OR FLYE ASSEMBLY IS BEST QUALITY
+  /*
+   * SELECT "BEST" ASSEMBLY (CONSENSUS (TRYCYCLER) OR FLYE)
+   *    TODO: Revise reference-free approach 
+   *    TODO: Include unicycler assembly too
+   */
+  trycycler_reconciled = 
+    // Channel for successful trycycler assemblies
+    trycycler_reconcile.out.reconciled_seqs
+    .groupTuple(by:[0])
+  
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
@@ -340,21 +356,35 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // IF FLYE ASSEMBLY IS BEST...
 
-  // MEDAKA-POLISH FLYE ASSEMBLY 
-  filtered_discard = select_assembly.out.consensus_discard
-          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
-          .map { barcode, consensus_file, final_path ->
-            tuple(barcode, consensus_file, final_path)
-          }
-          //.view()
+  /*
+   * Channel that has the ids for all samples that either:
+   *  1. Has too few contigs for trycycler/consensus assembly
+   *  2. Enough contigs but flye > consensus assembly
+   *
+   * flye_better_barcode channel emits each sample id separately for joining
+   * with the paths to the flye assembly and trimmed fqs later
+   * 
+   */
+  flye_better_barcodes = select_assembly.out.consensus_discard
+    .map { barcode, consensus_file, filtered_flye_contigs -> barcode }
+    .mix(trycycler_skipped_barcodes)
+    .flatMap()
 
-// THIS IS BROKEN - I THINK IVE MESSED IT UP SOMEHOW ITS NOT JOINING BARCODES APPROPRIATELY
-// WHY ARE WE PASSING DISCARDED READS INTO MEDAKA HERE, WHY NOT JUST FLYE ASSEMBLY?
-  flye_polish_in = filtered_discard
-                  .join(flye_assembly.out.flye_assembly, by: 0)
-                  .join(porechop.out.trimmed_fq, by: 0)
-                  .map { barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq -> tuple(barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq) }
-                  //.view()
+  /*
+   * MEDAKA-POLISH FLYE ASSEMBLY 
+   *
+   * The current select_assembly process discards any non-chromosomal
+   * contigs based on a reference-based NCBI lookup.
+   *
+   * The following channel passes in ALL contigs assembled by flye for
+   * polishing as select_assembly is revised. i.e. not just the putatively
+   * chromosmal ones.
+   *
+   */
+  flye_polish_in =
+    flye_better_barcodes
+    .join(flye_assembly.out.flye_assembly, by: 0)
+    .join(porechop.out.trimmed_fq, by: 0)
 
   medaka_polish_flye(flye_polish_in)
 
