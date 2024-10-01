@@ -123,11 +123,8 @@ def get_available_species_genome_details_dic(assembly_summary_refseq, species_na
 def main():
     assembly_summary_refseq = sys.argv[1]
     all_args = sys.argv[2:]
-    len_args = len(all_args)
-    half_way = int(len_args / 2)
-
-    kraken2_reports = all_args[:half_way]
-    bakta_results = all_args[half_way:]
+    kraken2_reports = [ arg for arg in all_args if 'k2report' in arg ]
+    bakta_results = [ arg for arg in all_args if '_bakta' in arg ]
 
     sampleID_species_dic = {}
     nr_species_list = []

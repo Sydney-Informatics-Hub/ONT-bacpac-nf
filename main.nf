@@ -180,20 +180,20 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   
   parse_required_pycoqc_segments(pycoqc_summary.out.pycoqc_summary,params.pycoqc_header_file)
 
-	// CONCATENATE FQS PER SAMPLE
-	concat_fastqs(unzipped_fq_dirs)
-	
-	// PORECHOP NANOPORE ADAPTERS 
-	porechop(concat_fastqs.out.concat_fq)
+  // CONCATENATE FQS PER SAMPLE
+  concat_fastqs(unzipped_fq_dirs)
+  
+  // PORECHOP NANOPORE ADAPTERS 
+  porechop(concat_fastqs.out.concat_fq)
 
   // SCREEN FOR CONTAMINANTS 
-	kraken2(porechop.out.trimmed_fq, kraken2_db)
+  kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // ASSEMBLE GENOME WITH FLYE
-	flye_assembly(porechop.out.trimmed_fq)
+  flye_assembly(porechop.out.trimmed_fq)
 
   // ASSEMBLE GENOME WITH UNICYCLER
-	unicycler_assembly(porechop.out.trimmed_fq)
+  unicycler_assembly(porechop.out.trimmed_fq)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   plassembler_in = porechop.out.trimmed_fq
@@ -208,11 +208,33 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                 .join(porechop.out.trimmed_fq, by:0)
                 .map { barcode, unicycler_assembly, flye_assembly, trimmed_fq ->
                   tuple(barcode, unicycler_assembly, flye_assembly, trimmed_fq)}
-                
+
   trycycler_cluster(combined_assemblies)
 
+  /* 
+   * Building a tree requires >2 contigs.
+   * Use `contigs.phylip` to check the number of contigs. The number of lines
+   * in a `.phylip` indicates the number of contigs/tips.
+   */ 
+  assemblies_with_trycycler_clusters = trycycler_cluster.out.trycycler_cluster 
+    .map { barcode, assemblies, cluster_phylip ->
+        def phylip_lines = cluster_phylip.text.readLines().size() - 1 // Exclude header
+        return [barcode, assemblies, phylip_lines] 
+    }
+    .branch { barcode, assemblies, phylip_lines ->
+        run_trycycler: phylip_lines >= 3 // Enough clusters/contigs
+        skip_trycycler: phylip_lines < 3
+    }
+
+  trycycler_skipped_barcodes =
+    // barcodes with insufficient contigs for trycycler
+    assemblies_with_trycycler_clusters.skip_trycycler
+    .map { barcode, assemblies, phylip_lines -> barcode }
+    .collect()
+
+  // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
   // CLASSIFY CONTIGS WITH TRYCYCLER
-  classify_trycycler(trycycler_cluster.out.trycycler_cluster)
+  classify_trycycler(assemblies_with_trycycler_clusters.run_trycycler)
 
   // RECONCILE CONTIGS WITH TRYCYCLER
   contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
@@ -229,14 +251,22 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  // SELECT WHETHER CONSENSUS OR FLYE ASSEMBLY IS BEST QUALITY
+  /*
+   * SELECT "BEST" ASSEMBLY (CONSENSUS (TRYCYCLER) OR FLYE)
+   *    TODO: Revise reference-free approach 
+   *    TODO: Include unicycler assembly too
+   */
+  trycycler_reconciled = 
+    // Channel for successful trycycler assemblies
+    trycycler_reconcile.out.reconciled_seqs
+    .groupTuple(by:[0])
+  
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
               .join(kraken2.out.kraken2_screen, by:0)
               .map { barcode, reconciled, flye_assembly, k2_report ->
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
-	      //.view()
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
 
@@ -262,7 +292,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           }
           
   trycycler_msa(msa_in_consensus)
-  trycycler_msa_out =  trycycler_msa.out.three_msa
+  trycycler_msa_out = trycycler_msa.out.three_msa
 
   // TRYCYCLER PARTITIONING READS
   partition_in = select_assembly.out.consensus_good
@@ -297,11 +327,10 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   consensus_polish_in = partition_out
                         .join(trycycler_consensus.out.consensus_consensus, by:1)
 			                  .map { row ->[row[1], row[0], row[2], row[4]]}
-                        //.view()
 
   medaka_polish_consensus(consensus_polish_in)
 
-  //ANNOTATE VARIOUS CONSENSUS-CHROMOSOME FEATURES  
+  // ANNOTATE VARIOUS CONSENSUS-CHROMOSOME FEATURES  
   // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
   polish_grouped_by_barcode = medaka_polish_consensus.out.consensus_polished
 			.groupTuple(by:[0])
@@ -327,21 +356,35 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // IF FLYE ASSEMBLY IS BEST...
 
-  // MEDAKA-POLISH FLYE ASSEMBLY 
-  filtered_discard = select_assembly.out.consensus_discard
-          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
-          .map { barcode, consensus_file, final_path ->
-            tuple(barcode, consensus_file, final_path)
-          }
-          //.view()
+  /*
+   * Channel that has the ids for all samples that either:
+   *  1. Has too few contigs for trycycler/consensus assembly
+   *  2. Enough contigs but flye > consensus assembly
+   *
+   * flye_better_barcode channel emits each sample id separately for joining
+   * with the paths to the flye assembly and trimmed fqs later
+   * 
+   */
+  flye_better_barcodes = select_assembly.out.consensus_discard
+    .map { barcode, consensus_file, filtered_flye_contigs -> barcode }
+    .mix(trycycler_skipped_barcodes)
+    .flatMap()
 
-// THIS IS BROKEN - I THINK IVE MESSED IT UP SOMEHOW ITS NOT JOINING BARCODES APPROPRIATELY
-// WHY ARE WE PASSING DISCARDED READS INTO MEDAKA HERE, WHY NOT JUST FLYE ASSEMBLY?
-  flye_polish_in = filtered_discard
-                  .join(flye_assembly.out.flye_assembly, by: 0)
-                  .join(porechop.out.trimmed_fq, by: 0)
-                  .map { barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq -> tuple(barcode, consensus_file, flye_chr_assembly, flye_assembly, trimmed_fq) }
-                  //.view()
+  /*
+   * MEDAKA-POLISH FLYE ASSEMBLY 
+   *
+   * The current select_assembly process discards any non-chromosomal
+   * contigs based on a reference-based NCBI lookup.
+   *
+   * The following channel passes in ALL contigs assembled by flye for
+   * polishing as select_assembly is revised. i.e. not just the putatively
+   * chromosmal ones.
+   *
+   */
+  flye_polish_in =
+    flye_better_barcodes
+    .join(flye_assembly.out.flye_assembly, by: 0)
+    .join(porechop.out.trimmed_fq, by: 0)
 
   medaka_polish_flye(flye_polish_in)
 

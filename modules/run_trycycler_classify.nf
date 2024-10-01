@@ -3,7 +3,7 @@ process classify_trycycler {
   container 'python:3.8'
 
   input:
-  tuple val(barcode), path(trycycler_cluster)
+  tuple val(barcode), path(trycycler_cluster), val(num_contigs)
 
   output:
   tuple val(barcode), path("${barcode}_discarded/*"), emit: discard_contigs, optional: true
