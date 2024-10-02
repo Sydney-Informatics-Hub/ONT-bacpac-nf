@@ -7,12 +7,14 @@ process pycoqc_summary {
   path(sequencing_summary)
 
   output:
-  path("pycoqc_summary.html"), emit: pycoqc_summary
-
+  path("pycoqc_summary.html"), emit: pycoqc_html
+  path("pycoqc_summary.json"), emit: pycoqc_json
+  
   script: 
   """
   pycoQC \\
-    --summary_file ${params.sequencing_summary} \\
-    -o pycoqc_summary.html
+    -f ${params.sequencing_summary} \\
+    -o pycoqc_summary.html \\
+    -j pycoqc_summary.json
   """
 }
