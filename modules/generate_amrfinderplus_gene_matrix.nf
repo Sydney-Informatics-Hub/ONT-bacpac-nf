@@ -9,7 +9,7 @@ process generate_amrfinderplus_gene_matrix {
   path(sampleid_species_table)
 
   output:
-  	path("amrfinderplus_output.txt"), emit: amrfinderplus_gene_matrix
+  path("amrfinderplus_output.txt"), emit: amrfinderplus_gene_matrix
   //	path("sampleID_species_table_mqc.txt"), emit: sampleID_species_table
 
   script: 
