@@ -177,8 +177,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   nanoplot_summary(sequencing_summary)
   pycoqc_summary(sequencing_summary)
-  
-  parse_required_pycoqc_segments(pycoqc_summary.out.pycoqc_summary,params.pycoqc_header_file)
 
 	// CONCATENATE FQS PER SAMPLE
 	concat_fastqs(unzipped_fq_dirs)
@@ -444,7 +442,6 @@ all_samples_abricate_output = flye_only_abricate_output
                                 barcode_species_table)
 
   // CREATE PHYLOGENETIC TREE + HEATMAP IMAGE
-
   create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,
                                     generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
                                     generate_abricate_gene_matrix.out.abricate_gene_matrix)
@@ -454,9 +451,8 @@ all_samples_abricate_output = flye_only_abricate_output
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty
-nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
-
-pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary.ifEmpty([])
+  nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
+  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_json.ifEmpty([])
 
 kraken2_required_for_multiqc = kraken2.out.kraken2_screen
     .map { it[1] }
@@ -513,7 +509,6 @@ multiqc_report(
     bakta_required_for_multiqc,
     bakta_plasmids_required_for_multiqc,
     busco_required_for_multiqc,
-    parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
     phylogeny_heatmap_plot_required_for_multiqc
 )
 }
