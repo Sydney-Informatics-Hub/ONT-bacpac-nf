@@ -12,7 +12,6 @@ process multiqc_report {
   path(bakta)
   path(bakta_plasmids)
   path(busco)
-  path(pycoqc_subsetted_graphs)
   path(phylogeny_heatmap_plot)
 
   output:
@@ -20,13 +19,6 @@ process multiqc_report {
 
   script:
   """
-
-  # QUAST
-  # (1) Needed to rename quast logs from report.tsv to sampleid.tsv in run_quast*.nf ; to be able to pass in .collect()
-  # (2) However multiqc only reads a file named report.tsv
-  # (3) So copied the sampleid.tsv into sampleid/report.tsv
-  # Works
-   
   for dir in $quast; do
 	file_name=\$(basename "\${dir}")
 	# Remove the .tsv extension
