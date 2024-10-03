@@ -202,6 +202,23 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                   
   plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
+  // PRE-TRYCYCLER CHECKS
+  num_contigs_per_barcode =
+    unicycler_assembly.out.unicycler_assembly
+    .mix(flye_assembly.out.flye_assembly)
+    // Count num contigs per assembly
+    .map { barcode, assembly_dir ->
+        def fa = assembly_dir + "/assembly.fasta"
+        def ncontigs = fa.countFasta()
+        return [barcode, ncontigs]
+    }
+    .groupTuple()
+    // Add total contigs across assemblies
+    .map { barcode, ncontigs ->
+        def total_contigs = ncontigs[0].toInteger() + ncontigs[1].toInteger()
+        [barcode, total_contigs]
+    }
+
   // CLUSTER CONTIGS WITH TRYCYCLER 
   combined_assemblies = unicycler_assembly.out.unicycler_assembly
                 .join(flye_assembly.out.flye_assembly, by:0)
