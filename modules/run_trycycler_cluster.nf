@@ -5,7 +5,7 @@ process trycycler_cluster {
   errorStrategy 'ignore' // Ignore the error status
 
   input:
-  tuple val(barcode), path(unicycler_assembly), path(flye_assembly), path(trimmed_fq)
+  tuple val(barcode), path(unicycler_assembly), path(flye_assembly), path(trimmed_fq), val(num_contigs)
 
   output:
   tuple val(barcode), path("*"), path("${barcode}_cluster/contigs.phylip"), emit: trycycler_cluster

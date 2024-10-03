@@ -219,13 +219,14 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         [barcode, total_contigs]
     }
 
-  // CLUSTER CONTIGS WITH TRYCYCLER 
-  combined_assemblies = unicycler_assembly.out.unicycler_assembly
-                .join(flye_assembly.out.flye_assembly, by:0)
-                .join(porechop.out.trimmed_fq, by:0)
-                .map { barcode, unicycler_assembly, flye_assembly, trimmed_fq ->
-                  tuple(barcode, unicycler_assembly, flye_assembly, trimmed_fq)}
+  combined_assemblies =
+    unicycler_assembly.out.unicycler_assembly
+    .join(flye_assembly.out.flye_assembly, by:0)
+    .join(porechop.out.trimmed_fq, by:0)
+    .join(num_contigs_per_barcode, by:0)
+    .view()
 
+  // CLUSTER CONTIGS WITH TRYCYCLER
   trycycler_cluster(combined_assemblies)
 
   /* 
