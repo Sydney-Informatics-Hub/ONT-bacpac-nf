@@ -27,6 +27,7 @@ include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
 include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
+include { medaka_polish } from './modules/run_medaka_polish'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 include { plassembler } from './modules/run_plassembler'
@@ -387,42 +388,27 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
 
-  // IF FLYE ASSEMBLY IS BEST...
+  // MEDAKA: POLISH DE NOVO ASSEMBLIES
+  unicycler_assembly.out.unicycler_assembly.view()
+  flye_assembly.out.flye_assembly.view()
 
-  /*
-   * Channel that has the ids for all samples that either:
-   *  1. Has too few contigs for trycycler/consensus assembly
-   *  2. Enough contigs but flye > consensus assembly
-   *
-   * flye_better_barcode channel emits each sample id separately for joining
-   * with the paths to the flye assembly and trimmed fqs later
-   * 
-   */
-  flye_better_barcodes = select_assembly.out.consensus_discard
-    .map { barcode, consensus_file, filtered_flye_contigs -> barcode }
-    .mix(trycycler_skipped_barcodes)
-    .flatMap()
+  polish_denovo_assemblies_in =
+    unicycler_assembly.out.unicycler_assembly
+    .mix(flye_assembly.out.flye_assembly)
+    .map { barcode, assembly_dir -> 
+        // Get the assembler name by parsing the publishDir path.
+        // A better way to do this is output i.e. val(assembler_name) in the
+        // assembly processes but will required more changes
+        String assembler_name = assembly_dir.toString().tokenize("_")[-2]
+        return [barcode, assembler_name, assembly_dir] 
+    }
+    .combine(porechop.out.trimmed_fq, by: 0)
 
-  /*
-   * MEDAKA-POLISH FLYE ASSEMBLY 
-   *
-   * The current select_assembly process discards any non-chromosomal
-   * contigs based on a reference-based NCBI lookup.
-   *
-   * The following channel passes in ALL contigs assembled by flye for
-   * polishing as select_assembly is revised. i.e. not just the putatively
-   * chromosmal ones.
-   *
-   */
-  flye_polish_in =
-    flye_better_barcodes
-    .join(flye_assembly.out.flye_assembly, by: 0)
-    .join(porechop.out.trimmed_fq, by: 0)
-
+  medaka_polish(polish_denovo_assemblies_in)
   medaka_polish_flye(flye_polish_in)
 
   // QUAST QC FLYE-ONLY ASSEMBLY 
-  quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
+  quast_qc_flye_chromosomes(medaka_polish.out.polished)
 
   // BAKTA ANNOTATE FLYE-ONLY CHROMOSOME FEATURES 
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
