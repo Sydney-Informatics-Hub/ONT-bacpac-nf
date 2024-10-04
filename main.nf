@@ -202,21 +202,29 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                   
   plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
-  // PRE-TRYCYCLER CHECKS
+  /*
+   * PRE-TRYCYCLER CHECKS
+   * 
+   * Trycycler requires >= 3 contigs to run. Use the in-built .countFasta()
+   * operator to count the total number of contigs assembled for each barcode.
+   *
+   * If additional assemblers/read subsets/replicates are added, ensure it 
+   * is added here.
+   */
   num_contigs_per_barcode =
     unicycler_assembly.out.unicycler_assembly
     .mix(flye_assembly.out.flye_assembly)
-    // Count num contigs per assembly
     .map { barcode, assembly_dir ->
+        // Count num contigs per assembly
         def fa = assembly_dir + "/assembly.fasta"
         def ncontigs = fa.countFasta()
         return [barcode, ncontigs]
     }
     .groupTuple()
-    // Add total contigs across assemblies
     .map { barcode, ncontigs ->
+        // Add total contigs across assemblies
         def total_contigs = ncontigs[0].toInteger() + ncontigs[1].toInteger()
-        [barcode, total_contigs]
+        return [barcode, total_contigs]
     }
 
   combined_assemblies =
