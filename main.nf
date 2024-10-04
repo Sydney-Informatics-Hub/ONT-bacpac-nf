@@ -190,10 +190,8 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // SCREEN FOR CONTAMINANTS 
   kraken2(porechop.out.trimmed_fq, kraken2_db)
 
-  // ASSEMBLE GENOME WITH FLYE
+  // DE NOVO GENOME ASSEMBLIES
   flye_assembly(porechop.out.trimmed_fq)
-
-  // ASSEMBLE GENOME WITH UNICYCLER
   unicycler_assembly(porechop.out.trimmed_fq)
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
@@ -204,7 +202,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   plassembler(plassembler_in, get_plassembler.out.plassembler_db)
 
   /*
-   * PRE-TRYCYCLER CHECKS
+   * CONSENSUS ASSEMBLY PRE-PROCESSING
    * 
    * Trycycler requires >= 3 contigs to run. Use the in-built .countFasta()
    * operator to count the total number of contigs assembled for each barcode.
@@ -228,11 +226,14 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, total_contigs]
     }
 
-  combined_assemblies =
+  denovo_assemblies =
     unicycler_assembly.out.unicycler_assembly
     .join(flye_assembly.out.flye_assembly, by:0)
     .join(porechop.out.trimmed_fq, by:0)
     .join(num_contigs_per_barcode, by:0)
+
+  denovo_assembly_contigs =
+    denovo_assemblies
     .branch { barcode, unicycler, flye, trimmed_fq, num_contigs ->
         run_trycycler: num_contigs >= 3
         skip_trycycler: num_contigs < 3
@@ -240,9 +241,9 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_skipped_barcodes =
     // barcodes with insufficient contigs for trycycler
-    // TODO: Remove - combined_assemblies can be passed directly when 
-    // select_assembly is revised
-    combined_assemblies.skip_trycycler
+    // TODO: Remove this when select_assembly is revised.
+    // denovo_assemblies can be passed directly when ready.
+    denovo_assembly_contigs.skip_trycycler
     .map { 
         barcode, unicycler_assembly, flye_assembly, trimmed_fq, num_contigs -> barcode
     }
@@ -250,7 +251,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
   // CLUSTER CONTIGS WITH TRYCYCLER
-  trycycler_cluster(combined_assemblies.run_trycycler)
+  trycycler_cluster(denovo_assembly_contigs.run_trycycler)
 
   classify_clusters_in =
     // trycycler_cluster filters out small contigs (default < 5000nt) and can
