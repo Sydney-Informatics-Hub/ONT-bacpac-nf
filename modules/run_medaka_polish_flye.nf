@@ -4,7 +4,7 @@ process medaka_polish_flye {
   publishDir "${params.outdir}/assemblies/${barcode}_flye", mode: 'symlink'
 
   input:
-  tuple val(barcode), path(flye_assembly), path(trimmed_fq)
+  tuple val(barcode), val(assembler_name), path(flye_assembly), path(trimmed_fq)
 
   output:
   tuple val(barcode), path("*"), emit: flye_polished, optional: true

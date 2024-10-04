@@ -33,6 +33,7 @@ include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 include { plassembler } from './modules/run_plassembler'
 include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
+include { quast_qc } from './modules/run_quast_qc'
 include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
 include { quast_qc_flye_chromosomes } from './modules/run_quast_qc_flye_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
@@ -390,9 +391,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
-  unicycler_assembly.out.unicycler_assembly.view()
-  flye_assembly.out.flye_assembly.view()
-
   polish_denovo_assemblies_in =
     unicycler_assembly.out.unicycler_assembly
     .mix(flye_assembly.out.flye_assembly)
@@ -406,10 +404,15 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .combine(porechop.out.trimmed_fq, by: 0)
 
   medaka_polish(polish_denovo_assemblies_in)
-  medaka_polish_flye(flye_polish_in)
 
-  // QUAST QC FLYE-ONLY ASSEMBLY 
-  quast_qc_flye_chromosomes(medaka_polish.out.polished)
+  // QUAST: QC
+  // TODO: probably better to collect all per-barcode assemblies in one quast
+  // run to void a parsing/merging step
+  quast_qc(medaka_polish.out.polished)
+
+  // DELETE: Old implementation
+  medaka_polish_flye(polish_denovo_assemblies_in)
+  quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
 
   // BAKTA ANNOTATE FLYE-ONLY CHROMOSOME FEATURES 
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)

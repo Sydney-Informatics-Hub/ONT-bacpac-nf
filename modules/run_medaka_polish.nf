@@ -7,7 +7,7 @@ process medaka_polish {
   tuple val(barcode), val(assembler_name), path(assembly), path(trimmed_fq)
 
   output:
-  tuple val(barcode), path("*"), emit: polished
+  tuple val(barcode), val(assembler_name), path("*"), emit: polished
 
   script:
   """
