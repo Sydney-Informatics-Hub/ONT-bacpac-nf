@@ -38,6 +38,7 @@ include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
 include { quast_qc_flye_chromosomes } from './modules/run_quast_qc_flye_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
 include { bakta_annotation_flye_chromosomes } from './modules/run_bakta_annotation_flye_chromosomes'
+include { busco_qc } from './modules/run_busco_qc'
 include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosomes'
 include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotation_flye_chromosomes'
 include { abricateVFDB_annotation_chromosomes } from './modules/run_abricateVFDB_annotation_chromosomes'
@@ -405,10 +406,11 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   medaka_polish(polish_denovo_assemblies_in)
 
-  // QUAST: QC
+  // ASSEMBLY QC
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
   quast_qc(medaka_polish.out.polished)
+  busco_qc(medaka_polish.out.polished, get_busco.out.busco_db)
 
   // DELETE: Old implementation
   medaka_polish_flye(polish_denovo_assemblies_in)
