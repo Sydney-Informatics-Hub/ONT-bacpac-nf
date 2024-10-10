@@ -25,6 +25,7 @@ include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
+include { trycycler_partition_new } from './modules/run_trycycler_partition_new'
 include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish } from './modules/run_medaka_polish'
@@ -252,7 +253,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .collect()
 
   // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
-  // CLUSTER CONTIGS WITH TRYCYCLER
+  // TRYCYCLER: Cluster contigs
   trycycler_cluster(denovo_assembly_contigs.run_trycycler)
 
   classify_clusters_in =
@@ -270,10 +271,10 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         // create a channel from skip_trycycler if failed barcodes need to be reported/used
     }
 
-  // CLASSIFY CONTIGS WITH TRYCYCLER
+  // TRYCYCLER: Classify contigs
   classify_trycycler(classify_clusters_in.run_trycycler)
 
-  // RECONCILE CONTIGS WITH TRYCYCLER
+  // TRYCYCLER: Reconcile contigs
   contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
                       .join(porechop.out.trimmed_fq, by: 0)
                       .flatMap { barcode, reconcile_contigs, trimmed_fq ->
@@ -288,16 +289,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  /*
-   * SELECT "BEST" ASSEMBLY (CONSENSUS (TRYCYCLER) OR FLYE)
-   *    TODO: Revise reference-free approach 
-   *    TODO: Include unicycler assembly too
-   */
-  trycycler_reconciled = 
-    // Channel for successful trycycler assemblies
-    trycycler_reconcile.out.reconciled_seqs
-    .groupTuple(by:[0])
-  
+  // DELETE---
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
@@ -306,6 +298,13 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
+  // ---DELETE
+
+  // TRYCYCLER: Align reconciled sequences
+  trycycler_reconciled = 
+    // Channel for successful trycycler assemblies.
+    // TODO: Can delete this and pass output directly
+    trycycler_reconcile.out.reconciled_seqs
 
   // IF CONSENSUS ASSEMBLY IS BEST...
 
@@ -330,7 +329,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           
   trycycler_msa(msa_in_consensus)
   trycycler_msa_out = trycycler_msa.out.three_msa
-
+  // ---DELETE
   // TRYCYCLER PARTITIONING READS
   partition_in = select_assembly.out.consensus_good
           .filter { it[1].exists() }  // Ensure the correct path is checked for existence
