@@ -256,26 +256,32 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // TRYCYCLER: Cluster contigs
   trycycler_cluster(denovo_assembly_contigs.run_trycycler)
 
-  classify_clusters_in =
+  barcode_cluster_sizes =
     // trycycler_cluster filters out small contigs (default < 5000nt) and can
     // result in < 2 contigs here again. Use the same branching logic to avoid
     // < 2 contig errors.
-    trycycler_cluster.out.trycycler_cluster
-    .map { barcode, trycycler_clusters, contigs_phylip ->
+    trycycler_cluster.out.phylip
+    .map { barcode, contigs_phylip ->
         def phylip_lines = contigs_phylip.text.readLines().size - 1 // exclude header
-        return [barcode, trycycler_clusters, phylip_lines]
+        return [barcode, phylip_lines]
     }
-    .branch { barcode, trycycler_clusters, phylip_lines ->
+    .branch { barcode, phylip_lines ->
         run_trycycler: phylip_lines >= 3
         skip_trycycler: phylip_lines < 3
         // create a channel from skip_trycycler if failed barcodes need to be reported/used
     }
 
-  // TRYCYCLER: Classify contigs
-  classify_trycycler(classify_clusters_in.run_trycycler)
+  // TRYCYCLER: Classify clusters
+  clusters_to_classify =
+    // Add path to clusters with sufficient contigs
+    trycycler_cluster.out.clusters
+    .join(barcode_cluster_sizes.run_trycycler)
 
+  classify_trycycler(clusters_to_classify)
+
+  // DELETE---
   // TRYCYCLER: Reconcile contigs
-  contigs_to_reconcile = classify_trycycler.out.reconcile_contigs
+  contigs_to_reconcile = classify_trycycler.out.clusters_to_reconcile
                       .join(porechop.out.trimmed_fq, by: 0)
                       .flatMap { barcode, reconcile_contigs, trimmed_fq ->
                         if (reconcile_contigs instanceof List) {
@@ -289,7 +295,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  // DELETE---
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
