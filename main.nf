@@ -6,10 +6,9 @@ nextflow.enable.dsl=2
 // Import processes or subworkflows to be run in the workflow
 include { check_input } from './modules/check_input'
 include { check_samplesheet } from './modules/check_samplesheet'
-include { concat_fastqs } from './modules/concat_fq'
+include { concat_fastqs } from './modules/run_pigz'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
-include { parse_required_pycoqc_segments } from './modules/parse_required_pycoqc_segments'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_busco } from './modules/get_busco'
@@ -167,6 +166,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           def unzip_dir = path.toString()  // Ensure path is a string
           def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
           [barcode, unzip_dir]}  // Return a list containing the directory name and path
+
     }}
 
   // PREPARE INPUTS
