@@ -280,6 +280,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   classify_trycycler(clusters_to_classify)
 
+  // TRYCYCLER: Reconcile contigs
   clusters_to_reconcile_flat = 
     classify_trycycler.out.clusters_to_reconcile
     .join(porechop.out.trimmed_fq, by: 0)
@@ -292,9 +293,8 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     }
 
   trycycler_reconcile_new(clusters_to_reconcile_flat)
-  trycycler_reconcile_new.out[0].view()
 
-  // TRYCYCLER: Reconcile contigs
+  // DELETE---
   contigs_to_reconcile = classify_trycycler.out.clusters_to_reconcile
                       .join(porechop.out.trimmed_fq, by: 0)
                       .flatMap { barcode, reconcile_contigs, trimmed_fq ->
@@ -309,7 +309,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
-  // DELETE---
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
@@ -318,7 +317,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                   tuple(barcode, reconciled, flye_assembly, k2_report)}
 
   select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
-  // ---DELETE
 
   // TRYCYCLER: Align reconciled sequences
   trycycler_reconciled = 
@@ -326,6 +324,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     // TODO: Can delete this and pass output directly
     trycycler_reconcile.out.reconciled_seqs
 
+  // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
 
   // TRYCYCLER MULTIPLE SEQUENCE ALIGNMENT

@@ -1,13 +1,13 @@
 process trycycler_reconcile_new {
-  tag "RECONCILING CONTIGS: ${barcode}: ${reconcile_contigs}"
+  tag "RECONCILING CONTIGS: ${barcode}: ${cluster_dir}"
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
   input:
-  tuple val(barcode), path(reconcile_contigs), path(trimmed_fq)
+  tuple val(barcode), path(cluster_dir), path(trimmed_fq)
 
   output: 
-  tuple val(barcode), path("${reconcile_contigs}/"), emit: results, optional: true 
-  tuple val(barcode), path("${reconcile_contigs}/*/2_all_seqs.fasta"), emit: all_seqs, optional: true 
+  tuple val(barcode), path("${cluster_dir}/"), emit: results_dir
+  tuple val(barcode), path("${cluster_dir}/2_all_seqs.fasta"), emit: reconciled_seqs, optional: true 
   /* 
    * optional:true as reconcililation may be unsuccessful (true negative) 
    * i.e. if there is too much of a length difference between contigs in the 
@@ -17,8 +17,8 @@ process trycycler_reconcile_new {
   script: 
   """
   trycycler reconcile \\
-      --reads ${trimmed_fq} \\
-      --cluster_dir ${reconcile_contigs} \\
+      --reads $trimmed_fq \\
+      --cluster_dir $cluster_dir \\
       --threads ${task.cpus} \\
       --min_1kbp_identity 10 \\
       --max_add_seq 2500
