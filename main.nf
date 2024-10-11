@@ -22,6 +22,7 @@ include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
+include { trycycler_reconcile_new } from './modules/run_trycycler_reconcile_new'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa } from './modules/run_trycycler_msa'
@@ -279,7 +280,20 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   classify_trycycler(clusters_to_classify)
 
-  // DELETE---
+  clusters_to_reconcile_flat = 
+    classify_trycycler.out.clusters_to_reconcile
+    .join(porechop.out.trimmed_fq, by: 0)
+    // from [barcode, [pathA, pathB], ...]
+    // to [barcode, pathA, ...]; [barcode, pathB, ...]
+    .flatMap { barcode, cluster_paths, trimmed_fq ->
+        cluster_paths.collect { path -> 
+            return [barcode, path, trimmed_fq] 
+        }
+    }
+
+  trycycler_reconcile_new(clusters_to_reconcile_flat)
+  trycycler_reconcile_new.out[0].view()
+
   // TRYCYCLER: Reconcile contigs
   contigs_to_reconcile = classify_trycycler.out.clusters_to_reconcile
                       .join(porechop.out.trimmed_fq, by: 0)
@@ -295,6 +309,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   trycycler_reconcile(contigs_to_reconcile)
 
+  // DELETE---
   select_in = trycycler_reconcile.out.reconciled_seqs
               .groupTuple(by:[0])
               .join(flye_assembly.out.flye_assembly, by:0)
