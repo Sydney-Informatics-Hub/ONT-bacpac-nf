@@ -1,22 +1,18 @@
 process trycycler_msa_new {
-  tag "MSA FOR SUCCESSFUL TRYCYCLER ASSEMBLY: ${barcode}"
+  tag "ALIGNING RECONCILED TRYCYCLER SEQS: ${barcode}: ${cluster_dir}"
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
   input:
-  tuple val(barcode), path(reconciled_dir)	
+  tuple val(barcode), path(cluster_dir)	
 
   output:
-  tuple val(barcode), val("${barcode}_${reconciled_dir}"), path("${barcode}_${reconciled_dir}_msa"), emit: three_msa
+  tuple val(barcode), path("${cluster_dir}/"), emit: results_dir
+  tuple val(barcode), path("${cluster_dir}/3_msa.fasta"), emit: aligned_seqs
 
   script:
   """
-  # Run trycycler MSA step: https://github.com/rrwick/Trycycler/wiki/Multiple-sequence-alignment
   trycycler msa \\
-    --cluster_dir ${reconciled_dir} \\
+    --cluster_dir $cluster_dir \\
     --threads ${task.cpus}
-  
-  # Move the 3_msa.fasta to out directory
-  mkdir -p ${barcode}_${reconciled_dir}_msa
-  cp ${reconciled_dir}/3_msa.fasta ${barcode}_${reconciled_dir}_msa/3_msa.fasta  
   """
 }

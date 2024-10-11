@@ -25,6 +25,7 @@ include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile_new } from './modules/run_trycycler_reconcile_new'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
+include { trycycler_msa_new } from './modules/run_trycycler_msa_new'
 include { trycycler_msa } from './modules/run_trycycler_msa'
 include { trycycler_partition_new } from './modules/run_trycycler_partition_new'
 include { trycycler_partition } from './modules/run_trycycler_partition'
@@ -323,6 +324,17 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     // Channel for successful trycycler assemblies.
     // TODO: Can delete this and pass output directly
     trycycler_reconcile.out.reconciled_seqs
+  // ---DELETE
+ 
+ reconciled_clusters_to_align = 
+    trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled clusters
+    .join(trycycler_reconcile_new.out.results_dir)
+    // seqs file not required as trycycler looks through cluster_dirs
+    .map { barcode, seqs, cluster_dir ->
+        [barcode, cluster_dir]
+    }
+  
+  trycycler_msa_new(reconciled_clusters_to_align)
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
