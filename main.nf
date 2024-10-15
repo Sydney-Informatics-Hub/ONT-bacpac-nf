@@ -336,6 +336,21 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   
   trycycler_msa_new(reconciled_clusters_to_align)
 
+  // TRYCYCLER: Partitioning reads
+  clusters_to_partition =
+    trycycler_msa_new.out.results_dir
+    .groupTuple()
+    .join(porechop.out.trimmed_fq)
+    .view { it -> "partition_in: $it" }
+
+  trycycler_partition_new(clusters_to_partition)
+
+  trycycler_partition_new.out.results_dir.view { it -> "partition_out results: $it" }
+  trycycler_partition_new.out.partitioned_reads.view { it -> "partition_out partitioned_reads: $it" }
+
+  // TRYCYCLER: Partitioning reads
+  //trycycler_consensus_new()
+
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
 
@@ -360,7 +375,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           
   trycycler_msa(msa_in_consensus)
   trycycler_msa_out = trycycler_msa.out.three_msa
-  // ---DELETE
   // TRYCYCLER PARTITIONING READS
   partition_in = select_assembly.out.consensus_good
           .filter { it[1].exists() }  // Ensure the correct path is checked for existence
@@ -380,7 +394,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     files.collect { file -> [barcode, "${barcode}_${file.name}", file.path] }
   }
 
-// TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
+  // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
   consensus_in = trycycler_msa_out
   		 .join(partition_out, by:1)
                  .map { row ->
@@ -388,6 +402,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                  }
 
   trycycler_consensus(consensus_in)
+  // ---DELETE
 
   // MEDAKA POLISH CONSENSUS ASSEMBLY
   // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
