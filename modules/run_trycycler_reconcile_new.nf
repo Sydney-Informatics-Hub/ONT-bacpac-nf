@@ -7,7 +7,7 @@ process trycycler_reconcile_new {
 
   output: 
   tuple val(barcode), path("${cluster_dir}/"), emit: results_dir
-  tuple val(barcode), path("${cluster_dir}/2_all_seqs.fasta"), emit: reconciled_seqs, optional: true 
+  tuple val(barcode), path("**/2_all_seqs.fasta"), emit: reconciled_seqs, optional: true 
   /* 
    * optional:true as reconcililation may be unsuccessful (true negative) 
    * i.e. if there is too much of a length difference between contigs in the 

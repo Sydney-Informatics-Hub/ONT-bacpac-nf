@@ -6,8 +6,7 @@ process trycycler_partition_new {
   tuple val(barcode), path(cluster_dirs), path(trimmed_fq)
 
   output: 
-  tuple val(barcode), path("${cluster_dirs}"), emit: results_dir
-  tuple val(barcode), path("${cluster_dirs}/4_reads.fq"), emit: partitioned_reads
+  tuple val(barcode), path("**/4_reads.fastq"), emit: partitioned_reads
 
   script: 
   """ 

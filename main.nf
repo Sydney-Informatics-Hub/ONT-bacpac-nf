@@ -325,16 +325,17 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     // TODO: Can delete this and pass output directly
     trycycler_reconcile.out.reconciled_seqs
   // ---DELETE
- 
- reconciled_clusters_to_align = 
-    trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled clusters
-    .join(trycycler_reconcile_new.out.results_dir)
-    // seqs file not required as trycycler looks through cluster_dirs
-    .map { barcode, seqs, cluster_dir ->
-        [barcode, cluster_dir]
+
+ reconciled_cluster_dirs = 
+    trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled
+    .map { barcode, seq ->
+        // drops the last part of the path (reconciled_seqs file) as trycycler
+        // searches the parent dir for it
+        Path cluster_dir = seq.getParent()
+        return [barcode, cluster_dir] 
     }
   
-  trycycler_msa_new(reconciled_clusters_to_align)
+  trycycler_msa_new(reconciled_cluster_dirs)
 
   // TRYCYCLER: Partitioning reads
   clusters_to_partition =
@@ -344,9 +345,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .view { it -> "partition_in: $it" }
 
   trycycler_partition_new(clusters_to_partition)
-
-  trycycler_partition_new.out.results_dir.view { it -> "partition_out results: $it" }
-  trycycler_partition_new.out.partitioned_reads.view { it -> "partition_out partitioned_reads: $it" }
 
   // TRYCYCLER: Partitioning reads
   //trycycler_consensus_new()
