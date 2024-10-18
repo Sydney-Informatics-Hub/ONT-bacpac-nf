@@ -29,6 +29,7 @@ include { trycycler_msa_new } from './modules/run_trycycler_msa_new'
 include { trycycler_msa } from './modules/run_trycycler_msa'
 include { trycycler_partition_new } from './modules/run_trycycler_partition_new'
 include { trycycler_partition } from './modules/run_trycycler_partition'
+include { trycycler_consensus_new } from './modules/run_trycycler_consensus_new'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish } from './modules/run_medaka_polish'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
@@ -287,6 +288,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .join(porechop.out.trimmed_fq, by: 0)
     // from [barcode, [pathA, pathB], ...]
     // to [barcode, pathA, ...]; [barcode, pathB, ...]
+    // TODO: I think this can be replaced with .transpose()
     .flatMap { barcode, cluster_paths, trimmed_fq ->
         cluster_paths.collect { path -> 
             return [barcode, path, trimmed_fq] 
@@ -342,12 +344,23 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     trycycler_msa_new.out.results_dir
     .groupTuple()
     .join(porechop.out.trimmed_fq)
-    .view { it -> "partition_in: $it" }
 
   trycycler_partition_new(clusters_to_partition)
 
-  // TRYCYCLER: Partitioning reads
-  //trycycler_consensus_new()
+  // TRYCYCLER: Generate consensus assemblies  
+  clusters_for_consensus =
+    trycycler_partition_new.out.partitioned_reads
+    .transpose() // "ungroup" tuple
+    .map { barcode, reads ->
+        // Get directories of successfully partitioned reads
+        Path cluster_dir = reads.getParent()
+        return [barcode, cluster_dir]
+    }
+    .view { it -> "transposed: $it" }
+
+  trycycler_consensus_new(clusters_for_consensus)
+  
+  trycycler_consensus_new.out.view()
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
