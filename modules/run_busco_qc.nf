@@ -4,7 +4,7 @@ process busco_qc {
   publishDir "${params.outdir}/quality_control/${barcode}", mode: 'symlink'
 
   input:
-  tuple val(barcode), val(assembler_name), path(medaka_polished)
+  tuple val(barcode), val(assembler_name), path(polished_assembly)
   path(busco_db)
 
   output:
@@ -14,7 +14,7 @@ process busco_qc {
   script:
   """
   busco \\
-    -i ${medaka_polished}/consensus.fasta \\
+    -i ${polished_assembly} \\
     -m genome \\
     --lineage_dataset ${busco_db}/lineages/bacteria_odb10 \\
     --out ${assembler_name}_busco \\

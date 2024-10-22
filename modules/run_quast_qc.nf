@@ -4,7 +4,7 @@ process quast_qc {
   publishDir "${params.outdir}/quality_control/${barcode}", mode: 'symlink'
 
 input:
-  tuple val(barcode), val(assembler_name), path(medaka_polished)
+  tuple val(barcode), val(assembler_name), path(polished_assembly)
 
 output:
   tuple val(barcode), val(assembler_name), path("${assembler_name}_quast/"), emit: results 
@@ -15,7 +15,7 @@ script:
   quast.py \\
       --output-dir ${assembler_name}_quast \\
       -l ${assembler_name} \\
-      ${medaka_polished}/consensus.fasta
+      ${polished_assembly}
   """
 
 }

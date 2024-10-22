@@ -7,7 +7,7 @@ process medaka_polish_consensus_new {
   tuple val(barcode), path(cluster_dir)
 
   output:
-  tuple val(barcode), path("**/8_medaka.fasta"), emit: assembly
+  tuple val(barcode), path("**/consensus.fasta"), emit: assembly
 
   script:
   """
@@ -18,9 +18,9 @@ process medaka_polish_consensus_new {
     -t ${task.cpus}
  
   # rename medaka files to be consistent with trycycler outputs
-  mv ${cluster_dir}/medaka/consensus.fasta ${cluster_dir}/8_medaka.fasta
+  #mv ${cluster_dir}/medaka/consensus.fasta ${cluster_dir}/8_medaka.fasta
 
   # clean up according to trycycler wiki
-  rm -r ${cluster_dir}/medaka ${cluster_dir}/*.fai ${cluster_dir}/*.mmi
+  #rm -r ${cluster_dir}/medaka ${cluster_dir}/*.fai ${cluster_dir}/*.mmi
   """
 }

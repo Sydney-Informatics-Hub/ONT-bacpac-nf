@@ -472,15 +472,24 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
-  // TODO: probably better to collect all per-barcode assemblies in one quast
-  // run to void a parsing/merging step
   all_polished =
-    medaka_polish_denovo.out.results
-    .mix(medaka_polish_consensus_new.out.assembly)
+    medaka_polish_consensus_new.out.assembly
+    .map { barcode, consensus_fa ->
+        // technically should be "trycycler" but want to separate it out from
+        // the denovo assemblies clearly
+        String assembler = "consensus"
+        return [barcode, assembler, consensus_fa]
+    }
+    .mix(medaka_polish_denovo.out.assembly)
     .view()
 
-  // DELETE: Old implementation
-  medaka_polish_flye(polish_denovo_assemblies_in)
+  // TODO: probably better to collect all per-barcode assemblies in one quast
+  // run to void a parsing/merging step
+  quast_qc(all_polished)
+  busco_qc(all_polished, get_busco.out.busco_db)
+
+  // DELETE: Old implementation ---
+  medaka_polish_flye(unpolished_denovo_assemblies)
   quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
   // --- DELETE
 
