@@ -6,7 +6,7 @@ process trycycler_consensus_new {
   tuple val(barcode), path(cluster_dir)
 
   output:
-  tuple val(barcode), path("**/7_final_consensus.fasta"), emit: consensus_seq
+  tuple val(barcode), path("**/7_final_consensus.fasta"), emit: assembly
 
   script:
   """

@@ -31,7 +31,8 @@ include { trycycler_partition_new } from './modules/run_trycycler_partition_new'
 include { trycycler_partition } from './modules/run_trycycler_partition'
 include { trycycler_consensus_new } from './modules/run_trycycler_consensus_new'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
-include { medaka_polish } from './modules/run_medaka_polish'
+include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
+include { medaka_polish_consensus_new } from './modules/run_medaka_polish_consensus_new'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 include { plassembler } from './modules/run_plassembler'
@@ -356,11 +357,19 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         Path cluster_dir = reads.getParent()
         return [barcode, cluster_dir]
     }
-    .view { it -> "transposed: $it" }
 
   trycycler_consensus_new(clusters_for_consensus)
   
-  trycycler_consensus_new.out.view()
+  // MEDAKA: Polish consensus assembly
+  consensus_dir = 
+    // Get parent dir for assembly
+    trycycler_consensus_new.out.assembly
+    .map { barcode, assembly ->
+        Path assembly_dir = assembly.getParent()
+        return [barcode, assembly_dir]
+    }
+
+  medaka_polish_consensus_new(consensus_dir)
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
@@ -448,7 +457,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
-  polish_denovo_assemblies_in =
+  unpolished_denovo_assemblies =
     unicycler_assembly.out.unicycler_assembly
     .mix(flye_assembly.out.flye_assembly)
     .map { barcode, assembly_dir -> 
@@ -458,19 +467,22 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         String assembler_name = assembly_dir.toString().tokenize("_")[-2]
         return [barcode, assembler_name, assembly_dir] 
     }
-    .combine(porechop.out.trimmed_fq, by: 0)
+    .join(porechop.out.trimmed_fq)
 
-  medaka_polish(polish_denovo_assemblies_in)
+  medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
-  quast_qc(medaka_polish.out.polished)
-  busco_qc(medaka_polish.out.polished, get_busco.out.busco_db)
+  all_polished =
+    medaka_polish_denovo.out.results
+    .mix(medaka_polish_consensus_new.out.assembly)
+    .view()
 
   // DELETE: Old implementation
   medaka_polish_flye(polish_denovo_assemblies_in)
   quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
+  // --- DELETE
 
   // BAKTA ANNOTATE FLYE-ONLY CHROMOSOME FEATURES 
   bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
