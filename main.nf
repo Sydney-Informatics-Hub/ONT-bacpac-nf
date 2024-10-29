@@ -7,6 +7,7 @@ nextflow.enable.dsl=2
 include { check_input } from './modules/check_input'
 include { check_samplesheet } from './modules/check_samplesheet'
 include { concat_fastqs } from './modules/concat_fq'
+include { concat_fastas } from './modules/concat_fa'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
 include { parse_required_pycoqc_segments } from './modules/parse_required_pycoqc_segments'
@@ -363,13 +364,58 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // MEDAKA: Polish consensus assembly
   consensus_dir = 
     // Get parent dir for assembly
-    trycycler_consensus_new.out.assembly
+    trycycler_consensus_new.out.cluster_assembly
     .map { barcode, assembly ->
         Path assembly_dir = assembly.getParent()
         return [barcode, assembly_dir]
     }
 
   medaka_polish_consensus_new(consensus_dir)
+
+  // CAT: Combine polished clusters consensus assemblies into a single fasta
+  // using collectFile() with .groupTuple()
+  polished_clusters = 
+    medaka_polish_consensus_new.out.cluster_assembly
+    .groupTuple()
+  
+  concat_fastas(polished_clusters)
+
+  polished_consensus_per_barcode = concat_fastas.out
+
+  // MEDAKA: POLISH DE NOVO ASSEMBLIES
+  unpolished_denovo_assemblies =
+    unicycler_assembly.out.unicycler_assembly
+    .mix(flye_assembly.out.flye_assembly)
+    .map { barcode, assembly_dir -> 
+        // Get the assembler name by parsing the publishDir path.
+        // A better way to do this is output i.e. val(assembler_name) in the
+        // assembly processes but will required more changes
+        String assembler_name = assembly_dir.toString().tokenize("_")[-2]
+        return [barcode, assembler_name, assembly_dir] 
+    }
+    .join(porechop.out.trimmed_fq)
+    .view { it -> "denovo: $it" }
+
+  medaka_polish_denovo(unpolished_denovo_assemblies)
+  medaka_polish_denovo.out.view { it -> "medaka denovo: $it"} 
+
+  // ASSEMBLY QC
+  all_polished =
+    polished_consensus_per_barcode
+    .view { it -> "polished_consensus_per_barcode: $it" }
+    .map { barcode, consensus_fa ->
+        // technically should be "trycycler" but want to separate it out from
+        // the denovo assemblies clearly
+        String assembler = "consensus"
+        return [barcode, assembler, consensus_fa]
+    }
+    .mix(medaka_polish_denovo.out.assembly)
+    .view { it -> "all_polished: $it" }
+
+  // TODO: probably better to collect all per-barcode assemblies in one quast
+  // run to void a parsing/merging step
+  quast_qc(all_polished)
+  busco_qc(all_polished, get_busco.out.busco_db)
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
@@ -455,38 +501,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
 
   consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
-
-  // MEDAKA: POLISH DE NOVO ASSEMBLIES
-  unpolished_denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .map { barcode, assembly_dir -> 
-        // Get the assembler name by parsing the publishDir path.
-        // A better way to do this is output i.e. val(assembler_name) in the
-        // assembly processes but will required more changes
-        String assembler_name = assembly_dir.toString().tokenize("_")[-2]
-        return [barcode, assembler_name, assembly_dir] 
-    }
-    .join(porechop.out.trimmed_fq)
-
-  medaka_polish_denovo(unpolished_denovo_assemblies)
-
-  // ASSEMBLY QC
-  all_polished =
-    medaka_polish_consensus_new.out.assembly
-    .map { barcode, consensus_fa ->
-        // technically should be "trycycler" but want to separate it out from
-        // the denovo assemblies clearly
-        String assembler = "consensus"
-        return [barcode, assembler, consensus_fa]
-    }
-    .mix(medaka_polish_denovo.out.assembly)
-    .view()
-
-  // TODO: probably better to collect all per-barcode assemblies in one quast
-  // run to void a parsing/merging step
-  quast_qc(all_polished)
-  busco_qc(all_polished, get_busco.out.busco_db)
 
   // DELETE: Old implementation ---
   medaka_polish_flye(unpolished_denovo_assemblies)

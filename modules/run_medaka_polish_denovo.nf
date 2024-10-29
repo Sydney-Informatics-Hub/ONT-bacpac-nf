@@ -1,5 +1,5 @@
 process medaka_polish_denovo {
-  tag "POLISHING ASSEMBLY: ${assembler_name}: ${barcode}"
+  tag "${assembler_name}: ${barcode}"
   container 'quay.io/biocontainers/medaka:1.11.3--py39h05d5c5e_0'
   publishDir "${params.outdir}/assemblies/${barcode}_${assembler_name}", mode: 'symlink'
 
@@ -7,7 +7,7 @@ process medaka_polish_denovo {
   tuple val(barcode), val(assembler_name), path(assembly), path(trimmed_fq)
 
   output:
-  tuple val(barcode), val(assembler_name), path("**/consensus.fasta"), emit: assembly
+  tuple val(barcode), val(assembler_name), path("medaka/consensus.fasta"), emit: assembly
 
   script:
   """
