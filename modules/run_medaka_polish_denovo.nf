@@ -7,7 +7,7 @@ process medaka_polish_denovo {
   tuple val(barcode), val(assembler_name), path(assembly), path(trimmed_fq)
 
   output:
-  tuple val(barcode), val(assembler_name), path("medaka/consensus.fasta"), emit: assembly
+  tuple val(barcode), val(assembler_name), path("consensus.fasta"), emit: assembly
 
   script:
   """
@@ -15,6 +15,7 @@ process medaka_polish_denovo {
   medaka_consensus \\
     -i ${trimmed_fq} \\
     -d ${assembly}/assembly.fasta \\
+    -o ./ \\
     -t ${task.cpus}
   """
 }

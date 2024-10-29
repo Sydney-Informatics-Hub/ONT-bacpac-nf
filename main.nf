@@ -394,10 +394,8 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, assembler_name, assembly_dir] 
     }
     .join(porechop.out.trimmed_fq)
-    .view { it -> "denovo: $it" }
 
   medaka_polish_denovo(unpolished_denovo_assemblies)
-  medaka_polish_denovo.out.view { it -> "medaka denovo: $it"} 
 
   // ASSEMBLY QC
   all_polished =

@@ -7,14 +7,14 @@ process medaka_polish_consensus_new {
   tuple val(barcode), path(cluster_dir)
 
   output:
-  tuple val(barcode), path("**/consensus.fasta"), emit: cluster_assembly
+  tuple val(barcode), path("consensus.fasta"), emit: cluster_assembly
 
   script:
   """
   medaka_consensus \\
     -i ${cluster_dir}/4_reads.fastq \\
     -d ${cluster_dir}/7_final_consensus.fasta \\
-    -o ${cluster_dir}/medaka \\
+    -o ./ \\
     -t ${task.cpus}
   """
 }
