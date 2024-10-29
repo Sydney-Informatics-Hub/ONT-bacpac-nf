@@ -1,0 +1,248 @@
+diff --git a/main.nf b/main.nf
+index ad69ce5..da1e320 100755
+--- a/main.nf
++++ b/main.nf
+@@ -295,7 +295,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+         cluster_paths.collect { path -> 
+             return [barcode, path, trimmed_fq] 
+         }
+-    }
++    }.view { it -> "0: $it"} 
+ 
+   trycycler_reconcile_new(clusters_to_reconcile_flat)
+ 
+@@ -337,7 +337,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+         // searches the parent dir for it
+         Path cluster_dir = seq.getParent()
+         return [barcode, cluster_dir] 
+-    }
++    }.view { it -> "1: $it"} 
+   
+   trycycler_msa_new(reconciled_cluster_dirs)
+ 
+@@ -360,7 +360,9 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+     }
+ 
+   trycycler_consensus_new(clusters_for_consensus)
+-  
++
++  trycycler_consensus_new.out.view { it -> "2: $it" }
++ 
+   // MEDAKA: Polish consensus assembly
+   consensus_dir = 
+     // Get parent dir for assembly
+@@ -376,6 +378,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+   // using collectFile() with .groupTuple()
+   polished_clusters = 
+     medaka_polish_consensus_new.out.cluster_assembly
++    .view { it -> "3: $it" }
+     .groupTuple()
+   
+   concat_fastas(polished_clusters)
+@@ -400,7 +403,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+   // ASSEMBLY QC
+   all_polished =
+     polished_consensus_per_barcode
+-    .view { it -> "polished_consensus_per_barcode: $it" }
++    .view { it -> "4: $it" }
+     .map { barcode, consensus_fa ->
+         // technically should be "trycycler" but want to separate it out from
+         // the denovo assemblies clearly
+@@ -408,7 +411,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+         return [barcode, assembler, consensus_fa]
+     }
+     .mix(medaka_polish_denovo.out.assembly)
+-    .view { it -> "all_polished: $it" }
++    .view { it -> "5: $it" }
+ 
+   // TODO: probably better to collect all per-barcode assemblies in one quast
+   // run to void a parsing/merging step
+@@ -536,7 +539,14 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+ all_bakta_input_to_create_phylogeny_tree = flye_only_bakta
+     .ifEmpty([]) // If flye_only_bakta is empty, provide an empty list
+     .merge(consensus_bakta) // Merge with consensus_bakta
+-    //.view()
++    // DELETE: TEMPORARY FIX
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
+ 
+ create_phylogeny_tree_related_files(
+     get_ncbi.out.assembly_summary_refseq,
+@@ -568,10 +578,42 @@ create_phylogeny_tree_related_files(
+   all_samples_amrfinderplus_output = flye_only_amrfinderplus_output
+     .ifEmpty([]) // If flye_only_amrfinderplus_output is empty, provide an empty list
+     .merge(consensus_amrfinderplus_output) // Merge with consensus_amrfinderplus_output
+-
+-  all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
++    // DELETE: TEMPORARY FIX --
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
++    //.view {it->"barcode_spp: $it"}
++    // -- DELETE: TEMP FIX
++
++  all_references_amrfinderplus_output = 
++    amrfinderplus_annotation_reference.out.amrfinderplus_annotations
++    // DELETE: TEMPORARY FIX --
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
++    //.view {it->"barcode_spp: $it"}
++    // -- DELETE: TEMP FIX
+   
+-  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
++  barcode_species_table = 
++    create_phylogeny_tree_related_files.out.barcode_species_table
++    // DELETE: TEMPORARY FIX --
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
++    //.view {it->"barcode_spp: $it"}
++    // -- DELETE: TEMP FIX
+ 
+   generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,
+                                       all_references_amrfinderplus_output,
+@@ -593,8 +635,29 @@ create_phylogeny_tree_related_files(
+ all_samples_abricate_output = flye_only_abricate_output
+     .ifEmpty([]) // If flye_only_abricate_output is empty, provide an empty list
+     .merge(consensus_abricate_output) // Merge with consensus_abricate_output
+-
+-  all_references_abricate_output = abricateVFDB_annotation_reference.out.abricate_annotations
++    // DELETE: TEMPORARY FIX --
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
++    //.view {it->"samples_abricate: $it"}
++    // -- DELETE: TEMP FIX
++
++  all_references_abricate_output =
++    abricateVFDB_annotation_reference.out.abricate_annotations
++    // DELETE: TEMPORARY FIX --
++    .flatMap()
++    .map { path -> 
++        def barcode = path.toString().split('/').last()
++        return [barcode, path]
++    }
++    .groupTuple()
++    .map { barcode, paths -> paths[0] }
++    //.view {it->"refs_abricate: $it"}
++    // -- DELETE: TEMP FIX
+ 
+   generate_abricate_gene_matrix(all_samples_abricate_output,
+                                 all_references_abricate_output,
+@@ -661,18 +724,18 @@ phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image
+ multiqc_config = params.multiqc_config
+ 
+ // Run MultiQC with the gathered inputs
+-multiqc_report(
+-    pycoqc_required_for_multiqc,
+-    nanoplot_required_for_multiqc,
+-    multiqc_config,
+-    kraken2_required_for_multiqc,
+-    quast_required_for_multiqc,
+-    bakta_required_for_multiqc,
+-    bakta_plasmids_required_for_multiqc,
+-    busco_required_for_multiqc,
+-    parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
+-    phylogeny_heatmap_plot_required_for_multiqc
+-)
++//multiqc_report(
++//    pycoqc_required_for_multiqc,
++//    nanoplot_required_for_multiqc,
++//    multiqc_config,
++//    kraken2_required_for_multiqc,
++//    quast_required_for_multiqc,
++//    bakta_required_for_multiqc,
++//    bakta_plasmids_required_for_multiqc,
++//    busco_required_for_multiqc,
++//    parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
++//    phylogeny_heatmap_plot_required_for_multiqc
++//)
+ }
+ 
+ // Print workflow execution summary 
+diff --git a/test/run_test.sh b/test/run_test.sh
+index b3368e8..2b36b4d 100644
+--- a/test/run_test.sh
++++ b/test/run_test.sh
+@@ -1,14 +1,14 @@
+ #!/bin/bash
+ 
+-#PBS -P <PROJECT> 
+-#PBS -l walltime=10:00:00
++#PBS -P er01
++#PBS -l walltime=4:00:00
+ #PBS -l ncpus=1
+-#PBS -l mem=5GB
++#PBS -l mem=4GB
+ #PBS -W umask=022
+-#PBS -q copyq
++#PBS -q normal
+ #PBS -l wd
+-#PBS -l storage=scratch/<PROJECT>
+-#PBS -l jobfs=100GB
++#PBS -l storage=scratch/er01
++#PBS -l jobfs=1GB
+ 
+ ## RUN FROM PROJECT DIRECTORY WITH: bash test/run_test.sh
+ 
+@@ -17,12 +17,12 @@ module load nextflow/24.04.1
+ module load singularity 
+ 
+ # Define inputs 
+-input_directory= #path to your input directory
+-samplesheet= #path to samplesheet file
+-k2db= #path to predownloaded kraken2 database
+-sequencing_summary= #path to sequencing summary file from ONT run 
+-gadi_account= #e.g. aa00
+-gadi_storage= #e.g. scratch/aa00 or scratch/aa00+scratch/bb11 for more than 1 storage space
++dir="/scratch/er01/fj9712/ONT-bacpac-nf_wt/issue-54" #path to your input directory
++in="${dir}/data" #path to your input directory
++k2db="${in}/kraken2_db" #path to predownloaded kraken2 database
++sequencing_summary="${in}/sequencing_summary_FAX78092_2830cc58_163c38f4.txt" #path to sequencing summary file from ONT run 
++gadi_account="er01" #e.g. aa00
++gadi_storage="scratch/er01" #e.g. scratch/aa00
+ 
+ # Unhash this command to run pipeline over whole directory
+ #nextflow run main.nf \
+@@ -34,10 +34,12 @@ gadi_storage= #e.g. scratch/aa00 or scratch/aa00+scratch/bb11 for more than 1 st
+ #	-resume -profile gadi,high_accuracy #you can remove ,high_accuracy if you want to run fast basecalling samples
+ 
+ # Unhash this command to run pipeline with samplesheet
+-#nextflow run main.nf \
+-#	--samplesheet ${samplesheet} \
+-#	--kraken2_db ${k2db} \
+-#	--sequencing_summary ${sequencing_summary} \
+-#	--gadi_account ${gadi_account} \
+-#	--gadi_storage ${gadi_storage} \
+-#	-resume -profile gadi,high_accuracy #you can remove ,high_accuracy if you want to run fast basecalling samples
++samplesheet="${in}/samplesheet.csv" #path to samplesheet
++nextflow run main.nf \
++	--samplesheet ${samplesheet} \
++	--kraken2_db ${k2db} \
++	--sequencing_summary ${sequencing_summary} \
++	--gadi_account ${gadi_account} \
++	--gadi_storage ${gadi_storage} \
++	-resume \
++	-profile gadi #you can remove ,high_accuracy if you want to run fast basecalling samples
