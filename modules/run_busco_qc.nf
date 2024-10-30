@@ -10,6 +10,7 @@ process busco_qc {
   output:
   tuple val(barcode), val(assembler_name), path("${assembler_name}_busco/"), emit: results
   tuple val(barcode), val(assembler_name), path("${assembler_name}_busco/short_summary.specific.*.txt"), emit: summary
+  tuple val(barcode), path("${assembler_name}_busco/short_summary.specific.*.json"), emit: json 
 
   script:
   """

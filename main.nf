@@ -25,6 +25,7 @@ include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile_new } from './modules/run_trycycler_reconcile_new'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
+include { select_assembly_new } from './modules/select_assembly_new'
 include { select_assembly } from './modules/select_assembly'
 include { trycycler_msa_new } from './modules/run_trycycler_msa_new'
 include { trycycler_msa } from './modules/run_trycycler_msa'
@@ -298,6 +299,9 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     }
 
   trycycler_reconcile_new(clusters_to_reconcile_flat)
+  // TODO: Sometimes `2_all_seqs.fasta` is not output correctly, this view is
+  // useful for showing all the reconcile runs:
+  // trycycler_reconcile_new.out.results_dir.view { it -> "reconcile_runs: $it" }
 
   // DELETE---
   contigs_to_reconcile = classify_trycycler.out.clusters_to_reconcile
@@ -360,7 +364,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     }
 
   trycycler_consensus_new(clusters_for_consensus)
-  
+
   // MEDAKA: Polish consensus assembly
   consensus_dir = 
     // Get parent dir for assembly
@@ -388,7 +392,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
             }
         return [barcode, indexed_fas]
     }
-    .view { it -> "idx_to_concat: $it" }
   
   concat_fastas(polished_clusters)
 
@@ -412,7 +415,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // ASSEMBLY QC
   all_polished =
     polished_consensus_per_barcode
-    .view { it -> "polished_consensus_per_barcode: $it" }
     .map { barcode, consensus_fa ->
         // technically should be "trycycler" but want to separate it out from
         // the denovo assemblies clearly
@@ -420,12 +422,24 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, assembler, consensus_fa]
     }
     .mix(medaka_polish_denovo.out.assembly)
-    .view { it -> "all_polished: $it" }
 
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
   quast_qc(all_polished)
   busco_qc(all_polished, get_busco.out.busco_db)
+  
+  // SELECT "BEST" ASSEMBLY
+  // TODO: Discuss better approaches. Currently selects the best assembly per
+  // barcode by most Complete BUSCO % 
+  busco_qc.out.json.view { it -> "busco_jsons: $it" }
+  
+  barcode_busco_jsons =
+    // Gather all jsons for each barcode
+    busco_qc.out.json
+    .groupTuple()
+
+  select_assembly_new(barcode_busco_jsons)
+  select_assembly_new.out.view { it -> "BUSCOS!: $it" }
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...
@@ -478,7 +492,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
                  }
 
   trycycler_consensus(consensus_in)
-  // ---DELETE
 
   // MEDAKA POLISH CONSENSUS ASSEMBLY
   // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
@@ -496,6 +509,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // QUAST QC CONSENSUS-ASSEMBLY
   quast_qc_chromosomes(polish_grouped_by_barcode)
+  // ---DELETE
 
   // BAKTA ANNOTATE GENE FEATURES 
   bakta_annotation_chromosomes(polish_grouped_by_barcode,get_bakta.out.bakta_db)
