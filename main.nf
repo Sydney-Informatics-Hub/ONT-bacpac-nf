@@ -373,10 +373,22 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   medaka_polish_consensus_new(consensus_dir)
 
   // CAT: Combine polished clusters consensus assemblies into a single fasta
-  // using collectFile() with .groupTuple()
   polished_clusters = 
     medaka_polish_consensus_new.out.cluster_assembly
     .groupTuple()
+    .map { barcode, fastas ->
+        // Need to avoid filename collisions with consensus.fasta files
+        // by renaming them
+        def indexed_fas = 
+            fastas.withIndex()
+            .collect { fa, idx ->
+                def new_fa = fa.getParent() / "consensus_${idx}.fasta"
+                fa.copyTo(new_fa)
+                return new_fa
+            }
+        return [barcode, indexed_fas]
+    }
+    .view { it -> "idx_to_concat: $it" }
   
   concat_fastas(polished_clusters)
 
