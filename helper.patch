@@ -1,63 +1,8 @@
 diff --git a/main.nf b/main.nf
-index ad69ce5..da1e320 100755
+index 69ef113..a50c4af 100755
 --- a/main.nf
 +++ b/main.nf
-@@ -295,7 +295,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-         cluster_paths.collect { path -> 
-             return [barcode, path, trimmed_fq] 
-         }
--    }
-+    }.view { it -> "0: $it"} 
- 
-   trycycler_reconcile_new(clusters_to_reconcile_flat)
- 
-@@ -337,7 +337,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-         // searches the parent dir for it
-         Path cluster_dir = seq.getParent()
-         return [barcode, cluster_dir] 
--    }
-+    }.view { it -> "1: $it"} 
-   
-   trycycler_msa_new(reconciled_cluster_dirs)
- 
-@@ -360,7 +360,9 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-     }
- 
-   trycycler_consensus_new(clusters_for_consensus)
--  
-+
-+  trycycler_consensus_new.out.view { it -> "2: $it" }
-+ 
-   // MEDAKA: Polish consensus assembly
-   consensus_dir = 
-     // Get parent dir for assembly
-@@ -376,6 +378,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-   // using collectFile() with .groupTuple()
-   polished_clusters = 
-     medaka_polish_consensus_new.out.cluster_assembly
-+    .view { it -> "3: $it" }
-     .groupTuple()
-   
-   concat_fastas(polished_clusters)
-@@ -400,7 +403,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-   // ASSEMBLY QC
-   all_polished =
-     polished_consensus_per_barcode
--    .view { it -> "polished_consensus_per_barcode: $it" }
-+    .view { it -> "4: $it" }
-     .map { barcode, consensus_fa ->
-         // technically should be "trycycler" but want to separate it out from
-         // the denovo assemblies clearly
-@@ -408,7 +411,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
-         return [barcode, assembler, consensus_fa]
-     }
-     .mix(medaka_polish_denovo.out.assembly)
--    .view { it -> "all_polished: $it" }
-+    .view { it -> "5: $it" }
- 
-   // TODO: probably better to collect all per-barcode assemblies in one quast
-   // run to void a parsing/merging step
-@@ -536,7 +539,14 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
+@@ -562,7 +562,14 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
  all_bakta_input_to_create_phylogeny_tree = flye_only_bakta
      .ifEmpty([]) // If flye_only_bakta is empty, provide an empty list
      .merge(consensus_bakta) // Merge with consensus_bakta
@@ -73,7 +18,7 @@ index ad69ce5..da1e320 100755
  
  create_phylogeny_tree_related_files(
      get_ncbi.out.assembly_summary_refseq,
-@@ -568,10 +578,42 @@ create_phylogeny_tree_related_files(
+@@ -594,10 +601,42 @@ create_phylogeny_tree_related_files(
    all_samples_amrfinderplus_output = flye_only_amrfinderplus_output
      .ifEmpty([]) // If flye_only_amrfinderplus_output is empty, provide an empty list
      .merge(consensus_amrfinderplus_output) // Merge with consensus_amrfinderplus_output
@@ -119,7 +64,7 @@ index ad69ce5..da1e320 100755
  
    generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,
                                        all_references_amrfinderplus_output,
-@@ -593,8 +635,29 @@ create_phylogeny_tree_related_files(
+@@ -619,8 +658,29 @@ create_phylogeny_tree_related_files(
  all_samples_abricate_output = flye_only_abricate_output
      .ifEmpty([]) // If flye_only_abricate_output is empty, provide an empty list
      .merge(consensus_abricate_output) // Merge with consensus_abricate_output
@@ -151,7 +96,7 @@ index ad69ce5..da1e320 100755
  
    generate_abricate_gene_matrix(all_samples_abricate_output,
                                  all_references_abricate_output,
-@@ -661,18 +724,18 @@ phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image
+@@ -687,18 +747,18 @@ phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image
  multiqc_config = params.multiqc_config
  
  // Run MultiQC with the gathered inputs
