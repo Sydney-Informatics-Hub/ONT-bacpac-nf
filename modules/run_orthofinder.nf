@@ -1,5 +1,5 @@
 process run_orthofinder{
-  tag "RUN ORTHOFINDER to generate Phylogeny tree"
+  tag "GENERATE PHYLOGENY"
   container 'quay.io/biocontainers/orthofinder:2.5.5--hdfd78af_2'
 
 input:

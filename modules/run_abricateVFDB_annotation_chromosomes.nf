@@ -1,26 +1,23 @@
 process abricateVFDB_annotation_chromosomes {
-  tag "ANNOTATING CONSENSUS ASSEMBLY WITH ABRICATE VFDB: ${barcode}"
+  tag "VFDB GENES: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
-  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}/abricate", mode: 'symlink'
 
-input:
-  tuple val(barcode), path(medaka_consensus)
+  input:
+  tuple val(barcode), val(assembler), path(polished_fasta)
 
-output:
-  tuple val(barcode), path("abricate/*"), emit: abricate_annotations, optional: true 
+  output:
+  tuple val(barcode), path("*.txt"), emit: report
 
-script:
+  script:
+  prefix = "${barcode}_${assembler}_chr"
+  db_name = 'vfdb'
   """
-  for dir in ${medaka_consensus}; do  
-  	cat \${dir}/consensus.fasta >> concatenated_consensus.fasta
-  done
-
-  db_name='vfdb'
-  mkdir -p abricate
-
-  abricate concatenated_consensus.fasta \\
-	-db \${db_name} > abricate/${barcode}.txt
- 
+  abricate \\
+    $polished_fasta \\
+	-db ${db_name} \\
+    --threads $task.cpus \\
+    > ${prefix}.txt
   """
 
 }

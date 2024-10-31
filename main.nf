@@ -293,11 +293,8 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     }
 
   trycycler_reconcile_new(clusters_to_reconcile_flat)
-  // TODO: Sometimes `2_all_seqs.fasta` is not output correctly, this view is
-  // useful for showing all the reconcile runs:
-  // trycycler_reconcile_new.out.results_dir.view { it -> "reconcile_runs: $it" }
 
- reconciled_cluster_dirs = 
+  reconciled_cluster_dirs = 
     trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled
     .map { barcode, seq ->
         // drops the last part of the path (reconciled_seqs file) as trycycler
@@ -386,6 +383,8 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, assembler, consensus_fa]
     }
     .mix(medaka_polish_denovo.out.assembly)
+    // TODO: Some assemblies go missing?
+    .view { it -> "all_polished: $it" }
 
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
@@ -412,49 +411,66 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .view { it -> "best: $it" }
     .join(all_polished, by: [0, 1])
 
-  // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY
+  // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-BARCODE
   // BAKTA: Annotate gene features
   bakta_annotation_chromosomes(best_chr_assembly, get_bakta.out.bakta_db)
+
+  // ABRICATE: Annotate VFDB genes
+  abricateVFDB_annotation_chromosomes(best_chr_assembly)
 
   // AMRFINDERPLUS: Annotate AMR genes
   amrfinderplus_annotation_chromosomes(
     bakta_annotation_chromosomes.out.faa,
     get_amrfinderplus.out.amrfinderplus_db
   )
-  
-  // // ABRICATE ANNOTATE CONSENSUS-CHROMOSOME WITH VFDB-GENES
-  // abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
 
-  // consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
+  // CREATE FILES FOR PHYLOGENETIC TREE BUILDING
+  // Collect all the output (annotation) reports required for tree building
+  kraken2_reports =
+    // Collect all k2 reports and drop barcodes
+    kraken2.out
+    .map { barcode, k2_report -> k2_report }
+    .collect()
 
-  // kraken_input_to_create_phylogeny_tree = 
-  //   kraken2.out
-  //   .map { [it[1]] }
+  bakta_results_dirs = 
+    // TODO: Currently takes dir as input, amend the phylo building .py file
+    // to take direct inputs
+    bakta_annotation_chromosomes.out.txt
+    .map { barcode, assembler, txt -> 
+        Path dir = txt.getParent()
+        return dir
+    } 
+    .collect()
+
+  // amrfinderplus_results_dirs = 
+  //   // TODO: Currently takes dir as input, amend the phylo building .py file
+  //   // to take direct inputs
+  //   amrfinderplus_annotation_chromosomes.out.report
+  //   .map { barcode, assembler, report -> 
+  //       Path dir = report.getParent()
+  //       return dir
+  //   }
   //   .collect()
 
-  // consensus_bakta =
-  //   bakta_annotation_chromosomes.out.bakta_annotations
-  //   .map { [it[1]] }
-  //   .collect()
+  create_phylogeny_tree_related_files(
+    get_ncbi.out.assembly_summary_refseq,
+    kraken2_reports,
+    bakta_results_dirs
+  )
 
-  // // CREATE FILES FOR PHYLOGENETIC TREE BUILDING
-  // all_bakta_input_to_create_phylogeny_tree = consensus_bakta
+  // ORTHOFINDER: Infer phylogeny using orthologous genes
+  phylogeny_in = create_phylogeny_tree_related_files.out.phylogeny_folder
+  run_orthofinder(phylogeny_in)
 
-  // create_phylogeny_tree_related_files(
-  //   get_ncbi.out.assembly_summary_refseq,
-  //   kraken_input_to_create_phylogeny_tree,
-  //   all_bakta_input_to_create_phylogeny_tree
-  // )
+  // ANNOTATE REFERENCE STRAINS
+  // AMRFINDERPLUS: Annotate AMR genes
+  amrfinderplus_annotation_reference(
+    phylogeny_in,
+    get_amrfinderplus.out.amrfinderplus_db
+  )
 
-  // // ORTHOFINDER PHYLOGENETIC ORTHOLOGY INFERENCE
-  // run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
-
-  // // AMRIFINDER ANNOTATE REFERENCE STRAINS FOR AMR GENES
-  // amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,
-  //                                   get_amrfinderplus.out.amrfinderplus_db)
-
-  // // ABRICATE ANNOTATE REFERENCE STRAINS FOR AMR GENES
-  // abricateVFDB_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder) 
+  // ABRICATE: Annotate VFDB genes
+  abricateVFDB_annotation_reference(phylogeny_in) 
 
   // // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
   // consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out
