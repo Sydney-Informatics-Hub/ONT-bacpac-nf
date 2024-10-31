@@ -1,23 +1,17 @@
 process select_assembly {
-  tag "EVALUATING CONSENSUS ASSEMBLY QUALITY: ${barcode}"  
+  tag "${barcode}"  
   container 'python:3.8'
 
   input:
-  tuple val(barcode), path(reconciled), path(flye_assembly), path(kraken2_report)
-  path(ncbi_lookup)
+  tuple val(barcode), path(busco_jsons)
 
   output:
-  tuple val(barcode), path("Consensus.txt"), path("${barcode}_final/*"), emit: consensus_good, optional: true
-  tuple val(barcode), path("FlyeOnly.txt"), path("${barcode}_flye_assembly/Chr_contigs/"), emit: consensus_discard, optional: true
+  tuple val(barcode), path("best_assembly.txt")
 
   script: 
-  //TODO double check this is capturing all reconciled clusters
+  // Save to file (instead of print to stdout) for nextflow caching
   """
-  select_assembly.py \\
-    ${barcode} \\
-    ${reconciled.join(' ')} \\
-    ${flye_assembly} \\
-    ${kraken2_report} \\
-    ${ncbi_lookup}
+  compare_busco.py $busco_jsons > best_assembly.txt
   """
+  
 }

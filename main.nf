@@ -23,18 +23,12 @@ include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
 include { classify_trycycler } from './modules/run_trycycler_classify'
-include { trycycler_reconcile_new } from './modules/run_trycycler_reconcile_new'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
-include { select_assembly_new } from './modules/select_assembly_new'
 include { select_assembly } from './modules/select_assembly'
-include { trycycler_msa_new } from './modules/run_trycycler_msa_new'
 include { trycycler_msa } from './modules/run_trycycler_msa'
-include { trycycler_partition_new } from './modules/run_trycycler_partition_new'
 include { trycycler_partition } from './modules/run_trycycler_partition'
-include { trycycler_consensus_new } from './modules/run_trycycler_consensus_new'
 include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
-include { medaka_polish_consensus_new } from './modules/run_medaka_polish_consensus_new'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { plassembler } from './modules/run_plassembler'
 include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
@@ -292,10 +286,10 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         }
     }
 
-  trycycler_reconcile_new(clusters_to_reconcile_flat)
+  trycycler_reconcile(clusters_to_reconcile_flat)
 
   reconciled_cluster_dirs = 
-    trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled
+    trycycler_reconcile.out.reconciled_seqs // successfully reconciled
     .map { barcode, seq ->
         // drops the last part of the path (reconciled_seqs file) as trycycler
         // searches the parent dir for it
@@ -304,19 +298,19 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     }
   
   // TRYCYCLER: Align
-  trycycler_msa_new(reconciled_cluster_dirs)
+  trycycler_msa(reconciled_cluster_dirs)
 
   // TRYCYCLER: Partitioning reads
   clusters_to_partition =
-    trycycler_msa_new.out.results_dir
+    trycycler_msa.out.results_dir
     .groupTuple()
     .join(porechop.out.trimmed_fq)
 
-  trycycler_partition_new(clusters_to_partition)
+  trycycler_partition(clusters_to_partition)
 
   // TRYCYCLER: Generate consensus assemblies  
   clusters_for_consensus =
-    trycycler_partition_new.out.partitioned_reads
+    trycycler_partition.out.partitioned_reads
     .transpose() // "ungroup" tuple
     .map { barcode, reads ->
         // Get directories of successfully partitioned reads
@@ -324,22 +318,22 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, cluster_dir]
     }
 
-  trycycler_consensus_new(clusters_for_consensus)
+  trycycler_consensus(clusters_for_consensus)
 
   // MEDAKA: Polish consensus assembly
   consensus_dir = 
     // Get parent dir for assembly
-    trycycler_consensus_new.out.cluster_assembly
+    trycycler_consensus.out.cluster_assembly
     .map { barcode, assembly ->
         Path assembly_dir = assembly.getParent()
         return [barcode, assembly_dir]
     }
 
-  medaka_polish_consensus_new(consensus_dir)
+  medaka_polish_consensus(consensus_dir)
 
   // CAT: Combine polished clusters consensus assemblies into a single fasta
   polished_clusters = 
-    medaka_polish_consensus_new.out.cluster_assembly
+    medaka_polish_consensus.out.cluster_assembly
     .groupTuple()
     .map { barcode, fastas ->
         // Need to avoid filename collisions with consensus.fasta files
@@ -398,11 +392,12 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     // Gather all jsons for each barcode
     busco_qc.out.json
     .groupTuple()
+    .view { it -> "busco_json: $it" }
 
-  select_assembly_new(barcode_busco_jsons)
+  select_assembly(barcode_busco_jsons)
   
   best_chr_assembly = 
-    select_assembly_new.out
+    select_assembly.out
     .map { barcode, txt ->
       // best assembly stored in txt file for pipeline caching
       String best = txt.splitText()[0].strip()
