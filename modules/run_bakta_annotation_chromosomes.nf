@@ -1,29 +1,24 @@
 process bakta_annotation_chromosomes {
-  tag "ANNOTATING CONSENSUS ASSEMBLY WITH BATKA: ${barcode}"
+  tag "GENE FEATURES: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
-  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}/bakta", mode: 'symlink'
 
-input:
-  tuple val(barcode), path(medaka_consensus)
+  input:
+  tuple val(barcode), val(assembler), path(polished_fasta)
   path(bakta_db)
 
-output:
-  tuple val(barcode), path("${barcode}_bakta"), emit: bakta_annotations
-  tuple val(barcode), path("${barcode}_bakta/${barcode}_chr.txt"), emit: bakta_annotations_multiqc
+  output:
+  tuple val(barcode), val(assembler), path("${prefix}.faa"), emit: faa
+  tuple val(barcode), val(assembler), path("${prefix}.txt"), emit: txt
 
-script:
+  script:
+  prefix = "${barcode}_${assembler}_chr"
   """
-  for dir in ${medaka_consensus}; do  
-  	cat \${dir}/consensus.fasta >> concatenated_consensus.fasta
-  done
-
   bakta \\
-    concatenated_consensus.fasta \\
-    --db ${bakta_db} \\
-    --output ${barcode}_bakta \\
-    --prefix ${barcode}_chr \\
+    $polished_fasta \\
+    --db $bakta_db \\
+    --prefix $prefix \\
     --force \\
     --threads ${task.cpus}
-   
   """
 }

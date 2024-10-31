@@ -1,22 +1,22 @@
 process amrfinderplus_annotation_chromosomes {
-  tag "DETECTING AMR GENES: ${barcode}"
+  tag "${barcode}: ${assembler}"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
-  publishDir "${params.outdir}/annotations/${barcode}", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}/amrfinder", mode: 'symlink'
   
-input:
-  tuple val(barcode), path(bakta_annotations)
+  input:
+  tuple val(barcode), val(assembler), path(annotated_faa)
   path(amrfinderplus_db)
 
-output:
-  tuple val(barcode), path("amrfinderplus/*"), emit: amrfinderplus_annotations
+  output:
+  tuple val(barcode), val(assembler), path("${prefix}.tsv"), emit: report
 
-script:
+  script:
+  prefix = "${barcode}_${assembler}_chr"
   """
-  mkdir -p amrfinderplus
-
-  amrfinder -p ${barcode}_bakta/${barcode}_chr.faa \\
-    -d ${amrfinderplus_db}/latest > amrfinderplus/${barcode}.txt
-
+  amrfinder \\
+    -p $annotated_faa \\
+    -d ${amrfinderplus_db}/latest \\
+    --threads $task.cpus > ${prefix}.tsv
   """
 
 }

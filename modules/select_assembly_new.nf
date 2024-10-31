@@ -6,10 +6,12 @@ process select_assembly_new {
   tuple val(barcode), path(busco_jsons)
 
   output:
-  tuple val(barcode), stdout
+  tuple val(barcode), path("best_assembly.txt")
 
   script: 
+  // Save to file (instead of print to stdout) for nextflow caching
   """
-  compare_busco.py $busco_jsons
+  compare_busco.py $busco_jsons > best_assembly.txt
   """
+  
 }

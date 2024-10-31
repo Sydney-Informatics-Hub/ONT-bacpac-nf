@@ -404,17 +404,24 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   
   best_chr_assembly = 
     select_assembly_new.out
+    .map { barcode, txt ->
+      // best assembly stored in txt file for pipeline caching
+      String best = txt.splitText()[0].strip()
+      return [barcode, best]
+    }
+    .view { it -> "best: $it" }
     .join(all_polished, by: [0, 1])
 
+  // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY
   // BAKTA: Annotate gene features
-  bakta_annotation_chromosomes(polish_grouped_by_barcode, get_bakta.out.bakta_db)
+  bakta_annotation_chromosomes(best_chr_assembly, get_bakta.out.bakta_db)
 
-  // AMRFINDERPLUS ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES
-  // amrfinderplus_annotation_chromosomes(
-  //   bakta_annotation_chromosomes.out.bakta_annotations,
-  //   get_amrfinderplus.out.amrfinderplus_db
-  // )
-  // 
+  // AMRFINDERPLUS: Annotate AMR genes
+  amrfinderplus_annotation_chromosomes(
+    bakta_annotation_chromosomes.out.faa,
+    get_amrfinderplus.out.amrfinderplus_db
+  )
+  
   // // ABRICATE ANNOTATE CONSENSUS-CHROMOSOME WITH VFDB-GENES
   // abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
 
