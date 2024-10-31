@@ -36,23 +36,17 @@ include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
 include { medaka_polish_consensus_new } from './modules/run_medaka_polish_consensus_new'
 include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
-include { medaka_polish_flye } from './modules/run_medaka_polish_flye'
 include { plassembler } from './modules/run_plassembler'
 include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 include { quast_qc } from './modules/run_quast_qc'
 include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
-include { quast_qc_flye_chromosomes } from './modules/run_quast_qc_flye_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
-include { bakta_annotation_flye_chromosomes } from './modules/run_bakta_annotation_flye_chromosomes'
 include { busco_qc } from './modules/run_busco_qc'
 include { busco_annotation_chromosomes } from './modules/run_busco_annotation_chromosomes'
-include { busco_annotation_flye_chromosomes } from './modules/run_busco_annotation_flye_chromosomes'
 include { abricateVFDB_annotation_chromosomes } from './modules/run_abricateVFDB_annotation_chromosomes'
-include { abricateVFDB_annotation_flye_chromosomes } from './modules/run_abricateVFDB_annotation_flye_chromosomes'
 include { abricateVFDB_annotation_reference } from './modules/run_abricateVFDB_annotation_reference'
 include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
-include { amrfinderplus_annotation_flye_chromosomes } from './modules/run_amrfinderplus_annotation_flye_chromosomes'
 include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
 include { create_phylogeny_tree_related_files } from './modules/create_phylogeny_tree_related_files'
 include { run_orthofinder } from './modules/run_orthofinder'
@@ -303,37 +297,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // useful for showing all the reconcile runs:
   // trycycler_reconcile_new.out.results_dir.view { it -> "reconcile_runs: $it" }
 
-  // DELETE---
-  contigs_to_reconcile = classify_trycycler.out.clusters_to_reconcile
-                      .join(porechop.out.trimmed_fq, by: 0)
-                      .flatMap { barcode, reconcile_contigs, trimmed_fq ->
-                        if (reconcile_contigs instanceof List) {
-                          reconcile_contigs.collect { cluster_dir ->
-                            tuple(barcode, cluster_dir, trimmed_fq)
-                          }
-                        } else {
-                          [tuple(barcode, reconcile_contigs, trimmed_fq)]
-                        }
-                      }
-
-  trycycler_reconcile(contigs_to_reconcile)
-
-  select_in = trycycler_reconcile.out.reconciled_seqs
-              .groupTuple(by:[0])
-              .join(flye_assembly.out.flye_assembly, by:0)
-              .join(kraken2.out.kraken2_screen, by:0)
-              .map { barcode, reconciled, flye_assembly, k2_report ->
-                  tuple(barcode, reconciled, flye_assembly, k2_report)}
-
-  select_assembly(select_in, get_ncbi.out.ncbi_lookup)	
-
-  // TRYCYCLER: Align reconciled sequences
-  trycycler_reconciled = 
-    // Channel for successful trycycler assemblies.
-    // TODO: Can delete this and pass output directly
-    trycycler_reconcile.out.reconciled_seqs
-  // ---DELETE
-
  reconciled_cluster_dirs = 
     trycycler_reconcile_new.out.reconciled_seqs // successfully reconciled
     .map { barcode, seq ->
@@ -343,6 +306,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, cluster_dir] 
     }
   
+  // TRYCYCLER: Align
   trycycler_msa_new(reconciled_cluster_dirs)
 
   // TRYCYCLER: Partitioning reads
@@ -442,264 +406,134 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     select_assembly_new.out
     .join(all_polished, by: [0, 1])
 
-  // DELETE---
-  // IF CONSENSUS ASSEMBLY IS BEST...
-
-  // TRYCYCLER MULTIPLE SEQUENCE ALIGNMENT
-  // CONSENSUS APPROACH : Check if file Consensus.txt exists
-  msa_in_consensus = select_assembly.out.consensus_good
-          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
-          .flatMap { tuple ->
-            def barcode = tuple[0]
-            def consensus_file = tuple[1]
-            def final_path = tuple[2]
-            if (final_path instanceof List) {
-                // If final_path is a list, return a stream of separate tuples
-                final_path.collect { path ->
-                    [barcode, consensus_file, path]
-                }
-            } else {
-                // If final_path is not a list, return a single-element list with the original tuple
-                [[barcode, consensus_file, final_path]]
-            }
-          }
-          
-  trycycler_msa(msa_in_consensus)
-  trycycler_msa_out = trycycler_msa.out.three_msa
-  // TRYCYCLER PARTITIONING READS
-  partition_in = select_assembly.out.consensus_good
-          .filter { it[1].exists() }  // Ensure the correct path is checked for existence
-          .join(porechop.out.trimmed_fq, by: 0)
-  	  .map { barcode, consensus_file, final_path, trimmed_fq ->
-            tuple(barcode, consensus_file, final_path, trimmed_fq)
-          }
-
-  trycycler_partition(partition_in)
-
-  // TRYCYCLER CONSENSUS
-  partition_out_raw = trycycler_partition.out.four_reads
-
-  partition_out = partition_out_raw.flatMap { barcode, path ->
-    def directory = new File(path.toString())
-    def files = directory.listFiles().findAll { it.name.endsWith('_reconciled') }
-    files.collect { file -> [barcode, "${barcode}_${file.name}", file.path] }
-  }
-
-  // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
-  consensus_in = trycycler_msa_out
-  		 .join(partition_out, by:1)
-                 .map { row ->
-                     [row[1], row[0], row[2], row[4]]
-                 }
-
-  trycycler_consensus(consensus_in)
-
-  // MEDAKA POLISH CONSENSUS ASSEMBLY
-  // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
-  consensus_polish_in = partition_out
-                        .join(trycycler_consensus.out.consensus_consensus, by:1)
-			                  .map { row ->[row[1], row[0], row[2], row[4]]}
-
-  medaka_polish_consensus(consensus_polish_in)
-
-  // ANNOTATE VARIOUS CONSENSUS-CHROMOSOME FEATURES  
-  // TODO MAKE NAMING CONSISTENT WITH OTHER CHANNELS
-  polish_grouped_by_barcode = medaka_polish_consensus.out.consensus_polished
-			.groupTuple(by:[0])
-			.map { row -> [row[0], row[2]]}
-
-  // QUAST QC CONSENSUS-ASSEMBLY
-  quast_qc_chromosomes(polish_grouped_by_barcode)
-  // ---DELETE
-
-  // BAKTA ANNOTATE GENE FEATURES 
-  bakta_annotation_chromosomes(polish_grouped_by_barcode,get_bakta.out.bakta_db)
-
-  // BUSCO ANNOTATE CONSENSUS-CHROMOSOME FEATURES
-  busco_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations, get_busco.out.busco_db) 
+  // BAKTA: Annotate gene features
+  bakta_annotation_chromosomes(polish_grouped_by_barcode, get_bakta.out.bakta_db)
 
   // AMRFINDERPLUS ANNOTATE CONSENSUS-CHROMOSOME AMR-GENES
-  amrfinderplus_annotation_chromosomes(bakta_annotation_chromosomes.out.bakta_annotations,
-                                        get_amrfinderplus.out.amrfinderplus_db)
-  
-  // ABRICATE ANNOTATE CONSENSUS-CHROMOSOME WITH VFDB-GENES
-  abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
+  // amrfinderplus_annotation_chromosomes(
+  //   bakta_annotation_chromosomes.out.bakta_annotations,
+  //   get_amrfinderplus.out.amrfinderplus_db
+  // )
+  // 
+  // // ABRICATE ANNOTATE CONSENSUS-CHROMOSOME WITH VFDB-GENES
+  // abricateVFDB_annotation_chromosomes(polish_grouped_by_barcode)
 
-  consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
+  // consensus_processed_samples=amrfinderplus_annotation_chromosomes.out.map { it[0] }.collect()
 
-  // DELETE: Old implementation ---
-  medaka_polish_flye(unpolished_denovo_assemblies)
-  quast_qc_flye_chromosomes(medaka_polish_flye.out.flye_polished)
-  // --- DELETE
+  // kraken_input_to_create_phylogeny_tree = 
+  //   kraken2.out
+  //   .map { [it[1]] }
+  //   .collect()
 
-  // BAKTA ANNOTATE FLYE-ONLY CHROMOSOME FEATURES 
-  bakta_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished,get_bakta.out.bakta_db)
+  // consensus_bakta =
+  //   bakta_annotation_chromosomes.out.bakta_annotations
+  //   .map { [it[1]] }
+  //   .collect()
 
-  // BUSCO ANNOTATE FLYE-ONLY-CHROMOSOME FEATURES
-  busco_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations, get_busco.out.busco_db)
+  // // CREATE FILES FOR PHYLOGENETIC TREE BUILDING
+  // all_bakta_input_to_create_phylogeny_tree = consensus_bakta
 
-  // AMRFINDERPLUS ANNOTATE FLYE-ONLY AMR-GENES
-  amrfinderplus_annotation_flye_chromosomes(bakta_annotation_flye_chromosomes.out.bakta_annotations,
-                                            get_amrfinderplus.out.amrfinderplus_db)
+  // create_phylogeny_tree_related_files(
+  //   get_ncbi.out.assembly_summary_refseq,
+  //   kraken_input_to_create_phylogeny_tree,
+  //   all_bakta_input_to_create_phylogeny_tree
+  // )
 
-  flye_only_processed_samples=amrfinderplus_annotation_flye_chromosomes.out
-                              .map { it[0] }.collect()
+  // // ORTHOFINDER PHYLOGENETIC ORTHOLOGY INFERENCE
+  // run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
 
-  // ABRICATE ANNOTATE FLYE-CHROMOSOME WITH VFDB-GENES
-  abricateVFDB_annotation_flye_chromosomes(medaka_polish_flye.out.flye_polished)
-  
-  kraken_input_to_create_phylogeny_tree = kraken2.out
-                                            .map { [it[1]] }
-	                                          .collect()
+  // // AMRIFINDER ANNOTATE REFERENCE STRAINS FOR AMR GENES
+  // amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,
+  //                                   get_amrfinderplus.out.amrfinderplus_db)
 
-  consensus_bakta=bakta_annotation_chromosomes.out.bakta_annotations
-                  .map { [it[1]] }.collect()
+  // // ABRICATE ANNOTATE REFERENCE STRAINS FOR AMR GENES
+  // abricateVFDB_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder) 
 
-  flye_only_bakta=bakta_annotation_flye_chromosomes.out.bakta_annotations
-                  .map { [it[1]] }.collect()
+  // // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
+  // consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out
+  //                                 .map { it[1] }
+  //                                 .collect()
 
-// CREATE FILES FOR PHYLOGENETIC TREE BUILDING
-// Check if flye_only_bakta is empty, and use only consensus_bakta if it is
-all_bakta_input_to_create_phylogeny_tree = flye_only_bakta
-    .ifEmpty([]) // If flye_only_bakta is empty, provide an empty list
-    .merge(consensus_bakta) // Merge with consensus_bakta
-    //.view()
+  // all_samples_amrfinderplus_output = consensus_amrfinderplus_output
 
-create_phylogeny_tree_related_files(
-    get_ncbi.out.assembly_summary_refseq,
-    kraken_input_to_create_phylogeny_tree,
-    all_bakta_input_to_create_phylogeny_tree
-)
+  // all_references_amrfinderplus_output = 
+  //   amrfinderplus_annotation_reference.out.amrfinderplus_annotations
+  // 
+  // barcode_species_table = 
+  //   create_phylogeny_tree_related_files.out.barcode_species_table
 
-  // ORTHOFINDER PHYLOGENETIC ORTHOLOGY INFERENCE
-  run_orthofinder(create_phylogeny_tree_related_files.out.phylogeny_folder)
+  // generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,
+  //                                     all_references_amrfinderplus_output,
+  //                                     barcode_species_table)
 
+  // // GENERATE ABRICATE-VFDB gene matrix (FOR PHYLOGENY-AMR HEATMAP)
+  // consensus_abricate_output=abricateVFDB_annotation_chromosomes.out
+  //                           .map { it[1] }
+  //                           .collect()
 
-  // AMRIFINDER ANNOTATE REFERENCE STRAINS FOR AMR GENES
-  amrfinderplus_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder,
-                                    get_amrfinderplus.out.amrfinderplus_db)
+  // all_samples_abricate_output = consensus_abricate_output
 
-  // ABRICATE ANNOTATE REFERENCE STRAINS FOR AMR GENES
-  abricateVFDB_annotation_reference(create_phylogeny_tree_related_files.out.phylogeny_folder) 
+  // all_references_abricate_output =
+  //   abricateVFDB_annotation_reference.out.abricate_annotations
 
-  // GENERATE AMRFINDERPLUS gene matrix (FOR PHYLOGENY-AMR HEATMAP) 
-  consensus_amrfinderplus_output=amrfinderplus_annotation_chromosomes.out
-                                  .map { it[1] }
-                                  .collect()
+  // generate_abricate_gene_matrix(all_samples_abricate_output,
+  //                               all_references_abricate_output,
+  //                               barcode_species_table)
 
-  flye_only_amrfinderplus_output=amrfinderplus_annotation_flye_chromosomes.out
-                                  .map { it[1] }
-                                  .collect()
+  // // CREATE PHYLOGENETIC TREE + HEATMAP IMAGE
+  // create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,
+  //                                   generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
+  //                                   generate_abricate_gene_matrix.out.abricate_gene_matrix)
 
-// Check if flye_only_amrfinderplus_output is empty, and use only consensus_amrfinderplus_output if it is
-  all_samples_amrfinderplus_output = flye_only_amrfinderplus_output
-    .ifEmpty([]) // If flye_only_amrfinderplus_output is empty, provide an empty list
-    .merge(consensus_amrfinderplus_output) // Merge with consensus_amrfinderplus_output
+  // // ANNOTATE PLASMID FEATURES (BATKA)
+  // bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
 
-  all_references_amrfinderplus_output = amrfinderplus_annotation_reference.out.amrfinderplus_annotations
-  
-  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
+  // // SUMMARISE RUN WITH MULTIQC REPORT
+  // // Ensure all necessary inputs are available for MultiQC, even if some are empty
+  // nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
 
-  generate_amrfinderplus_gene_matrix(all_samples_amrfinderplus_output,
-                                      all_references_amrfinderplus_output,
-                                      barcode_species_table)
+  // pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary.ifEmpty([])
 
-  // GENERATE ABRICATE-VFDB gene matrix (FOR PHYLOGENY-AMR HEATMAP)
-  consensus_abricate_output=abricateVFDB_annotation_chromosomes.out
-                            .map { it[1] }
-                            .collect()
+  // kraken2_required_for_multiqc = kraken2.out.kraken2_screen
+  //   .map { it[1] }
+  //   .collect()
+  //   .ifEmpty([])
 
-  flye_only_abricate_output=abricateVFDB_annotation_flye_chromosomes.out
-                            .map { it[1] }
-                            .collect()
+  // quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc
+  //   .map { it[1] }
+  //   .collect()
 
-//  all_samples_abricate_output = consensus_abricate_output
-//                                .merge(flye_only_abricate_output)
+  // bakta_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
+  //   .map { it[1] }
+  //   .collect()
 
-// Check if flye_only_abricate_output is empty, and use only consensus_abricate_output if it is
-all_samples_abricate_output = flye_only_abricate_output
-    .ifEmpty([]) // If flye_only_abricate_output is empty, provide an empty list
-    .merge(consensus_abricate_output) // Merge with consensus_abricate_output
+  // busco_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
+  //   .map { it[1] }
+  //   .collect()
 
-  all_references_abricate_output = abricateVFDB_annotation_reference.out.abricate_annotations
+  // bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations
+  //   .map { it[1] }
+  //   .collect()
+  //   .ifEmpty([])
 
-  generate_abricate_gene_matrix(all_samples_abricate_output,
-                                all_references_abricate_output,
-                                barcode_species_table)
+  // phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
+  //   .ifEmpty([])
 
-  // CREATE PHYLOGENETIC TREE + HEATMAP IMAGE
-
-  create_phylogeny_And_Heatmap_image(run_orthofinder.out.phylogeny_tree,
-                                    generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
-                                    generate_abricate_gene_matrix.out.abricate_gene_matrix)
-
-  // ANNOTATE PLASMID FEATURES (BATKA)
-  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
-
-  // SUMMARISE RUN WITH MULTIQC REPORT
-  // Ensure all necessary inputs are available for MultiQC, even if some are empty
-nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
-
-pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary.ifEmpty([])
-
-kraken2_required_for_multiqc = kraken2.out.kraken2_screen
-    .map { it[1] }
-    .collect()
-    .ifEmpty([])
-
-quast_required_for_multiqc = quast_qc_chromosomes.out.quast_qc_multiqc
-    .map { it[1] }
-    .collect()
-    .merge(
-        quast_qc_flye_chromosomes.out.quast_qc_multiqc
-        .map { it[1] }
-        .collect()
-        .ifEmpty([])
-    )
-
-bakta_required_for_multiqc = bakta_annotation_chromosomes.out.bakta_annotations_multiqc
-    .map { it[1] }
-    .collect()
-    .merge(
-        bakta_annotation_flye_chromosomes.out.bakta_annotations_multiqc
-        .map { it[1] }
-        .collect()
-        .ifEmpty([])
-    )
-
-busco_required_for_multiqc = busco_annotation_chromosomes.out.busco_annotations
-    .map { it[1] }
-    .collect()
-    .merge(
-        busco_annotation_flye_chromosomes.out.busco_annotations
-        .map { it[1] }
-        .collect()
-        .ifEmpty([])
-    )
-
-bakta_plasmids_required_for_multiqc = bakta_annotation_plasmids.out.bakta_annotations
-    .map { it[1] }
-    .collect()
-    .ifEmpty([])
-
-phylogeny_heatmap_plot_required_for_multiqc = create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
-    .ifEmpty([])
-
-multiqc_config = params.multiqc_config
-
-// Run MultiQC with the gathered inputs
-multiqc_report(
-    pycoqc_required_for_multiqc,
-    nanoplot_required_for_multiqc,
-    multiqc_config,
-    kraken2_required_for_multiqc,
-    quast_required_for_multiqc,
-    bakta_required_for_multiqc,
-    bakta_plasmids_required_for_multiqc,
-    busco_required_for_multiqc,
-    parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
-    phylogeny_heatmap_plot_required_for_multiqc
-)
+  // multiqc_config = params.multiqc_config
+  // 
+  // Run MultiQC with the gathered inputs
+  //multiqc_report(
+  //    pycoqc_required_for_multiqc,
+  //    nanoplot_required_for_multiqc,
+  //    multiqc_config,
+  //    kraken2_required_for_multiqc,
+  //    quast_required_for_multiqc,
+  //    bakta_required_for_multiqc,
+  //    bakta_plasmids_required_for_multiqc,
+  //    busco_required_for_multiqc,
+  //    parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
+  //    phylogeny_heatmap_plot_required_for_multiqc
+  //)
 }
 
 // Print workflow execution summary 
