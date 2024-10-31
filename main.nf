@@ -431,15 +431,16 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // SELECT "BEST" ASSEMBLY
   // TODO: Discuss better approaches. Currently selects the best assembly per
   // barcode by most Complete BUSCO % 
-  busco_qc.out.json.view { it -> "busco_jsons: $it" }
-  
   barcode_busco_jsons =
     // Gather all jsons for each barcode
     busco_qc.out.json
     .groupTuple()
 
   select_assembly_new(barcode_busco_jsons)
-  select_assembly_new.out.view { it -> "BUSCOS!: $it" }
+  
+  best_chr_assembly = 
+    select_assembly_new.out
+    .join(all_polished, by: [0, 1])
 
   // DELETE---
   // IF CONSENSUS ASSEMBLY IS BEST...

@@ -1,6 +1,6 @@
 process select_assembly_new {
   tag "${barcode}"  
-  container 'python:3.12'
+  container 'python:3.8'
 
   input:
   tuple val(barcode), path(busco_jsons)

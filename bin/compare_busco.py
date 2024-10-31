@@ -30,4 +30,4 @@ if __name__ == "__main__":
     args = parse_args()
     results = [get_complete_buscos(file) for file in args.json_files]
     highest_busco = max(results, key=lambda x: x[1])
-    print(highest_busco[0])
+    print(highest_busco[0], end="") # don't print newline
