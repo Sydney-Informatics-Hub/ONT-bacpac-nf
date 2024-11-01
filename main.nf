@@ -277,12 +277,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     .join(porechop.out.trimmed_fq, by: 0)
     // from [barcode, [pathA, pathB], ...]
     // to [barcode, pathA, ...]; [barcode, pathB, ...]
-    // TODO: I think this can be replaced with .transpose()
-    .flatMap { barcode, cluster_paths, trimmed_fq ->
-        cluster_paths.collect { path -> 
-            return [barcode, path, trimmed_fq] 
-        }
-    }
+    .transpose()
 
   trycycler_reconcile(clusters_to_reconcile_flat)
 
@@ -362,7 +357,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
         return [barcode, assembler_name, assembly_dir] 
     }
     .combine(porechop.out.trimmed_fq, by: 0)
-    .view { it -> "3 unpolished_denovos: $it" }
 
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
@@ -389,7 +383,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     // Gather all jsons for each barcode
     busco_qc_chromosomes.out.json_summary
     .groupTuple()
-    .view { it -> "busco_json: $it" }
 
   select_assembly(barcode_busco_jsons)
   
@@ -400,7 +393,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
       String best = txt.splitText()[0].strip()
       return [barcode, best]
     }
-    .view { it -> "best: $it" }
     .join(all_polished, by: [0, 1])
 
   // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-BARCODE
@@ -475,7 +467,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     abricateVFDB_annotation_chromosomes.out.report
     .map { barcode, report -> report }
     .collect()
-    .view { it -> "abricate: $it" }
 
   generate_abricate_gene_matrix(
     abricate_chr_reports,
