@@ -6,11 +6,10 @@ nextflow.enable.dsl=2
 // Import processes or subworkflows to be run in the workflow
 include { check_input } from './modules/check_input'
 include { check_samplesheet } from './modules/check_samplesheet'
-include { concat_fastqs } from './modules/concat_fq'
 include { concat_fastas } from './modules/concat_fa'
+include { concat_fastqs } from './modules/run_pigz'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
-include { parse_required_pycoqc_segments } from './modules/parse_required_pycoqc_segments'
 include { nanoplot_summary } from './modules/run_nanoplot'
 include { get_ncbi } from './modules/get_ncbi'
 include { get_busco } from './modules/get_busco'
@@ -163,6 +162,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
           def unzip_dir = path.toString()  // Ensure path is a string
           def barcode = unzip_dir.tokenize('/').last()  // Extract the directory name
           [barcode, unzip_dir]}  // Return a list containing the directory name and path
+
     }}
 
   // PREPARE INPUTS
@@ -173,8 +173,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   nanoplot_summary(sequencing_summary)
   pycoqc_summary(sequencing_summary)
-  
-  parse_required_pycoqc_segments(pycoqc_summary.out.pycoqc_summary,params.pycoqc_header_file)
 
   // CONCATENATE FQS PER SAMPLE
   concat_fastqs(unzipped_fq_dirs)
@@ -448,8 +446,6 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (AMRFINDERPLUS)
   amrfinderplus_chr_reports =
-    // TODO: Currently takes dir as input, amend the phylo building .py file
-    // to take direct inputs
     amrfinderplus_annotation_chromosomes.out.report
     .map { barcode, assembler, report -> report }
     .collect()
@@ -487,8 +483,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty
   nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
-
-  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_summary.ifEmpty([])
+  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_json.ifEmpty([])
 
   kraken2_required_for_multiqc = 
     kraken2.out.kraken2_screen
@@ -525,16 +520,15 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // Run MultiQC with the gathered inputs
   multiqc_report(
-      pycoqc_required_for_multiqc,
-      nanoplot_required_for_multiqc,
-      multiqc_config,
-      kraken2_required_for_multiqc,
-      quast_required_for_multiqc,
-      bakta_required_for_multiqc,
-      bakta_plasmids_required_for_multiqc,
-      busco_required_for_multiqc,
-      parse_required_pycoqc_segments.out.pycoQC_mqc.ifEmpty([]),
-      phylogeny_heatmap_plot_required_for_multiqc
+    pycoqc_required_for_multiqc,
+    nanoplot_required_for_multiqc,
+    multiqc_config,
+    kraken2_required_for_multiqc,
+    quast_required_for_multiqc,
+    bakta_required_for_multiqc,
+    bakta_plasmids_required_for_multiqc,
+    busco_required_for_multiqc,
+    phylogeny_heatmap_plot_required_for_multiqc
   )
 }
 

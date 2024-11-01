@@ -4,8 +4,8 @@ process generate_abricate_gene_matrix {
   publishDir "${params.outdir}/taxonomy", mode: 'symlink'
   
   input:
-        path(abricate_output_all_samples)
-        path(all_references_folder_abricate_output)
+    path(abricate_output_all_samples)
+    path(all_references_folder_abricate_output)
   	path(sampleid_species_table)
 
   output:

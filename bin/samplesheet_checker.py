@@ -33,16 +33,10 @@ def unzip_from_samplesheet(samplesheet_path, output_dir):
         reader.fieldnames = [name.lstrip('#') for name in reader.fieldnames]
         
         for row in reader:
-            barcode = row['barcode']
-            batch = row['batch']
             zip_file = Path(row['file_path'])
-
-            # Create a directory structure based on barcode and batch
-            batch_dir = output_dir / barcode / batch
-            batch_dir.mkdir(parents=True, exist_ok=True)
             
             # Unzip the file into the batch directory
-            unzip_file(zip_file, batch_dir)
+            unzip_file(zip_file, output_dir)
 
     print(f"Unzipping complete. Unzipped directories are organized by barcode and batch in {output_dir}")
 
