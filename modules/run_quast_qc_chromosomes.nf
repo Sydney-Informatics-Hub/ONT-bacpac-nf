@@ -1,27 +1,25 @@
 process quast_qc_chromosomes {
-  tag "EVALUATING GENOME QUALITY: ${barcode}"
+  tag "EVALUATING GENOME QUALITY: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/quast:5.2.0--py39pl5321h2add14b_1'
-  publishDir "${params.outdir}/quality_control", mode: 'symlink'
+  publishDir "${params.outdir}/quality_control/${barcode}", mode: 'symlink'
 
-input:
-  tuple val(barcode), path(medaka_consensus)
+  input:
+  tuple val(barcode), val(assembler), path(polished_assembly)
 
-output:
-  tuple val(barcode), path("${barcode}_quast"), emit: quast_qc
-  tuple val(barcode), path("${barcode}_quast/${barcode}.tsv"), emit: quast_qc_multiqc
+  output:
+  tuple val(barcode), val(assembler), path("${prefix}"), emit: results
+  tuple val(barcode), val(assembler), path("${prefix}.tsv"), emit: tsv
 
-script:
+  script:
+  prefix = "${barcode}_${assembler}"
   """
-  for dir in ${medaka_consensus}; do  
-  	cat \${dir}/consensus.fasta >> concatenated_consensus.fasta
-  done
-
   quast.py \\
-        --output-dir ${barcode}_quast \\
-        -l ${barcode} \\
-        concatenated_consensus.fasta
+    --output-dir $prefix \\
+    $polished_assembly \\
+    --threads $task.cpus
 
-  mv ${barcode}_quast/report.tsv ${barcode}_quast/${barcode}.tsv 
+  # multiqc requires tsv to be named with sample
+  ln -s ${prefix}/report.tsv ${prefix}.tsv
   """
 
 }
