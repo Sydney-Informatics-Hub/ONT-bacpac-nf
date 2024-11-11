@@ -1,7 +1,7 @@
 process plassembler {
   tag "DETECTING PLASMIDS AND OTHER MOBILE ELEMENTS: ${barcode}"
   container 'quay.io/gbouras13/plassembler:1.6.2'
-  publishDir "${params.outdir}/assemblies", mode: 'symlink'
+  publishDir "${params.outdir}/assemblies", mode: 'copy'
 
   input:
   tuple val(barcode), path(trimmed_fq), path(flye_assembly)

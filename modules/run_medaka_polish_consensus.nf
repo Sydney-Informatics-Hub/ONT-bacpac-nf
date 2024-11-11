@@ -1,7 +1,7 @@
 process medaka_polish_consensus {
   tag "${barcode}: ${cluster_dir}"
   container 'quay.io/biocontainers/medaka:1.11.3--py39h05d5c5e_0'
-  publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'symlink'
+  publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'copy'
 
   input:
   tuple val(barcode), path(cluster_dir)

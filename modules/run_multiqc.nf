@@ -1,7 +1,7 @@
 process multiqc_report {
   tag "GENERATING SUMMARY REPORT"
   container 'quay.io/biocontainers/multiqc:1.21--pyhdfd78af_0'
-  publishDir "${params.outdir}/report", mode: 'symlink'
+  publishDir "${params.outdir}/report", mode: 'copy'
 
   input:
   path(pycoqc)

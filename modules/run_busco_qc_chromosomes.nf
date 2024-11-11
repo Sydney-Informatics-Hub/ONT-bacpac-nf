@@ -1,7 +1,7 @@
 process busco_qc_chromosomes {
   tag "EVALUATING GENOME COMPLETENESS: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/busco:5.6.1--pyhdfd78af_0'
-  publishDir "${params.outdir}/quality_control/${barcode}", mode: 'symlink'
+  publishDir "${params.outdir}/quality_control/${barcode}", mode: 'copy'
   
   input:
   tuple val(barcode), val(assembler), path(polished_assembly)

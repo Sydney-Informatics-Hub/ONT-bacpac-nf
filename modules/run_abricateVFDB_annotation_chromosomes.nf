@@ -1,7 +1,7 @@
 process abricateVFDB_annotation_chromosomes {
   tag "VFDB GENES: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
-  publishDir "${params.outdir}/annotations/${barcode}/abricate", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}/abricate", mode: 'copy'
 
   input:
   tuple val(barcode), val(assembler), path(polished_fasta)

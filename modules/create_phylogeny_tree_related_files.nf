@@ -1,6 +1,6 @@
 process create_phylogeny_tree_related_files {
   container 'python:3.8'
-  publishDir "${params.outdir}/taxonomy", mode: 'symlink'
+  publishDir "${params.outdir}/taxonomy", mode: 'copy'
   
   input:
   path(assembly_summary_refseq)

@@ -1,7 +1,7 @@
 process bakta_annotation_plasmids {
   tag "ANNOTATING PLASMIDS: ${barcode}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
-  publishDir "${params.outdir}/annotations/${barcode}/plasmids", mode: 'symlink'
+  publishDir "${params.outdir}/annotations/${barcode}/plasmids", mode: 'copy'
   
 input:
   tuple val(barcode), path(plassembler_plasmids)
