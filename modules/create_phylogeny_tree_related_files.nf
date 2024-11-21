@@ -14,8 +14,8 @@ process create_phylogeny_tree_related_files {
   script: 
   """
   create_phylogenytree_related_files.py \\
-    ${assembly_summary_refseq} \\
-    ${kraken2_reports} \\
-    ${bakta_results}
+    --assembly_summary_refseq ${assembly_summary_refseq} \\
+    --kraken2_reports ${kraken2_reports} \\
+    --bakta_results ${bakta_results}
   """
 }
