@@ -1,7 +1,7 @@
 process generate_abricate_gene_matrix {
   tag "GENERATING ABRICATE GENE MATRIX FOR ALL SAMPLES: ${params.input}"  
   container 'python:3.8'
-  publishDir "${params.outdir}/taxonomy", mode: 'symlink'
+  publishDir "${params.outdir}/taxonomy", mode: 'copy'
   
   input:
     path(abricate_output_all_samples)

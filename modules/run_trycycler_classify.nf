@@ -6,12 +6,11 @@ process classify_trycycler {
   tuple val(barcode), path(trycycler_cluster), val(num_contigs)
 
   output:
-  tuple val(barcode), path("${barcode}_discarded/*"), emit: discard_contigs, optional: true
-  tuple val(barcode), path("${barcode}_for_reconciliation/*"), emit: reconcile_contigs
+  tuple val(barcode), path("${barcode}_discarded/*"), emit: clusters_to_discard, optional: true
+  tuple val(barcode), path("${barcode}_for_reconciliation/*"), emit: clusters_to_reconcile
 
   script: 
   """
-  classify_trycycler_clusters.py \\
-    ${barcode} 
+  classify_trycycler_clusters.py ${barcode} 
   """
 }

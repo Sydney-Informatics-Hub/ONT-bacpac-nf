@@ -27,7 +27,8 @@ import glob
 import shutil
 import urllib.request
 import time
-
+import argparse
+from pathlib import Path
 
 def download_file(url, output_path):
     try:
@@ -119,20 +120,37 @@ def get_available_species_genome_details_dic(assembly_summary_refseq, species_na
 
     return
 
-
 def main():
-    assembly_summary_refseq = sys.argv[1]
-    all_args = sys.argv[2:]
-    kraken2_reports = [ arg for arg in all_args if 'k2report' in arg ]
-    bakta_results = [ arg for arg in all_args if '_bakta' in arg ]
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--assembly_summary_refseq",
+        required=True,
+        help="Path to refseq_summary.txt"
+    )
+    parser.add_argument(
+        "--kraken2_reports",
+        nargs='+',
+        required=True,
+        help="Paths to k2report files"
+    )
+    parser.add_argument(
+        "--bakta_results",
+        nargs='+',
+        required=True,
+        help="Paths to bakta result dirs"
+    )
+    args = parser.parse_args()
 
     sampleID_species_dic = {}
     nr_species_list = []
 
-    for each_sample in range(len(kraken2_reports)):
-        present_sampleid_k2path = kraken2_reports[each_sample]
-        present_sampleid = str(present_sampleid_k2path).split('/')[-1].split('.')[0]
-        sampleID_species_dic = get_dominant_species(present_sampleid, present_sampleid_k2path, sampleID_species_dic, nr_species_list)
+    for k2_path in args.kraken2_reports:
+        """
+        Parse sample/barcode IDs from kraken 2 path inputs
+        k2_path = "barcode10.k2report"
+        """
+        sample_id = k2_path.split('.')[0]
+        sampleID_species_dic = get_dominant_species(sample_id, k2_path, sampleID_species_dic, nr_species_list)
 
     output_sampleID_species_table_path = "barcode_species_table_mqc.txt"
     with open(output_sampleID_species_table_path, "w") as file_out:
@@ -144,14 +162,24 @@ def main():
 
     os.makedirs("phylogeny", exist_ok=True)
 
-    for each_sample in range(len(bakta_results)):
-        present_sampleid_baktapath = bakta_results[each_sample]
-        present_sampleid = str(present_sampleid_baktapath).split("_bakta")[0].strip()
-        present_species = sampleID_species_dic[present_sampleid]
+    for bakta_path in args.bakta_results:
+        """
+        Parse sample/barcode IDs from kraken 2 path inputs
+        bakta_path = [nextflow_output_hash]
 
-        final_protein_file_name = f"{present_sampleid}_{present_species}.faa"
+        Has to look for a txt file in the bakta dir to get the sample/barcode
+        id. Not great. But should raise an error if not in sampleID_species_dic
 
-        find_and_cpy_cmd = f'find {present_sampleid_baktapath}/ -type f -name "*.faa" ! -name "*hypotheticals*.faa" -exec cp {{}} "phylogeny/{final_protein_file_name}" \\;'
+        txt file because that what is passed in main.nf currently.
+        """
+        path = list(Path(bakta_path).glob("*.txt"))
+        file_name = path[0].name
+        sample_id = file_name.split('_')[0]
+        present_species = sampleID_species_dic[sample_id]
+
+        final_protein_file_name = f"{sample_id}_{present_species}.faa"
+
+        find_and_cpy_cmd = f'find {bakta_path}/ -type f -name "*.faa" ! -name "*hypotheticals*.faa" -exec cp {{}} "phylogeny/{final_protein_file_name}" \\;'
         os.system(find_and_cpy_cmd)
 
     species_list = list(set(sampleID_species_dic.values()))
@@ -159,7 +187,7 @@ def main():
     for species_name in species_list:
         species_name_abbreviation_sp = species_name.split("_")
         species_name_abbreviation = f"{species_name_abbreviation_sp[0][0]}{species_name_abbreviation_sp[1][0]}"
-        get_available_species_genome_details_dic(assembly_summary_refseq, species_name, species_name_abbreviation)
+        get_available_species_genome_details_dic(args.assembly_summary_refseq, species_name, species_name_abbreviation)
 
     return
 

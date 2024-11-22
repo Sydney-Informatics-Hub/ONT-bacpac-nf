@@ -1,20 +1,20 @@
 process medaka_polish_consensus {
-  tag "POLISHING CONSENSUS ASSEMBLY: ${barcode}"
+  tag "${barcode}: ${cluster_dir}"
   container 'quay.io/biocontainers/medaka:1.11.3--py39h05d5c5e_0'
-  publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'symlink'
+  publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'copy'
 
   input:
-  tuple val(barcode), val(cluster_id), path(consensus_partition), path(consensus_consensus)  
+  tuple val(barcode), path(cluster_dir)
 
   output:
-  tuple val(barcode), val(cluster_id), path("${cluster_id}_polished"), emit: consensus_polished, optional: true
+  tuple val(barcode), path("consensus.fasta"), emit: cluster_assembly
 
   script:
   """
   medaka_consensus \\
-		-i ${consensus_partition}/4_reads.fastq \\
-		-d ${consensus_consensus}/7_final_consensus.fasta \\
-		-o ${cluster_id}_polished \\
-		-t ${task.cpus}
+    -i ${cluster_dir}/4_reads.fastq \\
+    -d ${cluster_dir}/7_final_consensus.fasta \\
+    -o ./ \\
+    -t ${task.cpus}
   """
 }
