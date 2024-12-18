@@ -31,7 +31,7 @@ tree <- read.tree(full_path)
 
 ## Heatmap for AMR genes
 # Read first heatmap data 
-heatmap_data1 <- read.table(amrfinderplus_gene_matrix, header = TRUE, sep = "\t", row.names = 1)
+heatmap_data1 <- read.table(amrfinderplus_gene_matrix, header = TRUE, sep = "\t", row.names = 1, quote = "")
 
 # Read second heatmap data
 heatmap_data2 <- read.table(abricate_gene_matrix, header = TRUE, sep = "\t", row.names = 1)
