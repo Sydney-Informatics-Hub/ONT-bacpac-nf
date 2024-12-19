@@ -472,7 +472,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
 
   // R: Plot phylogeny and heatmap
   create_phylogeny_And_Heatmap_image(
-    run_orthofinder.out.phylogeny_tree,
+    run_orthofinder.out.rooted_tree,
     generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
     generate_abricate_gene_matrix.out.abricate_gene_matrix
   )
