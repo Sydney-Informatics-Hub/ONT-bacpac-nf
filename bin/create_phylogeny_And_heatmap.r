@@ -107,20 +107,25 @@ p_names <- tree$tip.label %>%
   coord_cartesian(clip = "off")
 
 # Generate plot ----
+# Set plot size dynamically
+n <- ncol(combined_heatmap)
+l <- length(tree$tip.label)
+
+# used linear eq. (mx + b) to find scaling factor between nrow 17 and 87, where
+# x is the number of genes
+name_width <- -9/560 * n + 993/560
+tree_width <- -3/560 * n + 331/560
+  
 # Align tree, names, and heatmap with aplot  
 main <-
   p_heat %>% 
-  aplot::insert_left(p_names, width = 1.2) %>%
-  aplot::insert_left(p_tree, width = 0.4)
-
-# Set plot size dynamically
-n <- nrow(combined_heatmap)
-l <- length(tree$tip.label)
-
-WIDTH = 600 + n * 30 # tree and names = 600px + dynamic based on genes
-HEIGHT = 100 + l * 30 # dynamic padding for gene names at the top
+  aplot::insert_left(p_names, width = name_width) %>%
+  aplot::insert_left(p_tree, width = tree_width)
 
 # Save to file ----
+WIDTH = 800 + (n * 10) # tree and names = 800px + dynamic based on genes
+HEIGHT = 100 + l * 30 # dynamic padding for gene names at the top
+
 png("combined_plot_mqc.png", width = WIDTH, height = HEIGHT)
 main
 dev.off()
