@@ -24,6 +24,18 @@ heatmap_data2 <- read.table(abricate_gene_matrix, header = TRUE, sep = "\t", row
 
 rm(abricate_gene_matrix, amrfinderplus_gene_matrix, tree_path)
 
+if (ncol(heatmap_data1) + ncol(heatmap_data2) == 0) {
+  # Plot only the tree if no amr data
+  WIDTH = 800
+  HEIGHT = 100 + length(tree$tip.label) * 30
+  png("combined_plot_mqc.png", width = WIDTH, height = HEIGHT)
+  ggtree(tree, size = 1) + 
+    theme_tree2() +
+    geom_tiplab(align = T, as_ylab = T, size = 12)
+  dev.off()
+  stop("No AMR genes detected, plotting phylogeny only")
+}
+
 # Match labels ----
 # Find names that already match across data. These are likely the reference seqs. 
 # IDing here will ensure matching labels are not manipulated. Also to prevent
@@ -74,7 +86,8 @@ row.names(heatmap_data2) <- ifelse(
   heatmap2_names$tip_name[idx]
 )
 
-# Doesn't matter if either heatmap have null results
+# Doesn't matter if either heatmap have null results. If no data in total,
+# plot tree only above
 combined_heatmap <- cbind(heatmap_data1, heatmap_data2)
 rm(heatmap_data1, heatmap_data2, heatmap1_names, heatmap2_names, tree_names)
 
