@@ -39,4 +39,9 @@ The authors acknowledge the support provided by the Sydney Informatics Hub, a Co
 
 ### Cite us to support us!
 
-DOI coming soon 
+You can cite this pipeline as: 
+
+```
+Samaha, G., Samsing, F., O'Brien, M., & Jaya, F. (2025). ONT-bacpac-nf (Version 1.0.0) [Computer software]. https://doi.org/10.48546/workflowhub.workflow.1263.1
+```
+
