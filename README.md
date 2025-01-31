@@ -1,7 +1,5 @@
 # ONT-bacpac-nf
 
-:wrench: THIS PIPELINE IS UNDER ACTIVE DEVELOPMENT :wrench:
-
 ## Workflow description 
 
 A rapid and portable workflow for pond-side sequencing of bacterial pathogens for sustainable aquaculture using ONT long-read sequencing. 
@@ -34,6 +32,7 @@ Acknowledgements (and co-authorship, where appropriate) are an important way for
 - Francisca Samsing (Sydney School of Veterinary Science, University of Sydney)
 - Georgie Samaha (Sydney Informatics Hub, University of Sydney)
 - Fred Jaya (Sydney Informatics Hub, University of Sydney)
+- Mitchell O'Brien (Sydney Informatics Hub, University of Sydney)
   
 ### Suggested acknowledgement
 The authors acknowledge the support provided by the Sydney Informatics Hub, a Core Research Facility of the University of Sydney. This research/project was undertaken with the assistance of resources and services from the National Computational Infrastructure (NCI), which is supported by the Australian Government, and the Australian BioCommons which is enabled by NCRIS via Bioplatforms Australia funding.
