@@ -51,3 +51,61 @@ process process_name {
   """
 }
 ```
+
+## `nf-test`
+
+Installing `nf-test` on Gadi:
+
+```bash
+# Load modules
+$ module load java/jdk-17.0.2
+$ module load nextflow
+
+# Install according to nf-test.com docs
+$ curl -fsSL https://get.nf-test.com | bash
+
+# Test installation
+$ nf-test version
+```
+
+Initialising `nf-test` for the pipeline. This creates a config file and `tests/` directory. Not required to run again.
+
+```bash
+$ nf-test init
+```
+
+Create a boilerplate test for the whole pipeline.
+
+```bash
+$ nf-test generate pipeline main.nf
+```
+
+Running test interactively:
+
+```bash
+qsub -I -P er01 -lwalltime=4:00:00 -lmem=4GB -lncpus=1 -qcopyq -lstorage=gdata/tj48+gdata/er01+scratch/er01 -ljobfs=64GB
+```
+
+Run test:
+
+```bash
+$ nf-test test --profile gadi
+```
+
+Currently errors:
+
+```bash
+Caused by:
+  Failed to submit process to grid scheduler for execution
+
+
+  Command executed:
+
+    qsub -N nf-get_bakta_DO .command.run
+
+  Command exit status:
+    32
+
+    Command output:
+      qsub: Error: Filesystem "" is unknown. Please check your "-l storage" flag is correct.
+```

@@ -12,3 +12,4 @@ data*/
 run_test.*
 data/
 test/kraken2_db
+.nf-test*

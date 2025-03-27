@@ -1,0 +1,26 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("The whole pipeline runs one barcode.") {
+
+        when {
+            params {
+                // define parameters here. Example: 
+                // outdir = "tests/results"
+                samplesheet = "/g/data/er01/bacpac/test_data/sample_sheet.csv"
+                kraken2_db = "/scratch/tj48/databases/kraken2_db"
+                sequencing_summary = "/g/data/tj48/data/2402_FAX78092/sequencing_summary_FAX78092_2830cc58_163c38f4.txt"
+                gadi_account = "er01"
+                gadi_storage = "/scratch/er01+/gdata/er01+/gdata/tj48"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}
