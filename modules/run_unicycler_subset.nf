@@ -16,6 +16,6 @@ process unicycler_assembly_subset {
   unicycler \
     --long ${subset_fq} \\
     --threads ${task.cpus} \\
-    --out ${barcode}_unicycler_assembly
+    --out \${OUTDIR}
   """
 }

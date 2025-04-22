@@ -1,7 +1,6 @@
 process trycycler_subsample {
   tag "SUBSAMPLING FASTQS: ${barcode}"
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
-  publishDir "${params.outdir}/tests/trycycler_subsample", mode: 'copy'
 
   // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
 
