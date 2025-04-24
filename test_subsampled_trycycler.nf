@@ -24,6 +24,7 @@ include { unicycler_assembly } from './modules/run_unicycler'
 include { unicycler_assembly_subset } from './modules/run_unicycler_subset'
 include { trycycler_subsample } from './modules/run_trycycler_subsample'
 include { trycycler_cluster } from './modules/run_trycycler_cluster'
+include { trycycler_cluster_subset } from './modules/run_trycycler_cluster_subset'
 include { classify_trycycler } from './modules/run_trycycler_classify'
 include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
 include { select_assembly } from './modules/select_assembly'
@@ -179,9 +180,13 @@ if ( params.help || (!params.input_directory && !params.samplesheet)) {
         return [barcode, total_contigs]
     }
 
+  unicycler_assembly_subset_grouped = unicycler_assembly_subset.out.unicycler_assembly
+    .groupTuple()
+  flye_assembly_subset_grouped = flye_assembly_subset.out.flye_assembly
+    .groupTuple()
   denovo_assemblies =
-    unicycler_assembly_subset.out.unicycler_assembly
-    .join(flye_assembly_subset.out.flye_assembly, by:0)
+    unicycler_assembly_subset_grouped
+    .join(flye_assembly_subset_grouped, by:0)
     .join(porechop.out.trimmed_fq, by:0)
     .join(num_contigs_per_barcode, by:0)
 
@@ -194,13 +199,13 @@ if ( params.help || (!params.input_directory && !params.samplesheet)) {
 
   // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
   // TRYCYCLER: Cluster contigs
-  trycycler_cluster(denovo_assembly_contigs.run_trycycler)
+  trycycler_cluster_subset(denovo_assembly_contigs.run_trycycler)
 
   barcode_cluster_sizes =
     // trycycler_cluster filters out small contigs (default < 5000nt) and can
     // result in < 2 contigs here again. Use the same branching logic to avoid
     // < 2 contig errors.
-    trycycler_cluster.out.phylip
+    trycycler_cluster_subset.out.phylip
     .map { barcode, contigs_phylip ->
         def phylip_lines = contigs_phylip.text.readLines().size - 1 // exclude header
         return [barcode, phylip_lines]
@@ -214,7 +219,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet)) {
   // TRYCYCLER: Classify clusters
   clusters_to_classify =
     // Add path to clusters with sufficient contigs
-    trycycler_cluster.out.clusters
+    trycycler_cluster_subset.out.clusters
     .join(barcode_cluster_sizes.run_trycycler)
 
   classify_trycycler(clusters_to_classify)
@@ -294,19 +299,20 @@ if ( params.help || (!params.input_directory && !params.samplesheet)) {
   polished_consensus_per_barcode = concat_fastas.out
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
-  unpolished_denovo_assemblies =
-    unicycler_assembly_subset.out.unicycler_assembly
-    .mix(flye_assembly_subset.out.flye_assembly)
-    .map { barcode, assembly_dir -> 
-        // Get the assembler name by parsing the publishDir path.
-        // A better way to do this is output i.e. val(assembler_name) in the
-        // assembly processes but will required more changes
-        String assembler_name = assembly_dir.toString().tokenize("_")[-2]
-        return [barcode, assembler_name, assembly_dir] 
-    }
-    .combine(porechop.out.trimmed_fq, by: 0)
+  // Doesn't yet handle the subset assemblies
+  // unpolished_denovo_assemblies =
+  //   unicycler_assembly_subset.out.unicycler_assembly
+  //   .mix(flye_assembly_subset.out.flye_assembly)
+  //   .map { barcode, assembly_dir -> 
+  //       // Get the assembler name by parsing the publishDir path.
+  //       // A better way to do this is output i.e. val(assembler_name) in the
+  //       // assembly processes but will required more changes
+  //       String assembler_name = assembly_dir.toString().tokenize("_")[-2]
+  //       return [barcode, assembler_name, assembly_dir] 
+  //   }
+  //   .combine(porechop.out.trimmed_fq, by: 0)
 
-  medaka_polish_denovo(unpolished_denovo_assemblies)
+  // medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
   all_polished =
@@ -317,7 +323,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet)) {
         String assembler = "consensus"
         return [barcode, assembler, consensus_fa]
     }
-    .mix(medaka_polish_denovo.out.assembly)
+    // .mix(medaka_polish_denovo.out.assembly)
 
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
