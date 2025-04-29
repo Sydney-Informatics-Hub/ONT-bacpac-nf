@@ -15,6 +15,7 @@ process trycycler_subsample {
   trycycler subsample \\
     --reads $trimmed_fq \\
     --out_dir ${barcode}_subsets \\
+    --count ${params.trycycler_subsamples} \\
     --threads ${task.cpus}
   """
 }
