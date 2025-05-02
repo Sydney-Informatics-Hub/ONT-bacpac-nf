@@ -25,11 +25,11 @@
       "required": ["outdir", "sequencing_summary"],
       "properties": {
         "input_directory": {
-          "type": "boolean",
+          "type": "string",
           "fa_icon": "fas fa-folder-open"
         },
         "samplesheet": {
-          "type": "boolean",
+          "type": "string",
           "fa_icon": "fas fa-file"
         },
         "outdir": {
@@ -45,7 +45,7 @@
         },
         "multiqc_config": {
           "type": "string",
-          "default": "${projectDir}/assets/multiqc_config.yml",
+          "default": "/scratch/er01/gs5517/ONT-bacpac-nf/assets/multiqc_config.yml",
           "hidden": true
         }
       }
@@ -128,5 +128,11 @@
     {
       "$ref": "#/$defs/databases"
     }
-  ]
+  ],
+  "properties": {
+    "pycoqc_header_file": {
+      "type": "string",
+      "default": "/scratch/er01/gs5517/ONT-bacpac-nf/assets/pycoqc_report_header.txt"
+    }
+  }
 }
