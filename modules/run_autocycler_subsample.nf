@@ -15,6 +15,7 @@ process autocycler_subsample {
   autocycler subsample \\
     --reads $trimmed_fq \\
     --out_dir ${barcode}_subsets \\
+    --count ${params.subsamples} \\
     --genome_size \$(cat ${genome_size_txt})
   """
 }
