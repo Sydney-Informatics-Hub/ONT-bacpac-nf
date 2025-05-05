@@ -207,6 +207,13 @@ workflow trycycler {
     
     concat_fastas(polished_clusters)
 
+    consensus =
+        concat_fastas.out
+        .map { barcode, consensus_fa ->
+            String assembler = "trycycler"
+            return [barcode, assembler, consensus_fa]
+        }
+
     emit:
-    polished_consensus_per_barcode = concat_fastas.out
+    polished_consensus_per_barcode = consensus
 }

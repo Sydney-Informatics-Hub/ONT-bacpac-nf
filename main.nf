@@ -267,14 +267,7 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
-  all_polished =
-    polished_consensus_per_barcode
-    .map { barcode, consensus_fa ->
-        // technically should be "trycycler" but want to separate it out from
-        // the denovo assemblies clearly
-        String assembler = "consensus"
-        return [barcode, assembler, consensus_fa]
-    }
+  all_polished = polished_consensus_per_barcode
     .mix(medaka_polish_denovo.out.assembly)
 
   // TODO: probably better to collect all per-barcode assemblies in one quast
