@@ -210,7 +210,7 @@ workflow trycycler {
     consensus =
         concat_fastas.out
         .map { barcode, consensus_fa ->
-            String assembler = "trycycler"
+            String assembler = "consensus"
             return [barcode, assembler, consensus_fa]
         }
 

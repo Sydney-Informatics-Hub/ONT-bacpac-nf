@@ -72,7 +72,7 @@ workflow autocycler {
     consensus =
         autocycler_combine.out.autocycler_out
         .map { barcode, autocycler_dir ->
-            String assembler = "autocycler"
+            String assembler = "consensus"
             def consensus_fa = autocycler_dir / "consensus_assembly.fasta"
             return [barcode, assembler, consensus_fa]
         }
