@@ -11,11 +11,12 @@ process autocycler_subsample {
   tuple val(barcode), path("${barcode}_subsets/*.fastq"), emit: subsets
 
   script:
+  n_subsamples = params.subsamples.toInteger()
   """
   autocycler subsample \\
     --reads $trimmed_fq \\
     --out_dir ${barcode}_subsets \\
-    --count ${params.subsamples} \\
+    --count ${n_subsamples} \\
     --genome_size \$(cat ${genome_size_txt})
   """
 }

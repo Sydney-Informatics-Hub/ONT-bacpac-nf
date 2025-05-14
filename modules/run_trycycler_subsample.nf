@@ -11,11 +11,12 @@ process trycycler_subsample {
   tuple val(barcode), path("${barcode}_subsets/*.fastq"), emit: subsets
 
   script:
+  n_subsamples = params.subsamples.toInteger()
   """
   trycycler subsample \\
     --reads $trimmed_fq \\
     --out_dir ${barcode}_subsets \\
-    --count ${params.subsamples} \\
+    --count ${n_subsamples} \\
     --threads ${task.cpus}
   """
 }

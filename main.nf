@@ -244,6 +244,13 @@ if ( params.help || (!params.input_directory && !params.samplesheet) || !params.
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
+
+    // First, check that params.subsamples > 1
+    if (!(params.subsamples.toInteger() > 1)) {
+      log.info "Error: autocycler must be run with > 1 subsamples"
+      System.exit(1)
+    }
+    
     autocycler(porechop.out.trimmed_fq)
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode

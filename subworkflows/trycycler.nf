@@ -24,7 +24,7 @@ workflow trycycler {
     trycycler_assemblies
 
     main:
-    if (params.subsamples > 1) {
+    if (params.subsamples.toInteger() > 1) {
 
         // Subsampling to be performed
         // SUBSAMPLE FASTQ FILES

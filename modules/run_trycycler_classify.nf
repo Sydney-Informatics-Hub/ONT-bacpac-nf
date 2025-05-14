@@ -10,7 +10,7 @@ process classify_trycycler {
   tuple val(barcode), path("${barcode}_for_reconciliation/*"), emit: clusters_to_reconcile
 
   script:
-  n_assemblers = 2 * params.subsamples
+  n_assemblers = 2 * params.subsamples.toInteger()
   """
   classify_trycycler_clusters.py ${barcode} ${n_assemblers}
   """
