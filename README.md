@@ -7,6 +7,7 @@ A rapid and portable workflow for pond-side sequencing of bacterial pathogens fo
 ## User guide 
 
 See the following docs: 
+- Getting started: [docs/getting-started.md](docs/getting-started.md)
 - Gadi execution: [docs/gadi-execution.md](docs/gadi-execution.md)
 - Interpreting results: [docs/interpreting-results.md](docs/interpreting-results.md)
 - Developer instructions: [docs/developers.md](docs/developers.md)

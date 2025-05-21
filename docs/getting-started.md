@@ -1,0 +1,109 @@
+# Getting started
+
+The bacpac pipeline is designed as a rapid and portable workflow to process ONT long-read sequencing data for the purpose of pond-side detection of bacterial pathogens for sustainable aquaculture.
+
+The pipeline is designed using Nextflow and utilises common, well-tested tools for bacterial genome and plasmid assembly, quality control, DNA contamination detection, and antibiotic resistance gene annotation.
+
+## Software requirements
+
+At a minimum, you will require the following installed on your system:
+
+- Java version 17 or later
+- Nextflow version 24 or later
+    - See the [Nextflow docs](https://www.nextflow.io/docs/latest/install.html) for information on installing both Nextflow and Java
+- Singularity
+
+The workflow has been designed to primarily run on NCI's [gadi](https://nci.org.au/our-systems/hpc-systems) high performance computing infrastructure.
+
+## Pre-downloading the Kraken2 database
+
+We recommend pre-downloading a Kraken2 database as it can be quite slow to download as part of the pipeline. You can find links to these databases [here](https://benlangmead.github.io/aws-indexes/k2). We have tested this pipeline with the [Standard Kraken2 database from 12 January 2024](https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20240112.tar.gz).
+
+## Sequencing summary
+
+ONT sequeincing runs will generate a sequencing summary text file, named something like `sequencing_summary_*.txt`. This file is used by multiple quality control steps of the pipeline and must be supplied with the `--sequencing_summary` parameter.
+
+## Running the workflow
+
+The pipeline takes either a sequencing data directory or a CSV samplesheet as its input.
+
+A sequencing data directory should contain one `.zip` file per sample, each containing all FASTQs associated with that sample. It can be specified on the command line as follows:
+
+```bash
+nextflow run main.nf --input_directory /path/to/dataset [...]
+```
+
+If a samplesheet is provided, it should be formatted as follows:
+
+```csv
+barcode,batch,file_path
+barcode01,batch1,/path/to/dataset/barcode01.zip
+barcode02,batch1,/path/to/dataset/barcode02.zip
+barcode03,batch2,/path/to/dataset/barcode03.zip
+barcode04,batch2,/path/to/dataset/barcode04.zip
+```
+
+This can be specified with:
+
+```bash
+nextflow run main.nf --samplesheet /path/to/samplesheet.csv [...]
+```
+
+The sequencing summary file should be supplied with:
+
+```bash
+nextflow run main.nf --sequencing_summary /path/to/sequencing_summary.txt [...]
+```
+
+If supplying a pre-downloaded Kraken2 database, use the `--kraken2_db` parameter to provide the directory containing the database files (i.e. `hash.k2d`, `ktaxonomy.tsv`, `opts.k2d`, and `taxo.k2d`):
+
+```bash
+nextflow run main.nf --kraken2_db /path/to/kraken2/db [...]
+```
+
+### Execution on gadi
+
+If running on NCI's gadi, you will also need to provide the following paramters:
+
+- `--gadi_account <PROJ>`
+    - `PROJ` should be your NCI project ID, e.g. `ab01`
+- `--gadi_storage <STORAGE_STRING>`
+    - `STORAGE_STRING` should be a `+`-delimited list of NCI storage systems that you will require, e.g. `scratch/ab01` or `scratch/ab01+gdata/ab01`
+
+You will also need to specify to use the `gadi` Nextflow profile, e.g.:
+
+```bash
+nextflow run main.nf -profile gadi [...]
+```
+
+### Accuracy mode
+
+The pipeline expects by default that your samples have been called with fast basecalling - a quick but low-accuracy mode provided by Nanopore. If you have run basecalling with higher accuracy, you should also enable the `high_accuracy` profile to ensure the genome assembly steps have enough resources to complete successfully:
+
+```bash
+nextflow run main.nf -profile gadi,high_accuracy [...]
+```
+
+### Putting it together
+
+An typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, a sequencing summary file at `/scratch/ab01/dataset/sequencing_summary.txt`, and high-accuracy basecalling, we would do the following:
+
+```bash
+module load nextflow/24.04.1
+module load singularity
+
+nextflow run main.nf \
+    --samplesheet /scratch/ab01/samplesheet.csv \
+    --kraken2_db /scratch/ab01/kraken_db \
+    --sequencing_summary /scratch/ab01/dataset/sequencing_summary.txt \
+    --gadi_account ab01 \
+    --gadi_storage scratch/ab01 \
+    -profile gadi,high_accuracy \
+    -resume
+```
+
+## Next steps
+
+See [docs/gadi-execution.md](docs/gadi-execution.md) for more information on running the pipeline at scale on gadi.
+
+For information about interpreting the pipeline results, see [docs/interpreting-results.md](docs/interpreting-results.md)
