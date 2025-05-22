@@ -194,6 +194,7 @@ See an example of a samplesheet [here](../assets/samplesheet.csv). Keep in mind 
 ```csv
 barcode,batch,file_path
 ```
+**Note:** If you're rerunning the pipeline or using an older samplesheet version, make sure to **remove any leading `#` from the header line**.
 
 ### Execute the workflow
 
