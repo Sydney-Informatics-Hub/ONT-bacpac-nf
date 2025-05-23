@@ -129,8 +129,24 @@ nextflow run main.nf \
     -resume
 ```
 
+## Outputs
+
+By default, the pipeline will output all results to the `results/` directory. This can be changed by supplying the `--outdir` parameter, e.g.:
+
+```bash
+nextflow run main.nf --outdir 2025-06-01_results [...]
+```
+
+The output directory will contain the following sub-directories:
+
+- `assemblies`: Your completed genome assemblies.
+- `quality_control`: Quality information assessed by QUAST, BUSCO, Kraken2, PycoQC, and NanoPlot.
+- `annotations`: Annotations for antimicrobial resistance genes, virulence genes, plasmid annotations, and bacterial genome annotations.
+- `taxonomy`: Phylogenetic tree information.
+- `report`: A final MultiQC report summarising the pipeline run.
+
+For detailed information about interpreting the pipeline results, see [docs/interpreting-results.md](docs/interpreting-results.md)
+
 ## Next steps
 
-See [docs/gadi-execution.md](docs/gadi-execution.md) for more information on running the pipeline at scale on gadi.
-
-For information about interpreting the pipeline results, see [docs/interpreting-results.md](docs/interpreting-results.md)
+This pipeline has been primarily developed for use on NCI's gadi. For more information about running the pipeline at scale on that system, see [docs/gadi-execution.md](docs/gadi-execution.md).
