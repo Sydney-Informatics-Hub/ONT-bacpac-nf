@@ -21,7 +21,7 @@ We recommend pre-downloading a Kraken2 database as it can be quite slow to downl
 
 ## Sequencing summary
 
-ONT sequeincing runs will generate a sequencing summary text file, named something like `sequencing_summary_*.txt`. This file is used by multiple quality control steps of the pipeline and must be supplied with the `--sequencing_summary` parameter.
+ONT sequencing runs will generate a sequencing summary text file, named something like `sequencing_summary_*.txt`. This file is used by multiple quality control steps of the pipeline and must be supplied with the `--sequencing_summary` parameter.
 
 ## Running the workflow
 
@@ -75,6 +75,7 @@ You will also need to specify to use the `gadi` Nextflow profile, e.g.:
 ```bash
 nextflow run main.nf -profile gadi [...]
 ```
+For detailed instructions on scaling up the pipeline on Gadi, see [docs/gadi-execution.md](docs/gadi-execution.md).
 
 ### Accuracy mode
 
@@ -112,7 +113,7 @@ For Trycycler, you can disable subsampling altogether by using `--subsamples 1`.
 
 ### Putting it together
 
-An typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, a sequencing summary file at `/scratch/ab01/dataset/sequencing_summary.txt`, and high-accuracy basecalling, we would do the following:
+A typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, a sequencing summary file at `/scratch/ab01/dataset/sequencing_summary.txt`, and high-accuracy basecalling, we would do the following:
 
 ```bash
 module load nextflow/24.04.1
