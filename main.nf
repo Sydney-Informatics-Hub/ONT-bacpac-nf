@@ -19,15 +19,10 @@ include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
 include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
-include { trycycler_cluster } from './modules/run_trycycler_cluster'
-include { classify_trycycler } from './modules/run_trycycler_classify'
-include { trycycler_reconcile } from './modules/run_trycycler_reconcile'
+include { trycycler } from './subworkflows/trycycler'
+include { autocycler } from './subworkflows/autocycler'
 include { select_assembly } from './modules/select_assembly'
-include { trycycler_msa } from './modules/run_trycycler_msa'
-include { trycycler_partition } from './modules/run_trycycler_partition'
-include { trycycler_consensus} from './modules/run_trycycler_consensus'
 include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
-include { medaka_polish_consensus } from './modules/run_medaka_polish_consensus'
 include { plassembler } from './modules/run_plassembler'
 include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
 include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
@@ -230,106 +225,26 @@ workflow {
     }
     .collect()
 
-  // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
-  // TRYCYCLER: Cluster contigs
-  trycycler_cluster(denovo_assembly_contigs.run_trycycler)
+  if (params.consensus_method == 'trycycler') {
+    // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
+    trycycler(porechop.out.trimmed_fq, denovo_assembly_contigs.run_trycycler)
 
-  barcode_cluster_sizes =
-    // trycycler_cluster filters out small contigs (default < 5000nt) and can
-    // result in < 2 contigs here again. Use the same branching logic to avoid
-    // < 2 contig errors.
-    trycycler_cluster.out.phylip
-    .map { barcode, contigs_phylip ->
-        def phylip_lines = contigs_phylip.text.readLines().size - 1 // exclude header
-        return [barcode, phylip_lines]
+    polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
+  } else if (params.consensus_method == 'autocycler') {
+    // RUN AUTOCYCLER
+
+    // First, check that params.subsamples > 1
+    if (!(params.subsamples.toInteger() > 1)) {
+      log.info "Error: autocycler must be run with > 1 subsamples"
+      System.exit(1)
     }
-    .branch { barcode, phylip_lines ->
-        run_trycycler: phylip_lines >= 3
-        skip_trycycler: phylip_lines < 3
-        // create a channel from skip_trycycler if failed barcodes need to be reported/used
-    }
+    
+    autocycler(porechop.out.trimmed_fq)
 
-  // TRYCYCLER: Classify clusters
-  clusters_to_classify =
-    // Add path to clusters with sufficient contigs
-    trycycler_cluster.out.clusters
-    .join(barcode_cluster_sizes.run_trycycler)
-
-  classify_trycycler(clusters_to_classify)
-
-  // TRYCYCLER: Reconcile contigs
-  clusters_to_reconcile_flat = 
-    classify_trycycler.out.clusters_to_reconcile
-    .join(porechop.out.trimmed_fq, by: 0)
-    // from [barcode, [pathA, pathB], ...]
-    // to [barcode, pathA, ...]; [barcode, pathB, ...]
-    .transpose()
-
-  trycycler_reconcile(clusters_to_reconcile_flat)
-
-  reconciled_cluster_dirs = 
-    trycycler_reconcile.out.reconciled_seqs // successfully reconciled
-    .map { barcode, seq ->
-        // drops the last part of the path (reconciled_seqs file) as trycycler
-        // searches the parent dir for it
-        Path cluster_dir = seq.getParent()
-        return [barcode, cluster_dir] 
-    }
-  
-  // TRYCYCLER: Align
-  trycycler_msa(reconciled_cluster_dirs)
-
-  // TRYCYCLER: Partitioning reads
-  clusters_to_partition =
-    trycycler_msa.out.results_dir
-    .groupTuple()
-    .join(porechop.out.trimmed_fq)
-
-  trycycler_partition(clusters_to_partition)
-
-  // TRYCYCLER: Generate consensus assemblies  
-  clusters_for_consensus =
-    trycycler_partition.out.partitioned_reads
-    .transpose() // "ungroup" tuple
-    .map { barcode, reads ->
-        // Get directories of successfully partitioned reads
-        Path cluster_dir = reads.getParent()
-        return [barcode, cluster_dir]
-    }
-
-  trycycler_consensus(clusters_for_consensus)
-
-  // MEDAKA: Polish consensus assembly
-  consensus_dir = 
-    // Get parent dir for assembly
-    trycycler_consensus.out.cluster_assembly
-    .map { barcode, assembly ->
-        Path assembly_dir = assembly.getParent()
-        return [barcode, assembly_dir]
-    }
-
-  medaka_polish_consensus(consensus_dir)
-
-  // CAT: Combine polished clusters consensus assemblies into a single fasta
-  polished_clusters = 
-    medaka_polish_consensus.out.cluster_assembly
-    .groupTuple()
-    .map { barcode, fastas ->
-        // Need to avoid filename collisions with consensus.fasta files
-        // by renaming them
-        def indexed_fas = 
-            fastas.withIndex()
-            .collect { fa, idx ->
-                def new_fa = fa.getParent() / "consensus_${idx}.fasta"
-                fa.copyTo(new_fa)
-                return new_fa
-            }
-        return [barcode, indexed_fas]
-    }
-  
-  concat_fastas(polished_clusters)
-
-  polished_consensus_per_barcode = concat_fastas.out
+    polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
+  } else {
+    error 'Invalid value for `consensus_method`: ' + params.consensus_method
+  }
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies =
@@ -347,14 +262,7 @@ workflow {
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
-  all_polished =
-    polished_consensus_per_barcode
-    .map { barcode, consensus_fa ->
-        // technically should be "trycycler" but want to separate it out from
-        // the denovo assemblies clearly
-        String assembler = "consensus"
-        return [barcode, assembler, consensus_fa]
-    }
+  all_polished = polished_consensus_per_barcode
     .mix(medaka_polish_denovo.out.assembly)
 
   // TODO: probably better to collect all per-barcode assemblies in one quast

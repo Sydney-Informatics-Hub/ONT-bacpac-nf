@@ -27,7 +27,8 @@ import glob
 
 # Retrieve command-line arguments
 sample_id = sys.argv[1]
-number_of_assemblers = 2
+number_of_assemblers = int(sys.argv[2])
+assert number_of_assemblers > 0, 'Error: Number of assemblers must be at least 1'
 
 
 def get_contigs_clusters(data_clusters,number_of_assemblies):
