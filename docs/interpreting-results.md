@@ -60,11 +60,17 @@ The pipeline uses Kraken2 to screen for contamination in the raw reads. The pipe
 
 See the [Kraken2 docs](https://github.com/DerrickWood/kraken2/blob/master/docs/MANUAL.markdown#output-formats) for details.
 
-#### `${barcode}_quast/`
+#### `${barcode}/${barcode}_<assembly>/` - QUAST
 
-QUAST has been used to provide a variety of metrics and visualisations to help assess the accuracy and completeness of the chromosome assemblies. The pipeline will output the QUAST results into the `${params.outdir}/quality_control/${barcode}_quast`. Each directory contains a QUAST report, a `basic_stats/` folder and various other files. 
+QUAST has been used to provide a variety of metrics and visualisations to help assess the accuracy and completeness of the chromosome assemblies. QUAST will be run for each assembly of each sample. The pipeline will output the QUAST results into the `${params.outdir}/quality_control/${barcode}/${barcode}_<assembly>`, where `<assembly>` is one of `flye`, `unicycler`, or `consensus`. Each directory contains a QUAST report, a `basic_stats/` folder and various other files. 
 
 See the [QUAST docs](https://quast.sourceforge.net/docs/manual.html#sec3) for details. 
+
+#### `${barcode}/${barcode}_<assembly>_busco/` - BUSCO
+
+BUSCO reports the completeness of the genome based on the presence of Benchmarking Universal Single-Copy Orthologs (BUSCOs). The pipeline will output the BUSCO results into `${params.outdir}/quality_control/${barcode}/${barcode}_<assembly>_busco`. Each directory contains a BUSCO summary file.  
+
+See the [BUSCO docs](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results) for details. 
 
 ### `assemblies/` 
 
@@ -84,19 +90,13 @@ See the [Plassembler docs](https://github.com/gbouras13/plassembler?tab=readme-o
 
 ### `annotations/` 
 
-Output in this directory relates to assembly features and quality evaluation. Annotations have been organised according to their sample ID, `${barcode}`. Within each sample directory is a number of subdirectories: `abricate`, `amrfinderplus`, `bakta/`. `busco/`, and `plasmids/`. 
+Output in this directory relates to assembly features and quality evaluation. Annotations have been organised according to their sample ID, `${barcode}`. Within each sample directory is a number of subdirectories: `abricate`, `amrfinderplus`, `bakta/`. and `plasmids/`. 
 
 #### Gene annotations (`bakta/`)
 
 Bakta has been used to annotate the chromosome assemblies in this pipeline. Bakta annotation results are output into `${params.outdir}/annotations/${barcode}/bakta`. Each directory contains the Prokka annotation files for each barcode/sample. Bakta outputs a number of files, including a `.gff` file containing genome sequence annotations, a `.tsv` file containing a summary of gene features identified, and a `.faa` file that contains the protein sequences. 
 
 See the [Bakta docs](https://github.com/oschwengers/bakta?tab=readme-ov-file#output) for details. 
-
-#### Genome quality assessment (`busco/`)
-
-BUSCO reports the completeness of the genome based on the presence of Benchmarking Universal Single-Copy Orthologs (BUSCOs). The pipeline will output the BUSCO results into `${params.outdir}/annotations/${barcode}/busco`. Each directory contains a BUSCO summary file.  
-
-See the [BUSCO docs](https://busco.ezlab.org/busco_userguide.html#interpreting-the-results) for details. 
 
 #### Antimicrobial resistance genes (`amrfinderplus/`)
 

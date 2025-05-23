@@ -183,13 +183,18 @@ If you would prefer to specify selected samples to run through this workflow you
 
 The samplesheet should be a CSV file with the following structure: 
 
-| #barcode,batch,file_path                      |
+| barcode,batch,file_path                      |
 | --------------------------------------------- |
 barcode01,batch1,/path/to/dataset/barcode01.zip |
 barcode03,batch2,/path/to/dataset/barcode03.zip |
 barcode10,batch1,/path/to/dataset/barcode10.zip | 
 
-See an example of a samplesheet [here](../assets/samplesheet.csv). Keep in mind your header will need to be the same as the example, including the prefixed hash (#). 
+See an example of a samplesheet [here](../assets/samplesheet.csv). Keep in mind your header will need to be exactly the same as in the example:
+
+```csv
+barcode,batch,file_path
+```
+**Note:** If you're rerunning the pipeline or using an older samplesheet version, make sure to **remove any leading `#` from the header line**.
 
 ### Execute the workflow
 
@@ -300,7 +305,7 @@ sequencing_summary= #path to sequencing summary file from ONT run
 
 # Run pipeline 
 nextflow run main.nf \
-  --input_directory ${input_directory} \
+  --samplesheet ${samplesheet} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
   -resume 
