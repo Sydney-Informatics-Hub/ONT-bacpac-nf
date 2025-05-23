@@ -2,8 +2,6 @@ process trycycler_subsample {
   tag "SUBSAMPLING FASTQS: ${barcode}"
   container 'quay.io/biocontainers/trycycler:0.5.4--pyhdfd78af_0'
 
-  // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
-
   input:
   tuple val(barcode), path(trimmed_fq)
 

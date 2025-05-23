@@ -2,8 +2,6 @@ process autocycler_compress {
   tag "AUTOCYCLER COMPRESS: ${barcode}"
   container 'quay.io/biocontainers/autocycler:0.3.0--h3ab6199_0'
 
-  // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
-
   input:
   tuple val(barcode), path(assembly_fastas)
 

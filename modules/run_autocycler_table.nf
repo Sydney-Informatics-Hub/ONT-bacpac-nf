@@ -3,8 +3,6 @@ process autocycler_table {
   container 'quay.io/biocontainers/autocycler:0.3.0--h3ab6199_0'
   publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'copy'
 
-  // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
-
   input:
   tuple val(barcode), path(autocycler_dir)
 

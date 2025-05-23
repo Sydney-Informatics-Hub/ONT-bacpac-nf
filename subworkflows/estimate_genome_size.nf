@@ -2,8 +2,6 @@ process estimate_genome_size_raven {
   tag "ESTIMATE GENOME SIZE: ${barcode}"
   container 'quay.io/biocontainers/raven-assembler:1.8.3--h5ca1c30_3'
 
-  // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
-
   input:
   tuple val(barcode), path(trimmed_fq)
 
@@ -19,8 +17,6 @@ process estimate_genome_size_raven {
 process estimate_genome_size_seqtk {
   tag "ESTIMATE GENOME SIZE: ${barcode}"
   container 'quay.io/biocontainers/seqtk:1.4--h577a1d6_3'
-
-  // errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
 
   input:
   tuple val(barcode), path(raven_fa)
