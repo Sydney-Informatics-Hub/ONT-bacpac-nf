@@ -261,6 +261,9 @@ workflow {
     .mix(flye_assembly.out.flye_graph)
     .mix(consensus_gfa_per_barcode)
     .mix(plassembler_graphs)
+    .filter { barcode, assembly, graph ->
+      graph.size() > 0
+    }
 
   bandage(graphs_for_bandage)
 
