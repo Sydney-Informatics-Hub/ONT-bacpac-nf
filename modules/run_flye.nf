@@ -7,6 +7,7 @@ process flye_assembly {
 
   output:
   tuple val(barcode), path("*"), emit: flye_assembly
+  tuple val(barcode), val("flye"), path("${barcode}_flye_assembly/assembly_graph.gfa"), emit: flye_graph
 
   script: 
   """

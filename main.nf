@@ -231,6 +231,7 @@ workflow {
     trycycler(porechop.out.trimmed_fq, denovo_assembly_contigs.run_trycycler)
 
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
+    consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
 
@@ -243,9 +244,25 @@ workflow {
     autocycler(porechop.out.trimmed_fq)
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
+    consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
   } else {
     error 'Invalid value for `consensus_method`: ' + params.consensus_method
   }
+
+  // RUN BANDAGE ON AUTOCYCLER OUTPUTS
+  // DE NOVO ASSEMBLY GRAPHS
+  // AND PLASEMBLER GRAPHS
+  plassembler_graphs = plassembler.out.plassembler_gfa
+    .map { barcode, graph ->
+      [ barcode, "plassembler", graph ]
+    }
+  graphs_for_bandage =
+    unicycler_assembly.out.unicycler_graph
+    .mix(flye_assembly.out.flye_graph)
+    .mix(consensus_gfa_per_barcode)
+    .mix(plassembler_graphs)
+
+  bandage(graphs_for_bandage)
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies =
