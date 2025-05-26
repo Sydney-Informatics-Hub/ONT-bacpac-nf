@@ -48,8 +48,8 @@ workflow autocycler {
     clusters_for_refinement = autocycler_cluster.out.pass_clusters
         .transpose()
         .map { barcode, cluster_dir ->
-        cluster_id = cluster_dir.baseName
-        return [ barcode, cluster_id, cluster_dir ]
+            def cluster_id = cluster_dir.baseName
+            return [ barcode, cluster_id, cluster_dir ]
         }
 
     autocycler_trim(clusters_for_refinement)
@@ -62,7 +62,7 @@ workflow autocycler {
     autocycler_combine_inputs = autocycler_cluster.out.cluster_out
         .join(autocycler_resolve_out, by:0)
         .map { barcode, autocycler_cluster_dir, cluster_ids, pass_cluster_dirs ->
-        [ barcode, autocycler_cluster_dir, pass_cluster_dirs ]
+            [ barcode, autocycler_cluster_dir, pass_cluster_dirs ]
         }
 
     autocycler_combine(autocycler_combine_inputs)
@@ -72,7 +72,7 @@ workflow autocycler {
     consensus =
         autocycler_combine.out.autocycler_out
         .map { barcode, autocycler_dir ->
-            String assembler = "consensus"
+            def assembler = "consensus"
             def consensus_fa = autocycler_dir / "consensus_assembly.fasta"
             return [barcode, assembler, consensus_fa]
         }
