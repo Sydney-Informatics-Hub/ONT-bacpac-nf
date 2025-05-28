@@ -20,8 +20,8 @@ def main(args):
             templates[k] = f.read()
 
     # Add <script> and <style> tags to JS and CSS templates
-    templates['report_js_template'] = f'<script>{templates['report_js_template']}</script>'
-    templates['report_css_template'] = f'<style>{templates['report_css_template']}</style>'
+    templates['report_js_template'] = f'<script>{templates["report_js_template"]}</script>'
+    templates['report_css_template'] = f'<style>{templates["report_css_template"]}</style>'
 
     # Define dictionary to hold each image's HTML section
     bandage_plots = {}
