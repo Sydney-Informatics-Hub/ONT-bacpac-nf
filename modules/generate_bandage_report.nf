@@ -1,6 +1,6 @@
 process generate_bandage_report {
   tag "GENERATE BANDAGE REPORT"
-  // container 'quay.io/biocontainers/bandage:0.9.0--h9948957_0'
+  container 'python:3.8'
   publishDir "${params.outdir}/report/bandage", mode: 'copy'
 
   input:
