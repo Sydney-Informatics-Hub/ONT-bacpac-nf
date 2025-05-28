@@ -4,7 +4,7 @@ process quast_qc_chromosomes {
   publishDir "${params.outdir}/quality_control/${barcode}", mode: 'copy'
 
   input:
-  tuple val(barcode), val(assembler), path(polished_assembly)
+  tuple val(barcode), val(assembler), path(polished_assembly, stageAs: "${barcode}_${assembler}_chr.fasta")
 
   output:
   tuple val(barcode), val(assembler), path("${prefix}"), emit: results
