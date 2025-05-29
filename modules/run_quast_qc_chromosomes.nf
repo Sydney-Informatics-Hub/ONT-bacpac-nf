@@ -15,6 +15,7 @@ process quast_qc_chromosomes {
   """
   quast.py \\
     --output-dir $prefix \\
+    --labels ${prefix}_chr \\
     $polished_assembly \\
     --threads $task.cpus
 
