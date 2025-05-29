@@ -13,6 +13,7 @@ process multiqc_report {
   path(bakta_plasmids)
   path(busco)
   path(phylogeny_heatmap_plot)
+  path(bandage_report)
 
   output:
   path ("*"), emit: multiqc

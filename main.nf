@@ -21,6 +21,8 @@ include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
 include { trycycler } from './subworkflows/trycycler'
 include { autocycler } from './subworkflows/autocycler'
+include { bandage } from './modules/run_bandage'
+include { generate_bandage_report } from './modules/generate_bandage_report'
 include { select_assembly } from './modules/select_assembly'
 include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
 include { plassembler } from './modules/run_plassembler'
@@ -230,6 +232,7 @@ workflow {
     trycycler(porechop.out.trimmed_fq, denovo_assembly_contigs.run_trycycler)
 
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
+    consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
 
@@ -242,9 +245,34 @@ workflow {
     autocycler(porechop.out.trimmed_fq)
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
+    consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
   } else {
     error 'Invalid value for `consensus_method`: ' + params.consensus_method
   }
+
+  // RUN BANDAGE ON AUTOCYCLER OUTPUTS
+  // DE NOVO ASSEMBLY GRAPHS
+  // AND PLASEMBLER GRAPHS
+  plassembler_graphs = plassembler.out.plassembler_gfa
+    .map { barcode, graph ->
+      [ barcode, "plassembler", graph ]
+    }
+  graphs_for_bandage =
+    unicycler_assembly.out.unicycler_graph
+    .mix(flye_assembly.out.flye_graph)
+    .mix(consensus_gfa_per_barcode)
+    .mix(plassembler_graphs)
+    .filter { barcode, assembly, graph ->
+      graph.size() > 0
+    }
+
+  bandage(graphs_for_bandage)
+
+  // Generate MultiQC-ready Bandage report
+  all_bandage_plots = bandage.out.bandage_plot
+    .map { barcode, assembly, plot -> plot }
+    .collect()
+  generate_bandage_report(all_bandage_plots)
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies =
@@ -412,6 +440,8 @@ workflow {
     create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
     .ifEmpty([])
 
+  bandage_report = generate_bandage_report.out.bandage_report
+
   multiqc_config = params.multiqc_config
 
   // Run MultiQC with the gathered inputs
@@ -424,7 +454,8 @@ workflow {
     bakta_required_for_multiqc,
     bakta_plasmids_required_for_multiqc,
     busco_required_for_multiqc,
-    phylogeny_heatmap_plot_required_for_multiqc
+    phylogeny_heatmap_plot_required_for_multiqc,
+    bandage_report
   )
 }
 

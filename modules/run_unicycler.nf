@@ -8,6 +8,7 @@ process unicycler_assembly {
 
   output:
   tuple val(barcode), path("*"), emit: unicycler_assembly
+  tuple val(barcode), val("unicycler"), path("${barcode}_unicycler_assembly/assembly.gfa"), emit: unicycler_graph
 
   script: 
   """

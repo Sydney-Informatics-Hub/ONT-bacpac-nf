@@ -77,6 +77,15 @@ workflow autocycler {
             return [barcode, assembler, consensus_fa]
         }
 
+    consensus_gfa =
+        autocycler_combine.out.autocycler_out
+        .map { barcode, autocycler_dir ->
+            def assembler = "consensus"
+            def consensus_gfa = autocycler_dir / "consensus_assembly.gfa"
+            return [barcode, assembler, consensus_gfa]
+        }
+
     emit:
     polished_consensus_per_barcode = consensus
+    consensus_gfa_per_barcode = consensus_gfa
 }

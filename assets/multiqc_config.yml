@@ -153,6 +153,8 @@ report_section_order:
         order: -9970
     combined_plot_mqc_png:
         order: -9980
+    bandage:
+        order: -9990
     multiqc_software_versions:
         order: -10000
 
