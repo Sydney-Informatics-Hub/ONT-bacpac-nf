@@ -14,6 +14,7 @@ include { autocycler_trim } from '../modules/run_autocycler_trim'
 include { autocycler_resolve } from '../modules/run_autocycler_resolve'
 include { autocycler_combine } from '../modules/run_autocycler_combine'
 include { autocycler_table } from '../modules/run_autocycler_table'
+include { autocycler_table_mqc } from '../modules/run_autocycler_table_mqc'
 
 
 workflow autocycler {
@@ -69,6 +70,8 @@ workflow autocycler {
 
     autocycler_table(autocycler_combine.out.autocycler_out)
 
+    autocycler_table_mqc(autocycler_table.out.metrics)
+
     consensus =
         autocycler_combine.out.autocycler_out
         .map { barcode, autocycler_dir ->
@@ -88,4 +91,5 @@ workflow autocycler {
     emit:
     polished_consensus_per_barcode = consensus
     consensus_gfa_per_barcode = consensus_gfa
+    metrics = autocycler_table_mqc.out.metrics
 }

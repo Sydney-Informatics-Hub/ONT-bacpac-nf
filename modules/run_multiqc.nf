@@ -10,6 +10,7 @@ process multiqc_report {
   path(quast)
   path(busco)
   path(bandage_report)
+  path(autocycler_metrics)
 
   output:
   path ("*"), emit: multiqc

@@ -234,6 +234,7 @@ workflow {
 
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
+    autocycler_metrics = Channel.empty()  // To ensure that autocycler_metrics exists
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
 
@@ -247,6 +248,7 @@ workflow {
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
+    autocycler_metrics = autocycler.out.metrics
   } else {
     error 'Invalid value for `consensus_method`: ' + params.consensus_method
   }
@@ -443,6 +445,9 @@ workflow {
 
   bandage_report = generate_bandage_report.out.bandage_report
 
+  autocycler_metrics_for_mqc = autocycler_metrics
+    .ifEmpty([])
+
   multiqc_config = params.multiqc_config
   multiqc_results_config = params.multiqc_results_config
 
@@ -454,7 +459,8 @@ workflow {
     multiqc_config,
     quast_required_for_multiqc,
     busco_required_for_multiqc,
-    bandage_report
+    bandage_report,
+    autocycler_metrics_for_mqc
   )
   // Results report
   multiqc_results_report(
