@@ -42,6 +42,7 @@ include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinde
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
 include { multiqc_report } from './modules/run_multiqc'
+include { multiqc_results_report } from './modules/run_multiqc_results'
 
 // Print a header for your pipeline 
 log.info """\
@@ -443,19 +444,25 @@ workflow {
   bandage_report = generate_bandage_report.out.bandage_report
 
   multiqc_config = params.multiqc_config
+  multiqc_results_config = params.multiqc_results_config
 
   // Run MultiQC with the gathered inputs
+  // QC report
   multiqc_report(
     pycoqc_required_for_multiqc,
     nanoplot_required_for_multiqc,
     multiqc_config,
-    kraken2_required_for_multiqc,
     quast_required_for_multiqc,
+    busco_required_for_multiqc,
+    bandage_report
+  )
+  // Results report
+  multiqc_results_report(
+    multiqc_results_config,
+    kraken2_required_for_multiqc,
     bakta_required_for_multiqc,
     bakta_plasmids_required_for_multiqc,
-    busco_required_for_multiqc,
-    phylogeny_heatmap_plot_required_for_multiqc,
-    bandage_report
+    phylogeny_heatmap_plot_required_for_multiqc
   )
 }
 

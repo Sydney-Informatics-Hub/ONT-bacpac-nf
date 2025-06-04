@@ -26,8 +26,8 @@ report_header_info:
 fn_clean_exts:
   - ".gz"
   - ".txt"
+  - ".k2report"
   - "_allfiles-cat_nr.fastq"
-  - "_busco"
 
 fn_clean_trim:
   - "short_summary.specific.bacteria_odb10."
@@ -35,47 +35,38 @@ fn_clean_trim:
 # Hide unnecessary columns in the report
 # Columns that are not relevant to the end user are hidden for clarity.
 table_columns_visible:
-  NanoStat:
-    Active channels_seq summary: False
+  "kraken2: taxonomic classification":
+    pct_top_one: False
+    pct_top_n: False
+    pct_unclassified: False
+    
+  "bakta: Bacterial annotation pipeline":
+    Length: False
 
 # Define custom placement of columns in tables
 # Columns are reordered to prioritise the most important information for easy interpretation.
 table_columns_placement:
   table-general_stats_table:
-    "Total length": 900
-    N50: 1010
+    Count: 1020
+    CDSs: 1030
 
 # Rename columns for clarity
 # Column names are modified to be more descriptive and understandable.
 table_columns_name:
-    QUAST:
-      N50: "N50 contig length"
-
-# Adjust QUAST display units
-# QUAST (Quality Assessment Tool for genome assemblies) output is adjusted for readability by using megabase pairs (Mbp).
-quast_config:
-  contig_length_multiplier: 0.000001
-  contig_length_suffix: "Mbp"
-  total_length_multiplier: 0.000001
-  total_length_suffix: "Mbp"
-  total_number_contigs_multiplier: 1
-  total_number_contigs_suffix: ""
+  Bakta:
+    Count: "Number of contigs in assembly"
+    CDSs: "Number of Coding sequences (CDS)"
 
 # Customise module descriptions for clarity
 # Detailed descriptions are provided to explain the purpose and relevance of each analysis tool to a non-expert audience.
 
-# NanoStat: Summarizes sequencing run quality
-nanostat:
-  name: "NanoStat: Summary of the Sequencing Run"
-  description: "NanoStat provides an overview of the quality of the ONT sequencing run, including metrics such as read length and quality scores. This helps to assess the overall success of the sequencing process before moving on to more detailed analyses."
-
 custom_data:
   images:
-    title: "PycoQC: Summary of the Sequencing Run"
-    section_name: "pycoQC_mqc_html"
-    section_anchor: "pycoQC_mqc_html"
-    description: "PycoQC visualises the quality control metrics of ONT sequencing runs. These plots help in identifying potential issues with sequencing, such as bias in read lengths or poor base calling quality."
-    image_file: "pycoQC_mqc.html"
+    title: "Phylogenetic Tree and Heatmap: Genetic Relationships and AMR/Virulence Gene Detection"
+    section_name: "combined_plot_mqc_png"
+    section_anchor: "combined_plot_mqc_png"
+    description: "This heatmap visualises the evolutionary relationships between the samples, showing how closely related they are based on genetic data. Additionally, it provides a heatmap of known virulence and AMR genes identified in the samples."
+    image_file: "combined_plot_mqc.png"
 
   species_stats:
     extra_data:
@@ -101,11 +92,9 @@ fn_ignore_dirs:
   - "results/*/bakta/unicyclerChromosomes"
   - "results/*/bakta/flyeChromosomes"
   - "results/*/bakta/prePolished_ChrContigs"
-  - "results/*/quast_QC"
   - "results/*/bakta/unicyclerChromosomes/BUSCO"
   - "results/*/bakta/flyeChromosomes/BUSCO"
   - "results/*/bakta/prePolished_ChrContigs/BUSCO"
-  - "results/*/quast_QC"
   - "results/*/assemblies/plassembler"
   - "results/*/assemblies/Flye_assembly/NonChr_contigs"
   - "results/*/assemblies/unicycler_assembly/NonChr_contigs"
@@ -117,26 +106,23 @@ report_section_order:
         order: -9880
     sampleID_species_table_mqc:
         order: -9900
-    nanostat:
-        order: -9910
-    pycoQC_mqc_html:
-        order: -9920
-    porechop:
-        order: -9930
-    quast:
-        order: -9950 
-    busco:
-        order: -9970
-    bandage:
-        order: -9990
+    kraken:
+        order: -9940
+    bakta:
+        order: -9960 
+    combined_plot_mqc_png:
+        order: -9980
     multiqc_software_versions:
         order: -10000
+
+remove_sections:
+  - kraken-duplication-topfive
 
 # List software versions
 # The versions of the software used in the analysis are listed for reproducibility and reference.
 software_versions:
-  busco: "5.6.1"
-  porechop: "0.2.4"
+  bakta: "1.9.2"
+  kraken2: "2.1.3"
   multiqc: "1.20"
 
 # Tidy up various things in the report
