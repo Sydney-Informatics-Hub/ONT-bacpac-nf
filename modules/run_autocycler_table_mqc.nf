@@ -4,10 +4,10 @@ process autocycler_table_mqc {
   publishDir "${params.outdir}/report/autocycler", mode: 'copy'
 
   input:
-  tuple path(metrics_tsvs)
+  path(metrics_tsvs)
 
   output:
-  tuple path("autocycler_mqc.tsv"), emit: metrics
+  path("autocycler_mqc.tsv"), emit: metrics
 
   script:
   """
