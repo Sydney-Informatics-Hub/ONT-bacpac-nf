@@ -70,7 +70,11 @@ workflow autocycler {
 
     autocycler_table(autocycler_combine.out.autocycler_out)
 
-    autocycler_table_mqc(autocycler_table.out.metrics)
+    all_autocycler_metrics = autocycler_table.out.metrics
+        .map { barcode, tsv -> tsv }
+        .collect()
+
+    autocycler_table_mqc(all_autocycler_metrics)
 
     consensus =
         autocycler_combine.out.autocycler_out

@@ -4,7 +4,10 @@ import argparse
 import os
 
 def main(args):
-    metrics = pd.read_table(args.input, sep='\t', index_col='name')
+    metrics = pd.concat([
+        pd.read_table(f, sep='\t', index_col='name')
+        for f in args.input
+    ])
 
     list_columns = [
         'untrimmed_cluster_size',
@@ -49,15 +52,15 @@ def get_args():
     parser = argparse.ArgumentParser(description="Prepare Autocycler metrics table for use in a MultiQC report.")
     
     # Add arguments
-    parser.add_argument('-i', '--input', type=str, required=True, help='Path to the Autocycler metrics TSV file.')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output MultiQC-ready TSV file.')
+    parser.add_argument('input', type=str, nargs='+', help='Path to one or more Autocycler metrics TSV files.')
     
     # Parse arguments
     args = parser.parse_args()
 
     # Check inputs
-    assert isinstance(args.input, str) and os.path.isfile(args.input), 'Error: Invalid input file.'
     assert isinstance(args.output, str) and not os.path.exists(args.output), 'Error: Invalid output file.'
+    assert isinstance(args.input, list) and all([isinstance(f, str) for f in args.input]) and all([os.path.isfile(f) for f in args.input]), 'Error: Invalid input file(s).'
 
     return args
 

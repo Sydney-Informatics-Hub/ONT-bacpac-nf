@@ -4,13 +4,13 @@ process autocycler_table_mqc {
   publishDir "${params.outdir}/report/autocycler", mode: 'copy'
 
   input:
-  tuple val(barcode), path(metrics_tsv)
+  tuple path(metrics_tsvs)
 
   output:
-  tuple val(barcode), path("autocycler_mqc.tsv"), emit: metrics
+  tuple path("autocycler_mqc.tsv"), emit: metrics
 
   script:
   """
-  generate_autocycler_metrics_mqc.py -i ${metrics_tsv} -o autocycler_mqc.tsv
+  generate_autocycler_metrics_mqc.py -o autocycler_mqc.tsv ${metrics_tsvs}
   """
 }
