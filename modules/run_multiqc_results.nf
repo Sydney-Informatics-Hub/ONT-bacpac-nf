@@ -1,7 +1,7 @@
 process multiqc_results_report {
   tag "GENERATING RESULTS SUMMARY REPORT"
   container 'quay.io/biocontainers/multiqc:1.21--pyhdfd78af_0'
-  publishDir "${params.outdir}/report", mode: 'copy'
+  publishDir "${params.outdir}/report/results", mode: 'copy'
 
   input:
   path(multiqc_results_config)
