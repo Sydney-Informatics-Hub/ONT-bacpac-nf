@@ -127,6 +127,8 @@ report_section_order:
         order: -9950 
     busco:
         order: -9970
+    autocycler_metrics:
+        order: -9980
     bandage:
         order: -9990
     multiqc_software_versions:
