@@ -118,7 +118,7 @@ This pipeline uses MultiQC to aggregate stats and summaries for various steps of
 
 The first report summarises the sequencing and assembly quality control metrics, and will be located at `${params.outdir}/report/multiqc_report.html`. It includes data from PycoQC and NanoStat about the sequencing run, as well as QUAST and BUSCO metrics for each of the assemblies and (if used) metrics specific to Autocycler's consensus assembly.
 
-The second report summarises the results of the pipeline, including the results from Kraken and Bakta, and the phylogenetic tree and AMR/virulence gene findings.
+The second report summarises the results of the pipeline, including the results from Kraken and Bakta, and the phylogenetic tree and AMR/virulence gene findings. This will be loacted at `${params.outdir}/report/results/multiqc_report.html`.
 
 ### `taxonomy/`
 
