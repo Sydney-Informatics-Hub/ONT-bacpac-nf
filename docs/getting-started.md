@@ -143,7 +143,7 @@ The output directory will contain the following sub-directories:
 - `quality_control`: Quality information assessed by QUAST, BUSCO, Kraken2, PycoQC, and NanoPlot.
 - `annotations`: Annotations for antimicrobial resistance genes, virulence genes, plasmid annotations, and bacterial genome annotations.
 - `taxonomy`: Phylogenetic tree information.
-- `report`: A final MultiQC report summarising the pipeline run.
+- `report`: MultiQC reports summarising the pipeline run.
 
 For detailed information about interpreting the pipeline results, see [docs/interpreting-results.md](docs/interpreting-results.md)
 

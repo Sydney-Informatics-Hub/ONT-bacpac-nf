@@ -114,7 +114,11 @@ Bakta has been used to annotate the plasmid assemblies in this pipeline. Bakta a
 
 ### `report/` 
 
-This pipeline has used MultiQC to aggregate stats and summaries for various steps of the pipeline. The pipeline will output the MultiQC report as `${params.outdir}/report/multiqc_report.html`. The report can be opened in a web browser and contains a summary of the pipeline run, including the command line parameters used, the pipeline version, and the run time. 
+This pipeline uses MultiQC to aggregate stats and summaries for various steps of the pipeline. The pipeline will output two MultiQC reports, both of which can be opened in a web browser.
+
+The first report summarises the sequencing and assembly quality control metrics, and will be located at `${params.outdir}/report/multiqc_report.html`. It includes data from PycoQC and NanoStat about the sequencing run, as well as QUAST and BUSCO metrics for each of the assemblies and (if used) metrics specific to Autocycler's consensus assembly.
+
+The second report summarises the results of the pipeline, including the results from Kraken and Bakta, and the phylogenetic tree and AMR/virulence gene findings.
 
 ### `taxonomy/`
 
