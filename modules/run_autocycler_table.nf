@@ -7,14 +7,14 @@ process autocycler_table {
   tuple val(barcode), path(autocycler_dir)
 
   output:
-  tuple val(barcode), path("metrics.tsv"), emit: metrics
+  tuple val(barcode), path("${barcode}_metrics.tsv"), emit: metrics
 
   script:
   """
-  autocycler table > metrics.tsv  # Header row
+  autocycler table > ${barcode}_metrics.tsv  # Header row
   autocycler table \\
     --autocycler_dir autocycler_out \\
     --name ${barcode} \\
-    >> metrics.tsv
+    >> ${barcode}_metrics.tsv
   """
 }

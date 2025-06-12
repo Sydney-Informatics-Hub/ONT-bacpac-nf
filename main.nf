@@ -42,6 +42,7 @@ include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinde
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
 include { multiqc_report } from './modules/run_multiqc'
+include { multiqc_results_report } from './modules/run_multiqc_results'
 
 // Print a header for your pipeline 
 log.info """\
@@ -233,6 +234,7 @@ workflow {
 
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
+    autocycler_metrics = Channel.empty()  // To ensure that autocycler_metrics exists
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
 
@@ -246,6 +248,7 @@ workflow {
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
+    autocycler_metrics = autocycler.out.metrics
   } else {
     error 'Invalid value for `consensus_method`: ' + params.consensus_method
   }
@@ -442,20 +445,30 @@ workflow {
 
   bandage_report = generate_bandage_report.out.bandage_report
 
+  autocycler_metrics_for_mqc = autocycler_metrics
+    .ifEmpty([])
+
   multiqc_config = params.multiqc_config
+  multiqc_results_config = params.multiqc_results_config
 
   // Run MultiQC with the gathered inputs
+  // QC report
   multiqc_report(
     pycoqc_required_for_multiqc,
     nanoplot_required_for_multiqc,
     multiqc_config,
-    kraken2_required_for_multiqc,
     quast_required_for_multiqc,
+    busco_required_for_multiqc,
+    bandage_report,
+    autocycler_metrics_for_mqc
+  )
+  // Results report
+  multiqc_results_report(
+    multiqc_results_config,
+    kraken2_required_for_multiqc,
     bakta_required_for_multiqc,
     bakta_plasmids_required_for_multiqc,
-    busco_required_for_multiqc,
-    phylogeny_heatmap_plot_required_for_multiqc,
-    bandage_report
+    phylogeny_heatmap_plot_required_for_multiqc
   )
 }
 

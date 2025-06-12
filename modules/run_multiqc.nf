@@ -7,13 +7,10 @@ process multiqc_report {
   path(pycoqc)
   path(nanoplot)
   path(multiqc_config)
-  path(kraken2)
   path(quast)
-  path(bakta)
-  path(bakta_plasmids)
   path(busco)
-  path(phylogeny_heatmap_plot)
   path(bandage_report)
+  path(autocycler_metrics)
 
   output:
   path ("*"), emit: multiqc
