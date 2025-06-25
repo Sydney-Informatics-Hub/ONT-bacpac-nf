@@ -32,6 +32,7 @@ Acknowledgements (and co-authorship, where appropriate) are an important way for
 
 - Francisca Samsing (Sydney School of Veterinary Science, University of Sydney)
 - Georgie Samaha (Sydney Informatics Hub, University of Sydney)
+- Michael Geaghan (Sydney Informatics Hub, University of Sydney)
 - Fred Jaya (Sydney Informatics Hub, University of Sydney)
 - Mitchell O'Brien (Sydney Informatics Hub, University of Sydney)
   
@@ -43,6 +44,6 @@ The authors acknowledge the support provided by the Sydney Informatics Hub, a Co
 You can cite this pipeline as: 
 
 ```
-Samaha, G., Samsing, F., O'Brien, M., & Jaya, F. (2025). ONT-bacpac-nf (Version 1.0.0) [Computer software]. https://doi.org/10.48546/workflowhub.workflow.1263.1
+Samaha, G., Samsing, F., O'Brien, M., Jaya, F. & Geaghan, M. (2025). ONT-bacpac-nf (Version 1.0.0) [Computer software]. https://doi.org/10.48546/workflowhub.workflow.1263.1
 ```
 
