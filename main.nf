@@ -142,15 +142,23 @@ workflow {
       log.info "USING INPUT DIRECTORY `${params.input_directory}`"
       zipped_fqs = Channel.fromPath(params.input_directory + '/*.zip')
         .map { f -> [ f.baseName, f ] }
+      pre_unzipped_fq_dirs = Channel.fromPath(params.input_directory + '/*/*.{fq,fastq}.gz')  // For now we need to require .gz FASTQs due to requirements of pigz
+        .map { f -> [ f.parent.baseName, f.parent ] }
+        .unique()
     } else {
       // VALIDATE SAMPLESHEET
       log.info "READING ZIPPED FASTQS FROM SAMPLESHEET `${params.samplesheet}`"
-      zipped_fqs = Channel.fromPath(params.samplesheet)
+      samplesheet_ch = Channel.fromPath(params.samplesheet)
         .splitCsv( header: true )
         .map { row -> [ row.barcode, file(row.file_path) ] }
+      zipped_fqs = samplesheet_ch
+        .filter { bc, f -> f.isFile() && f.name.endsWith('.zip') }
+      pre_unzipped_fq_dirs = samplesheet_ch
+        .filter { bc, f -> f.isDirectory() }
     }
 
     unzipped_fq_dirs = unzip_fastqs(zipped_fqs)
+      .mix(pre_unzipped_fq_dirs)
   }
 
   // CONCATENATE FQS PER SAMPLE

@@ -27,7 +27,25 @@ ONT sequencing runs will generate a sequencing summary text file, named somethin
 
 The pipeline takes either a sequencing data directory or a CSV samplesheet as its input.
 
-A sequencing data directory should contain one `.zip` file per sample, each containing all FASTQs associated with that sample. It can be specified on the command line as follows:
+A sequencing data directory should contain FASTQs for one or more samples, with each sample's FASTQs either organised into a separate subdirectory or compressed as a `.zip` file. Each sample may have multiple FASTQ files associated with it. For example, in the following example, the sequencing directory `/example/sequencing/directory` contains the data for `barcode01` and `barocde02` within subdirectories, and `barcode03` and `barcode04` as `.zip` files:
+
+```bash
+tree /example/sequencing/directory
+```
+
+```console
+/example/sequencing/directory
+├── barcode01
+│   ├── FAX12345_pass_barcode01_6789abcd_ef012345_0.fastq.gz
+│   └── FAX12345_pass_barcode01_6789abcd_ef012345_1.fastq.gz
+├── barcode02
+│   ├── FAX23456_pass_barcode01_789abcde_f0123456_0.fastq.gz
+│   └── FAX23456_pass_barcode01_789abcde_f0123456_1.fastq.gz
+├── barcode03.zip
+└── barcode04.zip
+```
+
+You can specify to process all the samples within a directory like this with the `--input_directory` parameter:
 
 ```bash
 nextflow run main.nf --input_directory /path/to/dataset [...]
@@ -37,13 +55,15 @@ If a samplesheet is provided, it should be formatted as follows:
 
 ```csv
 barcode,batch,file_path
-barcode01,batch1,/path/to/dataset/barcode01.zip
-barcode02,batch1,/path/to/dataset/barcode02.zip
+barcode01,batch1,/path/to/dataset/barcode01
+barcode02,batch1,/path/to/dataset/barcode02
 barcode03,batch2,/path/to/dataset/barcode03.zip
 barcode04,batch2,/path/to/dataset/barcode04.zip
 ```
 
-This can be specified with:
+In this case, the path to the directory or `.zip` file containing a sample's FASTQs is provided under the `file_path` column.
+
+To use a samplesheet, you can use the `--samplesheet` parameter:
 
 ```bash
 nextflow run main.nf --samplesheet /path/to/samplesheet.csv [...]
