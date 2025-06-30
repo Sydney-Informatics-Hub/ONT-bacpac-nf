@@ -98,7 +98,7 @@ p_heat <-
   pivot_longer(-Sample, names_to = "Gene", values_to = "Presence") %>%
   ggplot(aes(Gene, Sample, fill = as.factor(Presence))) +
   geom_tile(color = "white") +
-  scale_fill_manual(values = c("#D6E4F0", "#F28C8C")) +
+  scale_fill_manual(values = c("#D6E4F0", "#F28C8C"), breaks = c(0, 1)) +  # matrix will only ever have 0 and 1 values, always set 0 to grey blue, 1 to red
   scale_x_discrete(position = "top") + # display gene name
   theme_void(base_size = 10) + # strip most theming, set font size
   theme(
