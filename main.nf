@@ -256,13 +256,15 @@ workflow {
 
   // Identify failed barcodes and create a list of their names
   consensus_successes = polished_consensus_per_barcode
-    .ifEmpty([null, null, true])  // Gives us something to join against, will be filtered out below
+    .ifEmpty([null, null, null])  // Gives us something to join against, will be filtered out below
   consensus_failures = concat_fastqs.out.concat_fq
     .map { barcode, _fq -> barcode }
     .unique()
     .join(consensus_successes, remainder: true)
-    .filter { _barcode, _assembler, fa -> !fa }
-    .map { barcode, _assembler, _fa -> barcode }
+    .filter { x ->
+      x.size() == 2 && !x[1]
+    }
+    .map { barcode, _nullval -> barcode }
     .collect()
 
   // Generate MultiQC-ready YAML file of failed barcodes
