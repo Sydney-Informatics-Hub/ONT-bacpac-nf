@@ -111,6 +111,18 @@ nextflow run main.nf --subsamples 8 [...]
 
 For Trycycler, you can disable subsampling altogether by using `--subsamples 1`. Subsampling is required for the Autocycler implementation and cannot be turned off.
 
+#### Consensus assembly failures
+
+In some cases, such as samples with low coverage or high fragmentation, the consensus assembly method may fail. In these cases, the pipeline will fall back to using one of the de novo assembly methods (currently either Unicycler or Flye). If this occurs, a message will be printed to the terminal and/or standard output where the pipeline is running, and a table of failed samples will appear at the top of the MultiQC reports.
+
+When generating a consensus sequence with autocycler, one of the causes of such a failure is if the mean number of contigs per assembly exceeds a set value. This threshold is `25` by default, but can be changed by providing the `--max_contigs` parameter when running Nextflow:
+
+```bash
+nextflow run main --max_contigs 50 [...]
+```
+
+Note that this may fix the issue in some cases, but for highly fragmented assemblies, autocycler may still fail to generate a consensus sequence.
+
 ### Putting it together
 
 A typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, a sequencing summary file at `/scratch/ab01/dataset/sequencing_summary.txt`, and high-accuracy basecalling, we would do the following:
