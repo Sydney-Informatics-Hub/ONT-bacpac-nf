@@ -487,33 +487,36 @@ workflow {
     phylogeny_heatmap_plot_required_for_multiqc,
     consensus_warnings
   )
+  // Print workflow execution summary 
+  workflow.onComplete = {
+    def summary = """
+    =======================================================================================
+    Workflow execution summary
+    =======================================================================================
+
+    Duration    : ${workflow.duration}
+    Success     : ${workflow.success}
+    workDir     : ${workflow.workDir}
+    Exit status : ${workflow.exitStatus}
+    results     : ${params.outdir}
+
+    =======================================================================================
+    """
+    println summary.replaceAll(/(^|\n)\s+/, '\n')
+
+    // If there were failed consensus assemblies, print a warning message
+    def consensus_failure_strings = consensus_failures.value
+    if (consensus_failure_strings.size() > 0) {
+      def msg = """
+      ===== CONSENSUS ASSEMBLY FAILURES =====
+      WARNING: Consensus assembly failed for
+      the following samples:
+      ${consensus_failure_strings.join('\n')}
+      =======================================
+      """
+      println msg.replaceAll(/(^|\n)\s+/, '\n')
+    }
+
+  }
 }
 
-// Print workflow execution summary 
-workflow.onComplete {
-summary = """
-=======================================================================================
-Workflow execution summary
-=======================================================================================
-
-Duration    : ${workflow.duration}
-Success     : ${workflow.success}
-workDir     : ${workflow.workDir}
-Exit status : ${workflow.exitStatus}
-results     : ${params.outdir}
-
-=======================================================================================
-  """
-println summary
-
-// If there were failed consensus assemblies, print a warning message
-consensus_failure_strings = consensus_failures.value
-if (consensus_failure_strings.size() > 0) {
-  println "===== CONSENSUS ASSEMBLY FAILURES ====="
-  println "WARNING: Consensus assembly failed for"
-  println "the following samples:"
-  println consensus_failure_strings.join('\n')
-  println "======================================="
-}
-
-}
