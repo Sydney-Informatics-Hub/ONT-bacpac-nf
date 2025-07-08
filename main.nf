@@ -515,7 +515,12 @@ workflow {
       ===== CONSENSUS ASSEMBLY FAILURES =====
       WARNING: Consensus assembly failed for
       the following samples:
+
       ${consensus_failure_strings.join('\n')}
+
+      For each of these samples, one of the
+      de novo assemblies was chosen for
+      downstream analyses
       =======================================
       """
       println msg.replaceAll(/(^|\n)\s+/, '\n')
