@@ -255,10 +255,12 @@ workflow {
   }
 
   // Identify failed barcodes and create a list of their names
+  consensus_successes = polished_consensus_per_barcode
+    .ifEmpty([null, null, true])  // Gives us something to join against, will be filtered out below
   consensus_failures = concat_fastqs.out.concat_fq
     .map { barcode, _fq -> barcode }
     .unique()
-    .join(polished_consensus_per_barcode, remainder: true)
+    .join(consensus_successes, remainder: true)
     .filter { _barcode, _assembler, fa -> !fa }
     .map { barcode, _assembler, _fa -> barcode }
     .collect()
@@ -505,7 +507,7 @@ workflow {
     println summary.replaceAll(/(^|\n)\s+/, '\n')
 
     // If there were failed consensus assemblies, print a warning message
-    def consensus_failure_strings = consensus_failures.value
+    def consensus_failure_strings = consensus_failures.ifEmpty([]).value
     if (consensus_failure_strings.size() > 0) {
       def msg = """
       ===== CONSENSUS ASSEMBLY FAILURES =====
