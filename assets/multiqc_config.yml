@@ -116,7 +116,7 @@ report_section_order:
     general_stats:
         order: -9880
     failure_warnings:
-        order: -9850
+        order: -9890
     sampleID_species_table_mqc:
         order: -9900
     nanostat:

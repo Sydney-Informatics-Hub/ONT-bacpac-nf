@@ -12,8 +12,8 @@ process generate_consensus_warnings {
   script:
   yaml_data = [
     'id: "failure_warnings"',
-    'section_name: "Failure Warnings"',
-    'description: "The following samples failed consensus assembly."',
+    'section_name: "Consensus Assembly Failure Warnings"',
+    'description: "The following samples failed consensus assembly. For each of these samples, one of the de novo assemblies was chosen for downstream analyses."',
     'plot_type: "table"',
     'headers:',
     '  consensus_method:',
