@@ -3,7 +3,7 @@ process autocycler_compress {
   container 'quay.io/biocontainers/autocycler:0.3.0--h3ab6199_0'
   // Autocycler compress can fail if the assembly is too fragmented
   // We can allow this and fall back to using the de novo assemblers
-  errorStrategy { task.exitStatus == 1 && params.fallback_denovo ? 'ignore' : 'finish' }
+  errorStrategy { task.exitStatus == 1 ? 'ignore' : 'finish' }
 
   input:
   tuple val(barcode), path(assembly_fastas)
