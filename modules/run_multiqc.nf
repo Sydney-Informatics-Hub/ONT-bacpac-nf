@@ -11,6 +11,7 @@ process multiqc_report {
   path(busco)
   path(bandage_report)
   path(autocycler_metrics)
+  path(consensus_warning_yaml)
 
   output:
   path ("*"), emit: multiqc

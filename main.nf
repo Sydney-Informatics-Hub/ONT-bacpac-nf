@@ -41,6 +41,7 @@ include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus
 include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
+include { generate_consensus_warnings } from './modules/generate_consensus_warnings'
 include { multiqc_report } from './modules/run_multiqc'
 include { multiqc_results_report } from './modules/run_multiqc_results'
 
@@ -261,6 +262,24 @@ workflow {
     error 'Invalid value for `consensus_method`: ' + params.consensus_method
   }
 
+  // Identify failed barcodes and create a list of their names
+  consensus_successes = polished_consensus_per_barcode
+    .ifEmpty([null, null, null])  // Gives us something to join against, will be filtered out below
+  consensus_failures = concat_fastqs.out.concat_fq
+    .map { barcode, _fq -> barcode }
+    .unique()
+    .join(consensus_successes, remainder: true)
+    .filter { x ->
+      x.size() == 2 && !x[1]
+    }
+    .map { barcode, _nullval -> barcode }
+    .collect()
+
+  // Generate MultiQC-ready YAML file of failed barcodes
+  generate_consensus_warnings(consensus_failures, params.consensus_method)
+  consensus_warnings = generate_consensus_warnings.out.mqc_yaml
+    .ifEmpty([])
+
   // RUN BANDAGE ON AUTOCYCLER OUTPUTS
   // DE NOVO ASSEMBLY GRAPHS
   // AND PLASEMBLER GRAPHS
@@ -468,7 +487,8 @@ workflow {
     quast_required_for_multiqc,
     busco_required_for_multiqc,
     bandage_report,
-    autocycler_metrics_for_mqc
+    autocycler_metrics_for_mqc,
+    consensus_warnings
   )
   // Results report
   multiqc_results_report(
@@ -476,25 +496,44 @@ workflow {
     kraken2_required_for_multiqc,
     bakta_required_for_multiqc,
     bakta_plasmids_required_for_multiqc,
-    phylogeny_heatmap_plot_required_for_multiqc
+    phylogeny_heatmap_plot_required_for_multiqc,
+    consensus_warnings
   )
+  // Print workflow execution summary 
+  workflow.onComplete = {
+    def summary = """
+    =======================================================================================
+    Workflow execution summary
+    =======================================================================================
+
+    Duration    : ${workflow.duration}
+    Success     : ${workflow.success}
+    workDir     : ${workflow.workDir}
+    Exit status : ${workflow.exitStatus}
+    results     : ${params.outdir}
+
+    =======================================================================================
+    """
+    println summary.replaceAll(/(^|\n)\s+/, '\n')
+
+    // If there were failed consensus assemblies, print a warning message
+    def consensus_failure_strings = consensus_failures.ifEmpty([]).value
+    if (consensus_failure_strings.size() > 0) {
+      def msg = """
+      ===== CONSENSUS ASSEMBLY FAILURES =====
+      WARNING: Consensus assembly failed for
+      the following samples:
+
+      ${consensus_failure_strings.join('\n')}
+
+      For each of these samples, one of the
+      de novo assemblies was chosen for
+      downstream analyses
+      =======================================
+      """
+      println msg.replaceAll(/(^|\n)\s+/, '\n')
+    }
+
+  }
 }
 
-// Print workflow execution summary 
-workflow.onComplete {
-summary = """
-=======================================================================================
-Workflow execution summary
-=======================================================================================
-
-Duration    : ${workflow.duration}
-Success     : ${workflow.success}
-workDir     : ${workflow.workDir}
-Exit status : ${workflow.exitStatus}
-results     : ${params.outdir}
-
-=======================================================================================
-  """
-println summary
-
-}

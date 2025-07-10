@@ -115,6 +115,8 @@ fn_ignore_dirs:
 report_section_order:
     general_stats:
         order: -9880
+    Consensus Assembly Failure Warnings:
+        order: -9890
     sampleID_species_table_mqc:
         order: -9900
     nanostat:

@@ -9,6 +9,7 @@ process multiqc_results_report {
   path(bakta)
   path(bakta_plasmids)
   path(phylogeny_heatmap_plot)
+  path(consensus_warning_yaml)
 
   output:
   path ("*"), emit: multiqc
