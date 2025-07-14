@@ -56,7 +56,7 @@
       "description": "Provide if running this pipeline on NCI Gadi, ignore otherwise.",
       "default": "",
       "properties": {
-        "whoami": {
+        "gadi_user": {
           "type": "string",
           "fa_icon": "fas fa-running",
           "description": "Provide your username (e.g. aa1111)"
