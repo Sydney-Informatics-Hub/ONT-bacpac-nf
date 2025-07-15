@@ -33,8 +33,6 @@ git clone https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf.git
 
 We have created a test script in the `test/` directory, called `run_test.sh`. This script will run the pipeline on all files in a directory **OR** a provided samplesheet. Unhash (i.e. remove the `#` prefixing each line of the command)the relevant command in the script and hash (i.e. prefix each line of the command with `#`) the command you don't want to run. 
 
-Before running the test script, ensure you have set your singularity cache directory. See below for instructions of how to check and do this.
-
 To execute the test script, start a [persistent session](https://opus.nci.org.au/display/Help/Persistent+Sessions) on Gadi with the following command, providing your project code and a name for the session: 
 
 ```bash
@@ -196,36 +194,27 @@ barcode,batch,file_path
 ```
 **Note:** If you're rerunning the pipeline or using an older samplesheet version, make sure to **remove any leading `#` from the header line**.
 
-### Execute the workflow
+### Preparing Singularity
 
-This workflow executes different tools for each step as containers. This means you do not have to download and install anything before executing the pipeline. Containers will be pulled during execution. Allow Nextflow to download and save your containers to a cache directory: 
+This workflow executes different tools for each step as containers. This means you do not have to download and install anything before executing the pipeline. Containers are stored within a cache directory that depends upon your Gadi project and username: `/scratch/<PROJECT>/<USER>/.nextflow/singularity`. Your username will be automatically detected, but can be overridden with the `--gadi_user` parameter when running the pipeline. Your Gadi project will also be automatically detected, but can also be overridden with the `--gadi_account` parameter, as detailed in [Getting Started - Execution on gadi](./getting-started.md#execution-on-gadi). If a container doesn't exist in the cache directory, it will be automatically pulled during execution. Finally, you can override the default container cache directory with the `--singularityCacheDir` parameter.
 
-```bash
-# Create the following cache directories for singularity containers
-mkdir /scratch/<PROJECT>/singularity_cache
-mkdir /scratch/<PROJECT>/nextflow_singularity_cache
-
-# Set the cache directory as an environment variable
-export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache
-export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/nextflow_singularity_cache
-```
-
-Confirm that the cache directory has been set: 
+You will also need to set the `SINGULARITY_CACHEDIR` environment variable. This tells Singularity to use this directory temporarily when pulling images. If this is not set, a directory in your home directory will be used and may run into storage quota limits.
 
 ```bash
-echo $SINGULARITY_CACHEDIR
-echo $NXF_SINGULARITY_CACHEDIR
+export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/<USER>/.singularity
 ```
 
-To avoid having to reset this variable before each run, you could add the export command to your `.bashrc` file: 
+To avoid having to reset this variable before each run, you can add the export command to your `~/.bashrc` file: 
   
 ```bash
 # Add the following line to your .bashrc file
-echo 'export NXF_SINGULARITY_CACHEDIR=/scratch/<PROJECT>/singularity_cache' >> ~/.bashrc
+echo 'export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/<USER>/.singularity' >> ~/.bashrc
 
 # Reload your .bashrc file to apply the changes
 source ~/.bashrc
 ```
+
+### Execute the workflow
 
 A template run script has been provided in this repository at `test/run_test.sh`. It will need to be modified to suit your specific project requirements.
 
@@ -241,7 +230,7 @@ Define paths to the workflow input variables:
 * `k2db=/scratch/<PROJECT>/databases/kraken2_db`
 * `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
 
-This is the structure of the run script saved in `test/run_test.sh` on all files in a directory:
+This is the structure of the run script saved in `test/run_test.sh`, modified to run on all files in a specific directory:
 
 ```bash
 #!/bin/bash
@@ -276,7 +265,7 @@ nextflow run main.nf \
   -resume 
 ```
 
-This is the structure of the run script saved in `test/run_test.sh` on selected files specified in a samplesheet:
+This is the structure of the run script saved in `test/run_test.sh`, modified to run on selected files specified in a samplesheet:
 
 ```bash
 #!/bin/bash

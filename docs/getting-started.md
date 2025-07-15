@@ -85,10 +85,11 @@ nextflow run main.nf --kraken2_db /path/to/kraken2/db [...]
 
 If running on NCI's gadi, you will also need to provide the following paramters:
 
-- `--gadi_account <PROJ>`
-    - `PROJ` should be your NCI project ID, e.g. `ab01`
 - `--gadi_storage <STORAGE_STRING>`
     - `STORAGE_STRING` should be a `+`-delimited list of NCI storage systems that you will require, e.g. `scratch/ab01` or `scratch/ab01+gdata/ab01`
+- `--gadi_account <PROJ>`
+    - `PROJ` should be your NCI project ID, e.g. `ab01`
+    - Only required if you wish to use a different account than your default NCI account.
 
 You will also need to specify to use the `gadi` Nextflow profile, e.g.:
 
