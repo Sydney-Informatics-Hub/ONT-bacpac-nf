@@ -9,7 +9,7 @@ input:
 
 output:
   tuple val(barcode), path("${barcode}_bakta/"), emit: bakta_annotations    
-  tuple val(barcode), path("${barcode}_bakta//${barcode}_plasmids.txt"), emit: bakta_annotations_multiqc
+  tuple val(barcode), path("${barcode}_bakta/${barcode}_plasmids.txt"), emit: bakta_annotations_multiqc
 
 script:
   """

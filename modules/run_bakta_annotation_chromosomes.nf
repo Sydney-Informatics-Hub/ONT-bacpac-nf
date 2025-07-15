@@ -10,6 +10,7 @@ process bakta_annotation_chromosomes {
   output:
   tuple val(barcode), val(assembler), path("${prefix}.faa"), emit: faa
   tuple val(barcode), val(assembler), path("${prefix}.txt"), emit: txt
+  tuple val(barcode), val(assembler), path("${prefix}.gff3"), emit: gff
 
   script:
   prefix = "${barcode}_${assembler}_chr"
