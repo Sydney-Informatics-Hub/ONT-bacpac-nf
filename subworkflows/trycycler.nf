@@ -98,11 +98,18 @@ workflow trycycler {
                 // create a channel from skip_trycycler if failed barcodes need to be reported/used
             }
 
+        // Get the number of assemblies per barcode
+        n_assemblies = denovo_assemblies
+            .map { barcode, assemblies, _trimmed_fq, _num_contigs ->
+                return [ barcode, assemblies.size() ]
+            }
+
         // TRYCYCLER: Classify clusters
         clusters_to_classify =
             // Add path to clusters with sufficient contigs
             trycycler_cluster_subset.out.clusters
             .join(barcode_cluster_sizes.run_trycycler)
+            .join(n_assemblies)
 
     } else {
 
@@ -124,11 +131,18 @@ workflow trycycler {
                 skip_trycycler: phylip_lines < 3
             }
 
+        // Get the number of assemblies per barcode
+        n_assemblies = trycycler_assemblies
+            .map { barcode, assemblies, _trimmed_fq, _num_contigs ->
+                return [ barcode, assemblies.size() ]
+            }
+
         // TRYCYCLER: Classify clusters
         clusters_to_classify =
             // Add path to clusters with sufficient contigs
             trycycler_cluster.out.clusters
             .join(barcode_cluster_sizes.run_trycycler)
+            .join(n_assemblies)
 
     }
 
