@@ -4,16 +4,17 @@ process medaka_polish_consensus {
   publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'copy'
 
   input:
-  tuple val(barcode), path(cluster_dir)
+  tuple val(barcode), path(fastq), path(fasta)
 
   output:
-  tuple val(barcode), path("consensus.fasta"), emit: cluster_assembly
+  tuple val(barcode), path("consensus.fasta"), emit: polished_assembly
 
   script:
+  cluster_dir = fasta.getParent()
   """
   medaka_consensus \\
-    -i ${cluster_dir}/4_reads.fastq \\
-    -d ${cluster_dir}/7_final_consensus.fasta \\
+    -i ${fastq} \\
+    -d ${fasta} \\
     -o ./ \\
     -t ${task.cpus}
   """

@@ -15,6 +15,7 @@ include { autocycler_resolve } from '../modules/run_autocycler_resolve'
 include { autocycler_combine } from '../modules/run_autocycler_combine'
 include { autocycler_table } from '../modules/run_autocycler_table'
 include { autocycler_table_mqc } from '../modules/run_autocycler_table_mqc'
+include { medaka_polish_consensus } from '../modules/run_medaka_polish_consensus'
 
 
 workflow autocycler {
@@ -84,6 +85,16 @@ workflow autocycler {
             return [barcode, assembler, consensus_fa]
         }
 
+    consensus_to_polish = consensus
+        .join(trimmed_fq)
+        .map { barcode, _assembler, consensus_fa, input_fq -> [ barcode, input_fq, consensus_fa ]}
+    
+    medaka_polish_consensus(consensus_to_polish)
+
+    polished_consensus =
+        medaka_polish_consensus.out.polished_assembly
+        .map { barcode, consensus_fa -> [ barcode, "consensus", consensus_fa ]}
+
     consensus_gfa =
         autocycler_combine.out.autocycler_out
         .map { barcode, autocycler_dir ->
@@ -93,7 +104,7 @@ workflow autocycler {
         }
 
     emit:
-    polished_consensus_per_barcode = consensus
+    polished_consensus_per_barcode = polished_consensus
     consensus_gfa_per_barcode = consensus_gfa
     metrics = autocycler_table_mqc.out.metrics
 }
