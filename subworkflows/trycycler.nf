@@ -7,6 +7,7 @@ nextflow.enable.dsl=2
 include { trycycler_subsample } from '../modules/run_trycycler_subsample'
 include { flye_assembly_subset } from '../modules/run_flye_subset'
 include { unicycler_assembly_subset } from '../modules/run_unicycler_subset'
+include { raven_assembly_subset } from '../modules/run_raven_subset'
 include { trycycler_cluster } from '../modules/run_trycycler_cluster'
 include { trycycler_cluster_subset } from '../modules/run_trycycler_cluster_subset'
 include { classify_trycycler } from '../modules/run_trycycler_classify'
@@ -37,6 +38,8 @@ workflow trycycler {
         // We need to re-run the assemblies on each subset
         flye_assembly_subset(subsets)
         unicycler_assembly_subset(subsets)
+        raven_assembly_subset(subsets)
+        // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
 
         /*
         * CONSENSUS ASSEMBLY PRE-PROCESSING
@@ -50,6 +53,8 @@ workflow trycycler {
         num_contigs_per_barcode =
             unicycler_assembly_subset.out.unicycler_assembly
             .mix(flye_assembly_subset.out.flye_assembly)
+            .mix(raven_assembly_subset.out.raven_assembly)
+            // MIX IN NEW SUBSET ASSEMBLERS HERE
             .map { barcode, assembly_dir ->
                 // Count num contigs per assembly
                 def fa = assembly_dir + "/assembly.fasta"
@@ -59,30 +64,24 @@ workflow trycycler {
             .groupTuple()
             .map { barcode, ncontigs ->
                 // Add total contigs across assemblies
-                def total_contigs = ncontigs.inject(0, { result, x -> result + x.toInteger() })
+                def ncontigs_int = ncontigs.collect { x -> x.toInteger() }
+                def total_contigs = ncontigs_int.sum()
                 return [barcode, total_contigs]
             }
 
-        unicycler_assembly_subset_grouped = unicycler_assembly_subset.out.unicycler_assembly
-            .groupTuple()
-        flye_assembly_subset_grouped = flye_assembly_subset.out.flye_assembly
-            .groupTuple()
         denovo_assemblies =
-            unicycler_assembly_subset_grouped
-            .join(flye_assembly_subset_grouped, by:0)
+            unicycler_assembly_subset.out.unicycler_assembly
+            .mix(flye_assembly_subset.out.flye_assembly)
+            .mix(raven_assembly_subset.out.raven_assembly)
+            // MIX IN NEW SUBSET ASSEMBLERS HERE
+            .groupTuple()
             .join(trimmed_fq, by:0)
             .join(num_contigs_per_barcode, by:0)
-
-        denovo_assembly_contigs =
-            denovo_assemblies
-            .branch { barcode, unicycler, flye, trimmed_fastq, num_contigs ->
-                run_trycycler: num_contigs >= 3
-                skip_trycycler: num_contigs < 3
-            }
+            .filter { _barcode, _assemblies, _trimmed_fq, num_contigs -> num_contigs >= 3 }
 
         // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
         // TRYCYCLER: Cluster contigs
-        trycycler_cluster_subset(denovo_assembly_contigs.run_trycycler)
+        trycycler_cluster_subset(denovo_assemblies)
 
         barcode_cluster_sizes =
             // trycycler_cluster filters out small contigs (default < 5000nt) and can
@@ -93,7 +92,7 @@ workflow trycycler {
                 def phylip_lines = contigs_phylip.text.readLines().size - 1 // exclude header
                 return [barcode, phylip_lines]
             }
-            .branch { barcode, phylip_lines ->
+            .branch { _barcode, phylip_lines ->
                 run_trycycler: phylip_lines >= 3
                 skip_trycycler: phylip_lines < 3
                 // create a channel from skip_trycycler if failed barcodes need to be reported/used
@@ -120,7 +119,7 @@ workflow trycycler {
                 def phylip_lines = contigs_phylip.text.readLines().size - 1 // exclude header
                 return [barcode, phylip_lines]
             }
-            .branch { barcode, phylip_lines ->
+            .branch { _barcode, phylip_lines ->
                 run_trycycler: phylip_lines >= 3
                 skip_trycycler: phylip_lines < 3
             }
