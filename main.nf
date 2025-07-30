@@ -182,7 +182,7 @@ workflow {
   // DE NOVO GENOME ASSEMBLIES
   flye_assembly(porechop.out.trimmed_fq)
   unicycler_assembly(porechop.out.trimmed_fq)
-  raven_assembly(porchop.out.trimmed_fq)
+  raven_assembly(porechop.out.trimmed_fq)
   // ADD CALLS TO NEW ASSEMBLERS HERE
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
