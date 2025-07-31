@@ -41,6 +41,13 @@ workflow trycycler {
         raven_assembly_subset(subsets)
         // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
 
+        // MIX ASSEMBLIES TOGETHER
+        mixed_assemblies = 
+            unicycler_assembly_subset.out.unicycler_assembly
+            .mix(flye_assembly_subset.out.flye_assembly)
+            .mix(raven_assembly_subset.out.raven_assembly)
+            // MIX IN NEW ASSEMBLERS HERE
+
         /*
         * CONSENSUS ASSEMBLY PRE-PROCESSING
         * 
@@ -51,10 +58,7 @@ workflow trycycler {
         * is added here.
         */
         num_contigs_per_barcode =
-            unicycler_assembly_subset.out.unicycler_assembly
-            .mix(flye_assembly_subset.out.flye_assembly)
-            .mix(raven_assembly_subset.out.raven_assembly)
-            // MIX IN NEW SUBSET ASSEMBLERS HERE
+            mixed_assemblies
             .map { barcode, assembly_dir ->
                 // Count num contigs per assembly
                 def fa = assembly_dir + "/assembly.fasta"
@@ -70,10 +74,7 @@ workflow trycycler {
             }
 
         denovo_assemblies =
-            unicycler_assembly_subset.out.unicycler_assembly
-            .mix(flye_assembly_subset.out.flye_assembly)
-            .mix(raven_assembly_subset.out.raven_assembly)
-            // MIX IN NEW SUBSET ASSEMBLERS HERE
+            mixed_assemblies
             .groupTuple()
             .join(trimmed_fq, by:0)
             .join(num_contigs_per_barcode, by:0)

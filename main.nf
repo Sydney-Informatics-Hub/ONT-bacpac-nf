@@ -185,6 +185,19 @@ workflow {
   raven_assembly(porechop.out.trimmed_fq)
   // ADD CALLS TO NEW ASSEMBLERS HERE
 
+  // MIX ASSEMBLIES TOGETHER
+  mixed_assemblies = 
+    unicycler_assembly.out.unicycler_assembly
+    .mix(flye_assembly.out.flye_assembly)
+    .mix(raven_assembly.out.raven_assembly)
+    // MIX IN NEW ASSEMBLERS HERE
+
+  mixed_assembly_graphs =
+    unicycler_assembly.out.unicycler_graph
+    .mix(flye_assembly.out.flye_graph)
+    .mix(raven_assembly.out.raven_graph)
+    // MIX IN NEW ASSEMBLERS HERE
+
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   plassembler_in = porechop.out.trimmed_fq
                   .join(flye_assembly.out.flye_assembly, by: 0)
@@ -202,10 +215,7 @@ workflow {
    * is added here.
    */
   num_contigs_per_barcode =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .mix(raven_assembly.out.raven_assembly)
-    // MIX IN NEW ASSEMBLERS HERE
+    mixed_assemblies
     .map { barcode, assembly_dir ->
         // Count num contigs per assembly
         def fa = assembly_dir + "/assembly.fasta"
@@ -221,10 +231,7 @@ workflow {
     }
 
   denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .mix(raven_assembly.out.raven_assembly)
-    // MIX IN NEW ASSEMBLERS HERE
+    mixed_assemblies
     .groupTuple()
     .join(porechop.out.trimmed_fq, by:0)
     .join(num_contigs_per_barcode, by:0)
@@ -281,10 +288,7 @@ workflow {
       [ barcode, "plassembler", graph ]
     }
   graphs_for_bandage =
-    unicycler_assembly.out.unicycler_graph
-    .mix(flye_assembly.out.flye_graph)
-    .mix(raven_assembly.out.raven_graph)
-    // MIX IN NEW ASSEMBLERS HERE
+    mixed_assembly_graphs
     .mix(consensus_gfa_per_barcode)
     .mix(plassembler_graphs)
     .filter { _barcode, _assembly, graph ->
@@ -301,10 +305,7 @@ workflow {
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .mix(raven_assembly.out.raven_assembly)
-    // MIX IN NEW ASSEMBLERS HERE
+    mixed_assemblies
     .map { barcode, assembly_dir -> 
         // Get the assembler name by parsing the publishDir path.
         // A better way to do this is output i.e. val(assembler_name) in the

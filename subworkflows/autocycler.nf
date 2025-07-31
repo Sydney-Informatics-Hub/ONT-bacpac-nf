@@ -41,10 +41,14 @@ workflow autocycler {
     raven_assembly_subset(subsets)
     // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
 
-    all_assembly_dirs = flye_assembly_subset.out.flye_assembly
-        .mix(unicycler_assembly_subset.out.unicycler_assembly)
+    // MIX ASSEMBLIES TOGETHER
+    mixed_assemblies = 
+        unicycler_assembly_subset.out.unicycler_assembly
+        .mix(flye_assembly_subset.out.flye_assembly)
         .mix(raven_assembly_subset.out.raven_assembly)
-        // MIX IN NEW SUBSET ASSEMBLERS HERE
+        // MIX IN NEW ASSEMBLERS HERE
+
+    all_assembly_dirs = mixed_assemblies
         .groupTuple(by:0)
 
     autocycler_compress(all_assembly_dirs)
