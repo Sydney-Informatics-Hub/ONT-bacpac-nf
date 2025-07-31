@@ -246,14 +246,7 @@ workflow {
     autocycler_metrics = Channel.empty()  // To ensure that autocycler_metrics exists
   } else if (params.consensus_method == 'autocycler') {
     // RUN AUTOCYCLER
-
-    // First, check that params.subsamples > 1
-    if (!(params.subsamples.toInteger() > 1)) {
-      log.info "Error: autocycler must be run with > 1 subsamples"
-      System.exit(1)
-    }
-    
-    autocycler(porechop.out.trimmed_fq)
+    autocycler(porechop.out.trimmed_fq, mixed_assemblies)
 
     polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode

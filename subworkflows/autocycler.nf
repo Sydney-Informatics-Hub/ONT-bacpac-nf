@@ -21,35 +21,41 @@ include { autocycler_table_mqc } from '../modules/run_autocycler_table_mqc'
 workflow autocycler {
     take:
     trimmed_fq
+    autocycler_mixed_assemblies
 
     main:
-    // ESTIMATE GENOME SIZE
-    estimate_genome_size(trimmed_fq)
+    if (params.subsamples.toInteger() > 1) {
+        // ESTIMATE GENOME SIZE
+        estimate_genome_size(trimmed_fq)
 
-    autocycler_inputs = trimmed_fq
-        .join(estimate_genome_size.out.genome_size, by:0)
+        autocycler_inputs = trimmed_fq
+            .join(estimate_genome_size.out.genome_size, by:0)
 
-    // SUBSAMPLE FASTQ FILES
-    autocycler_subsample(autocycler_inputs)
+        // SUBSAMPLE FASTQ FILES
+        autocycler_subsample(autocycler_inputs)
 
-    // Expand the multiple FASTQs per barcode to one tuple per subset
-    subsets = autocycler_subsample.out.subsets.transpose()
+        // Expand the multiple FASTQs per barcode to one tuple per subset
+        subsets = autocycler_subsample.out.subsets.transpose()
 
-    // DE NOVO GENOME ASSEMBLIES
-    flye_assembly_subset(subsets)
-    unicycler_assembly_subset(subsets)
-    raven_assembly_subset(subsets)
-    // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
+        // DE NOVO GENOME ASSEMBLIES
+        flye_assembly_subset(subsets)
+        unicycler_assembly_subset(subsets)
+        raven_assembly_subset(subsets)
+        // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
 
-    // MIX ASSEMBLIES TOGETHER
-    mixed_assemblies = 
-        unicycler_assembly_subset.out.unicycler_assembly
-        .mix(flye_assembly_subset.out.flye_assembly)
-        .mix(raven_assembly_subset.out.raven_assembly)
-        // MIX IN NEW ASSEMBLERS HERE
+        // MIX ASSEMBLIES TOGETHER
+        mixed_assemblies = 
+            unicycler_assembly_subset.out.unicycler_assembly
+            .mix(flye_assembly_subset.out.flye_assembly)
+            .mix(raven_assembly_subset.out.raven_assembly)
+            // MIX IN NEW ASSEMBLERS HERE
 
-    all_assembly_dirs = mixed_assemblies
-        .groupTuple(by:0)
+        all_assembly_dirs = mixed_assemblies
+            .groupTuple(by: 0)
+    } else {
+        all_assembly_dirs = autocycler_mixed_assemblies
+            .groupTuple(by: 0)
+    }
 
     autocycler_compress(all_assembly_dirs)
 
