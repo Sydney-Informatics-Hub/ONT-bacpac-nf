@@ -24,7 +24,7 @@ def get_complete_buscos(json_file) -> Tuple[str, float]:
         assembler = j['parameters']['out']
         # get assembler only from e.g. barcode01_consensus_busco
         assembler = assembler.split('_')[1]
-        assert assembler in ['flye', 'unicycler', 'consensus']
+        assert assembler in ['flye', 'unicycler', 'raven', 'consensus']  # Any new assemblers must be added here
         complete_busco = j['results']['Complete percentage']
         return assembler, complete_busco
 

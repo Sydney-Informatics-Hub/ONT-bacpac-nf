@@ -3,15 +3,14 @@ process classify_trycycler {
   container 'python:3.8'
 
   input:
-  tuple val(barcode), path(trycycler_cluster), val(num_contigs)
+  tuple val(barcode), path(trycycler_cluster), val(num_contigs), val(n_assemblies)
 
   output:
   tuple val(barcode), path("${barcode}_discarded/*"), emit: clusters_to_discard, optional: true
   tuple val(barcode), path("${barcode}_for_reconciliation/*"), emit: clusters_to_reconcile
 
   script:
-  n_assemblers = 2 * params.subsamples.toInteger()
   """
-  classify_trycycler_clusters.py ${barcode} ${n_assemblers}
+  classify_trycycler_clusters.py ${barcode} ${n_assemblies}
   """
 }

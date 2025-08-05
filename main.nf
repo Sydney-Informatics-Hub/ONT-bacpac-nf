@@ -19,6 +19,7 @@ include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
 include { flye_assembly } from './modules/run_flye'
 include { unicycler_assembly } from './modules/run_unicycler'
+include { raven_assembly } from './modules/run_raven'
 include { trycycler } from './subworkflows/trycycler'
 include { autocycler } from './subworkflows/autocycler'
 include { bandage } from './modules/run_bandage'
@@ -181,6 +182,21 @@ workflow {
   // DE NOVO GENOME ASSEMBLIES
   flye_assembly(porechop.out.trimmed_fq)
   unicycler_assembly(porechop.out.trimmed_fq)
+  raven_assembly(porechop.out.trimmed_fq)
+  // ADD CALLS TO NEW ASSEMBLERS HERE
+
+  // MIX ASSEMBLIES TOGETHER
+  mixed_assemblies = 
+    unicycler_assembly.out.unicycler_assembly
+    .mix(flye_assembly.out.flye_assembly)
+    .mix(raven_assembly.out.raven_assembly)
+    // MIX IN NEW ASSEMBLERS HERE
+
+  mixed_assembly_graphs =
+    unicycler_assembly.out.unicycler_graph
+    .mix(flye_assembly.out.flye_graph)
+    .mix(raven_assembly.out.raven_graph)
+    // MIX IN NEW ASSEMBLERS HERE
 
   // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
   plassembler_in = porechop.out.trimmed_fq
@@ -199,8 +215,7 @@ workflow {
    * is added here.
    */
   num_contigs_per_barcode =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
+    mixed_assemblies
     .map { barcode, assembly_dir ->
         // Count num contigs per assembly
         def fa = assembly_dir + "/assembly.fasta"
@@ -210,36 +225,21 @@ workflow {
     .groupTuple()
     .map { barcode, ncontigs ->
         // Add total contigs across assemblies
-        def total_contigs = ncontigs[0].toInteger() + ncontigs[1].toInteger()
+        def ncontigs_int = ncontigs.collect { x -> x.toInteger() }
+        def total_contigs = ncontigs_int.sum()
         return [barcode, total_contigs]
     }
 
   denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .join(flye_assembly.out.flye_assembly, by:0)
+    mixed_assemblies
+    .groupTuple()
     .join(porechop.out.trimmed_fq, by:0)
     .join(num_contigs_per_barcode, by:0)
-
-  denovo_assembly_contigs =
-    denovo_assemblies
-    .branch { barcode, unicycler, flye, trimmed_fq, num_contigs ->
-        run_trycycler: num_contigs >= 3
-        skip_trycycler: num_contigs < 3
-    }
-
-  trycycler_skipped_barcodes =
-    // barcodes with insufficient contigs for trycycler
-    // TODO: Remove this when select_assembly is revised.
-    // denovo_assemblies can be passed directly when ready.
-    denovo_assembly_contigs.skip_trycycler
-    .map { 
-        barcode, unicycler_assembly, flye_assembly, trimmed_fq, num_contigs -> barcode
-    }
-    .collect()
+    .filter { _barcode, _assemblies, _trimmed_fq, num_contigs -> num_contigs >= 3}
 
   if (params.consensus_method == 'trycycler') {
     // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
-    trycycler(porechop.out.trimmed_fq, denovo_assembly_contigs.run_trycycler)
+    trycycler(porechop.out.trimmed_fq, denovo_assemblies)
 
     polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
     consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
@@ -288,11 +288,10 @@ workflow {
       [ barcode, "plassembler", graph ]
     }
   graphs_for_bandage =
-    unicycler_assembly.out.unicycler_graph
-    .mix(flye_assembly.out.flye_graph)
+    mixed_assembly_graphs
     .mix(consensus_gfa_per_barcode)
     .mix(plassembler_graphs)
-    .filter { barcode, assembly, graph ->
+    .filter { _barcode, _assembly, graph ->
       graph.size() > 0
     }
 
@@ -300,14 +299,13 @@ workflow {
 
   // Generate MultiQC-ready Bandage report
   all_bandage_plots = bandage.out.bandage_plot
-    .map { barcode, assembly, plot -> plot }
+    .map { _barcode, _assembly, plot -> plot }
     .collect()
   generate_bandage_report(all_bandage_plots)
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
+    mixed_assemblies
     .map { barcode, assembly_dir -> 
         // Get the assembler name by parsing the publishDir path.
         // A better way to do this is output i.e. val(assembler_name) in the
