@@ -106,18 +106,33 @@ workflow {
   // If none of the above are a problem, then run the workflow
   } else {
 
-    // DOWNLOAD DATABASES  
-    get_amrfinderplus()
-    amrfinderplus_db = get_amrfinderplus.out.amrfinderplus_db
+    // DOWNLOAD DATABASES
+    // Only download amrfinderplus if existing db not already provided 
+    if (!params.amrfinderplus_db) {
+      get_amrfinderplus()
+      amrfinderplus_db = get_amrfinderplus.out.amrfinderplus_db
+    } else {
+      log.info "FYI: USING EXISTING AMRFINDERPLUS DATABASE ${params.amrfinderplus_db}"
+      amrfinderplus_db = params.amrfinderplus_db
+    }
 
-    get_plassembler()
-    plassembler_db = get_plassembler.out.plassembler_db
+    // Only download plassembler if existing db not already provided 
+    if (!params.plassembler_db) {
+      get_plassembler()
+      plassembler_db = get_plassembler.out.plassembler_db
+    } else {
+      log.info "FYI: USING EXISTING PLASSEMBLER DATABASE ${params.plassembler_db}"
+      plassembler_db = params.plassembler_db
+    }
 
-    get_ncbi()
-    //TODO revise the requirement for this process. We'll need the lookup for the tree, but likely not for select_assembly 
-
-    get_busco()
-    busco_db = get_busco.out.busco_db
+    // Only download busco if existing db not already provided 
+    if (!params.busco_db) {
+      get_busco()
+      busco_db = get_busco.out.busco_db
+    } else {
+      log.info "FYI: USING EXISTING BUSCO DATABASE ${params.busco_db}"
+      busco_db = params.busco_db
+    }
     
     // Only download kraken2 if existing db not already provided 
     if (!params.kraken2_db){
@@ -132,10 +147,14 @@ workflow {
     // Only download bakta if existing db not already provided 
     if (!params.bakta_db){
       get_bakta()
-
+      bakta_db = get_bakta.out.bakta_db
     } else { 
       log.info "FYI: USING EXISTING BAKTA DATABASE ${params.bakta_db}"
+      bakta_db = params.bakta_db
     }
+
+    get_ncbi()
+    //TODO revise the requirement for this process. We'll need the lookup for the tree, but likely not for select_assembly 
 
     // Get input FASTQs
     if (params.input_directory){
@@ -187,7 +206,7 @@ workflow {
                   .join(flye_assembly.out.flye_assembly, by: 0)
                   .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
                   
-  plassembler(plassembler_in, get_plassembler.out.plassembler_db)
+  plassembler(plassembler_in, plassembler_db)
 
   /*
    * CONSENSUS ASSEMBLY PRE-PROCESSING
@@ -326,7 +345,7 @@ workflow {
   // TODO: probably better to collect all per-barcode assemblies in one quast
   // run to void a parsing/merging step
   quast_qc_chromosomes(all_polished)
-  busco_qc_chromosomes(all_polished, get_busco.out.busco_db)
+  busco_qc_chromosomes(all_polished, busco_db)
   
   // SELECT "BEST" ASSEMBLY
   // TODO: Discuss better approaches. Currently selects the best assembly per
@@ -349,7 +368,7 @@ workflow {
 
   // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-BARCODE
   // BAKTA: Annotate gene features
-  bakta_annotation_chromosomes(best_chr_assembly, get_bakta.out.bakta_db)
+  bakta_annotation_chromosomes(best_chr_assembly, bakta_db)
 
   // ABRICATE: Annotate VFDB genes
   abricateVFDB_annotation_chromosomes(best_chr_assembly)
@@ -357,7 +376,7 @@ workflow {
   // AMRFINDERPLUS: Annotate AMR genes
   amrfinderplus_annotation_chromosomes(
     bakta_annotation_chromosomes.out.faa,
-    get_amrfinderplus.out.amrfinderplus_db
+    plassembler_db
   )
 
   // CREATE FILES FOR PHYLOGENETIC TREE BUILDING
@@ -392,7 +411,7 @@ workflow {
   // AMRFINDERPLUS: Annotate AMR genes
   amrfinderplus_annotation_reference(
     phylogeny_in,
-    get_amrfinderplus.out.amrfinderplus_db
+    plassembler_db
   )
 
   // ABRICATE: Annotate VFDB genes
@@ -432,7 +451,7 @@ workflow {
   )
 
   // BAKTA: Annotate plasmid gene features
-  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
+  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, bakta_db)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty
