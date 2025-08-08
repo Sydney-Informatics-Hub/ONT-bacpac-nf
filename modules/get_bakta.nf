@@ -6,8 +6,6 @@ process get_bakta {
 
   script: 
   """
-  # replace wget with aria2c 
-  wget https://zenodo.org/records/10522951/files/db-light.tar.gz
-  tar -zxvf db-light.tar.gz
+  bakta_db download --type light
   """
 }

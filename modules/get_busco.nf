@@ -7,9 +7,13 @@ process get_busco {
 
   script: 
   """
-  mkdir -p busco_downloads/lineages/
-  # TODO investgate issue with busco "download connection problem" and replace wget
-  wget https://busco-data.ezlab.org/v5/data/lineages/bacteria_odb10.2024-01-08.tar.gz
-  tar -xzf bacteria_odb10.2024-01-08.tar.gz -C busco_downloads/lineages/
+  # Get list of all BUSCO datasets
+  busco --list-datasets > datasets
+
+  # Get the latest bacteria dataset
+  DB=$(grep -oE ' bacteria_odb\w+' datasets | sed -E -e 's/^ //g')
+
+  # Download the database
+  busco --download \$DB
   """
 }

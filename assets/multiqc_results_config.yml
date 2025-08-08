@@ -29,6 +29,8 @@ fn_clean_exts:
   - ".k2report"
   - "_allfiles-cat_nr.fastq"
 
+# Won't work with updated database versions
+# Can we use wildcards? e.g. "short_summary.specific.bacteria_odb*"?
 fn_clean_trim:
   - "short_summary.specific.bacteria_odb10."
 

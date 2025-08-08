@@ -20,7 +20,7 @@ process busco_qc_chromosomes {
     --in $polished_assembly \\
     --out ${prefix} \\
     --mode genome \\
-    --lineage_dataset busco_downloads/lineages/bacteria_odb10 \\
+    --lineage_dataset busco_downloads/lineages/bacteria_odb* \\
     --force \\
     --offline
   """
