@@ -178,19 +178,19 @@ workflow trycycler {
     trycycler_consensus(clusters_for_consensus)
 
     // MEDAKA: Polish consensus assembly
-    consensus_dir = 
+    consensus_to_polish = 
         // Get parent dir for assembly
         trycycler_consensus.out.cluster_assembly
-        .map { barcode, assembly ->
-            Path assembly_dir = assembly.getParent()
-            return [barcode, assembly_dir]
+        .map { barcode, assembly_fasta ->
+            def assembly_fastq = assembly_fasta.getParent() / '4_reads.fastq'
+            return [barcode, assembly_fastq, assembly_fasta]
         }
 
-    medaka_polish_consensus(consensus_dir)
+    medaka_polish_consensus(consensus_to_polish)
 
     // CAT: Combine polished clusters consensus assemblies into a single fasta
     polished_clusters = 
-        medaka_polish_consensus.out.cluster_assembly
+        medaka_polish_consensus.out.polished_assembly
         .groupTuple()
         .map { barcode, fastas ->
             // Need to avoid filename collisions with consensus.fasta files
