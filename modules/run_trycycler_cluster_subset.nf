@@ -6,7 +6,7 @@ process trycycler_cluster_subset {
   errorStrategy { task.exitStatus == 1 ? 'ignore' : 'terminate' } 
 
   input:
-  tuple val(barcode), path(unicycler_assembly), path(flye_assembly), path(trimmed_fq), val(num_contigs)
+  tuple val(barcode), path(assembly_dirs), path(trimmed_fq), val(num_contigs)
 
   output:
   tuple val(barcode), path("${barcode}_cluster/"), emit: clusters
@@ -15,7 +15,7 @@ process trycycler_cluster_subset {
   script:
   """
   mkdir assemblies
-  for d in ${unicycler_assembly} ${flye_assembly}
+  for d in ${assembly_dirs}
   do
     cp \$d/assembly.fasta assemblies/\$(basename \$d).fasta
   done

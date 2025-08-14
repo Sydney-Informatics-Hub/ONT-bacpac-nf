@@ -8,6 +8,7 @@ include { estimate_genome_size } from '../subworkflows/estimate_genome_size'
 include { autocycler_subsample } from '../modules/run_autocycler_subsample'
 include { flye_assembly_subset } from '../modules/run_flye_subset'
 include { unicycler_assembly_subset } from '../modules/run_unicycler_subset'
+include { raven_assembly_subset } from '../modules/run_raven_subset'
 include { autocycler_compress } from '../modules/run_autocycler_compress'
 include { autocycler_cluster } from '../modules/run_autocycler_cluster'
 include { autocycler_trim } from '../modules/run_autocycler_trim'
@@ -38,9 +39,17 @@ workflow autocycler {
     // DE NOVO GENOME ASSEMBLIES
     flye_assembly_subset(subsets)
     unicycler_assembly_subset(subsets)
+    raven_assembly_subset(subsets)
+    // ADD CALLS TO NEW SUBSET ASSEMBLERS HERE
 
-    all_assembly_dirs = flye_assembly_subset.out.flye_assembly
-        .mix(unicycler_assembly_subset.out.unicycler_assembly)
+    // MIX ASSEMBLIES TOGETHER
+    mixed_assemblies = 
+        unicycler_assembly_subset.out.unicycler_assembly
+        .mix(flye_assembly_subset.out.flye_assembly)
+        .mix(raven_assembly_subset.out.raven_assembly)
+        // MIX IN NEW ASSEMBLERS HERE
+
+    all_assembly_dirs = mixed_assemblies
         .groupTuple(by:0)
 
     autocycler_compress(all_assembly_dirs)
