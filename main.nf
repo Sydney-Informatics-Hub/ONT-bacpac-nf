@@ -4,6 +4,7 @@
 nextflow.enable.dsl=2
 
 // Import processes or subworkflows to be run in the workflow
+include { denovo } from './subworkflows/denovo'
 include { unzip_fastqs } from './modules/unzip_fastqs'
 include { concat_fastas } from './modules/concat_fa'
 include { concat_fastqs } from './modules/run_pigz'
@@ -17,9 +18,6 @@ include { get_plassembler } from './modules/get_plassembler'
 include { get_kraken2 } from './modules/get_kraken2'
 include { get_bakta } from './modules/get_bakta'
 include { kraken2 } from './modules/run_kraken2'
-include { flye_assembly } from './modules/run_flye'
-include { unicycler_assembly } from './modules/run_unicycler'
-include { trycycler } from './subworkflows/trycycler'
 include { autocycler } from './subworkflows/autocycler'
 include { bandage } from './modules/run_bandage'
 include { generate_bandage_report } from './modules/generate_bandage_report'
@@ -27,7 +25,6 @@ include { select_assembly } from './modules/select_assembly'
 include { medaka_polish_denovo } from './modules/run_medaka_polish_denovo'
 include { plassembler } from './modules/run_plassembler'
 include { bakta_annotation_plasmids } from './modules/run_bakta_annotation_plasmids'
-include { busco_annotation_plasmids } from './modules/run_busco_annotation_plasmids'
 include { quast_qc_chromosomes } from './modules/run_quast_qc_chromosomes'
 include { bakta_annotation_chromosomes } from './modules/run_bakta_annotation_chromosomes'
 include { busco_qc_chromosomes } from './modules/run_busco_qc_chromosomes'
@@ -90,6 +87,7 @@ def helpMessage() {
 	
 """.stripIndent()
 }
+
 
 // Define workflow structure. Include some input/runtime tests here.
 // See https://www.nextflow.io/docs/latest/dsl2.html?highlight=workflow#workflow
@@ -179,88 +177,16 @@ workflow {
   kraken2(porechop.out.trimmed_fq, kraken2_db)
 
   // DE NOVO GENOME ASSEMBLIES
-  flye_assembly(porechop.out.trimmed_fq)
-  unicycler_assembly(porechop.out.trimmed_fq)
+  denovo_fqs = porechop.out.trimmed_fq
+    .map { barcode, fq -> [ barcode, null, fq ] }
+  denovo(denovo_fqs, plassembler_db)
 
-  // DETECT PLASMIDS AND OTHER MOBILE ELEMENTS 
-  plassembler_in = porechop.out.trimmed_fq
-                  .join(flye_assembly.out.flye_assembly, by: 0)
-                  .map { barcode, trimmed_fq, flye_assembly -> tuple(barcode, trimmed_fq, flye_assembly) }
-                  
-  plassembler(plassembler_in, get_plassembler.out.plassembler_db)
+  // RUN AUTOCYCLER
+  autocycler(porechop.out.trimmed_fq, denovo.out.assemblies, plassembler_db)
 
-  /*
-   * CONSENSUS ASSEMBLY PRE-PROCESSING
-   * 
-   * Trycycler requires >= 3 contigs to run. Use the in-built .countFasta()
-   * operator to count the total number of contigs assembled for each barcode.
-   *
-   * If additional assemblers/read subsets/replicates are added, ensure it 
-   * is added here.
-   */
-  num_contigs_per_barcode =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .map { barcode, assembly_dir ->
-        // Count num contigs per assembly
-        def fa = assembly_dir + "/assembly.fasta"
-        def ncontigs = fa.countFasta()
-        return [barcode, ncontigs]
-    }
-    .groupTuple()
-    .map { barcode, ncontigs ->
-        // Add total contigs across assemblies
-        def total_contigs = ncontigs[0].toInteger() + ncontigs[1].toInteger()
-        return [barcode, total_contigs]
-    }
-
-  denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .join(flye_assembly.out.flye_assembly, by:0)
-    .join(porechop.out.trimmed_fq, by:0)
-    .join(num_contigs_per_barcode, by:0)
-
-  denovo_assembly_contigs =
-    denovo_assemblies
-    .branch { barcode, unicycler, flye, trimmed_fq, num_contigs ->
-        run_trycycler: num_contigs >= 3
-        skip_trycycler: num_contigs < 3
-    }
-
-  trycycler_skipped_barcodes =
-    // barcodes with insufficient contigs for trycycler
-    // TODO: Remove this when select_assembly is revised.
-    // denovo_assemblies can be passed directly when ready.
-    denovo_assembly_contigs.skip_trycycler
-    .map { 
-        barcode, unicycler_assembly, flye_assembly, trimmed_fq, num_contigs -> barcode
-    }
-    .collect()
-
-  if (params.consensus_method == 'trycycler') {
-    // RUN TRYCYCLER (CONSENSUS ASSEMBLY) IF SUFFICIENT # CONTIGS
-    trycycler(porechop.out.trimmed_fq, denovo_assembly_contigs.run_trycycler)
-
-    polished_consensus_per_barcode = trycycler.out.polished_consensus_per_barcode
-    consensus_gfa_per_barcode = Channel.empty()  // To ensure that consensus_gfa_per_barcode exists
-    autocycler_metrics = Channel.empty()  // To ensure that autocycler_metrics exists
-  } else if (params.consensus_method == 'autocycler') {
-    // RUN AUTOCYCLER
-
-    // First, check that params.subsamples > 1
-    if (!(params.subsamples.toInteger() > 1)) {
-      log.info "Error: autocycler must be run with > 1 subsamples"
-      System.exit(1)
-    }
-    
-    autocycler(porechop.out.trimmed_fq)
-
-    polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
-    consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
-    autocycler_metrics = autocycler.out.metrics
-  } else {
-    error 'Invalid value for `consensus_method`: ' + params.consensus_method
-  }
+  polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
+  consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
+  autocycler_metrics = autocycler.out.metrics
 
   // Identify failed barcodes and create a list of their names
   consensus_successes = polished_consensus_per_barcode
@@ -280,19 +206,15 @@ workflow {
   consensus_warnings = generate_consensus_warnings.out.mqc_yaml
     .ifEmpty([])
 
-  // RUN BANDAGE ON AUTOCYCLER OUTPUTS
+  // RUN BANDAGE ON AUTOCYCLER GRAPHS
   // DE NOVO ASSEMBLY GRAPHS
   // AND PLASEMBLER GRAPHS
-  plassembler_graphs = plassembler.out.plassembler_gfa
-    .map { barcode, graph ->
-      [ barcode, "plassembler", graph ]
-    }
+  denovo_graphs = denovo.out.graphs
+    .map { barcode, _subset, assembler, graph -> [ barcode, assembler, graph ] }
   graphs_for_bandage =
-    unicycler_assembly.out.unicycler_graph
-    .mix(flye_assembly.out.flye_graph)
+    denovo_graphs
     .mix(consensus_gfa_per_barcode)
-    .mix(plassembler_graphs)
-    .filter { barcode, assembly, graph ->
+    .filter { _barcode, _assembly, graph ->
       graph.size() > 0
     }
 
@@ -305,18 +227,9 @@ workflow {
   generate_bandage_report(all_bandage_plots)
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
-  unpolished_denovo_assemblies =
-    unicycler_assembly.out.unicycler_assembly
-    .mix(flye_assembly.out.flye_assembly)
-    .map { barcode, assembly_dir -> 
-        // Get the assembler name by parsing the publishDir path.
-        // A better way to do this is output i.e. val(assembler_name) in the
-        // assembly processes but will required more changes
-        String assembler_name = assembly_dir.toString().tokenize("_")[-2]
-        return [barcode, assembler_name, assembly_dir] 
-    }
+  unpolished_denovo_assemblies = denovo.out.assemblies
+    .map { barcode, _subset, assembler, assembly_dir -> [ barcode, assembler, assembly_dir ] }
     .combine(porechop.out.trimmed_fq, by: 0)
-
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
@@ -334,6 +247,8 @@ workflow {
   barcode_busco_jsons =
     // Gather all jsons for each barcode
     busco_qc_chromosomes.out.json_summary
+    .filter { _barcode, assembler, _json -> assembler != 'plassembler' }
+    .map { barcode, _assembler, json -> [ barcode, json ] }
     .groupTuple()
 
   select_assembly(barcode_busco_jsons)
@@ -346,6 +261,11 @@ workflow {
       return [barcode, best]
     }
     .join(all_polished, by: [0, 1])
+
+  // NOTE: Currently, best_chr_assembly will either be
+  // an autocycler assembly (including plassembler output), or
+  // a de novo chr assembly (not including plassembler output)
+  // TODO: Include plassembler IF using a de novo assembly (i.e. autocycler didn't perform well)
 
   // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-BARCODE
   // BAKTA: Annotate gene features
@@ -432,7 +352,7 @@ workflow {
   )
 
   // BAKTA: Annotate plasmid gene features
-  bakta_annotation_plasmids(plassembler.out.plassembler_fasta, get_bakta.out.bakta_db)
+  bakta_annotation_plasmids(denovo.out.plassembler_fasta, get_bakta.out.bakta_db)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty

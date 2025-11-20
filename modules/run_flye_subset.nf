@@ -7,6 +7,7 @@ process flye_assembly_subset {
 
   output:
   tuple val(barcode), path("*"), emit: flye_assembly
+  tuple val(barcode), path(subset_fq), path("*"), emit: flye_assembly_for_plassembler
 
   script: 
   """

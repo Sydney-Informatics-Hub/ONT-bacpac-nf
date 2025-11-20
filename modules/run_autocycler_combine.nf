@@ -8,6 +8,8 @@ process autocycler_combine {
 
   output:
   tuple val(barcode), path("autocycler_out"), emit: autocycler_out
+  tuple val(barcode), path("autocycler_out/consensus_assembly.fasta"), emit: consensus_assembly
+  tuple val(barcode), path("autocycler_out/consensus_assembly.gfa"), emit: consensus_graph
 
   script:
   """
