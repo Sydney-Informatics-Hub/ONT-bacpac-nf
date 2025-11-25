@@ -1,7 +1,7 @@
 process amrfinderplus_annotation_chromosomes {
   tag "${barcode}: ${assembler}"
   container 'quay.io/biocontainers/ncbi-amrfinderplus:3.12.8--h283d18e_0'
-  publishDir "${params.outdir}/annotations/${barcode}/amrfinderplus", mode: 'copy'
+  publishDir "${params.outdir}/annotations/${prefix}/amrfinderplus", mode: 'copy'
   
   input:
   tuple val(barcode), val(assembler), path(annotated_faa)

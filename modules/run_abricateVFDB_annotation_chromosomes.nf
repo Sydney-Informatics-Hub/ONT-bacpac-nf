@@ -1,13 +1,13 @@
 process abricateVFDB_annotation_chromosomes {
   tag "VFDB GENES: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/abricate:1.0.1--ha8f3691_2'
-  publishDir "${params.outdir}/annotations/${barcode}/abricate", mode: 'copy'
+  publishDir "${params.outdir}/annotations/${prefix}/abricate", mode: 'copy'
 
   input:
   tuple val(barcode), val(assembler), path(polished_fasta)
 
   output:
-  tuple val(barcode), path("*.txt"), emit: report
+  tuple val(barcode), val(assembler), path("${prefix}.txt"), emit: report
 
   script:
   prefix = "${barcode}_${assembler}_chr"
@@ -15,9 +15,8 @@ process abricateVFDB_annotation_chromosomes {
   """
   abricate \\
     $polished_fasta \\
-	-db ${db_name} \\
-    --threads $task.cpus \\
-    > ${prefix}.txt
+    -db ${db_name} \\
+    --threads $task.cpus > ${prefix}.txt
   """
 
 }
