@@ -128,7 +128,7 @@ workflow {
 
     } else { 
       log.info "FYI: USING EXISTING KRAKEN2 DATABASE ${params.kraken2_db}"
-      kraken2_db = params.kraken2_db
+      kraken2_db = channel.fromPath(params.kraken2_db)
     }
 
     // Only download bakta if existing db not already provided 
