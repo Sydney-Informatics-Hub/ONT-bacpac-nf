@@ -8,9 +8,10 @@ process plassembler {
     path plassembler_db 
 
     output:
-    tuple val(barcode), val(subset), path("${id}_plassembler_assembly"), emit: plassembler_assembly
+    tuple val(barcode), val(subset), path("${id}_plassembler_assembly"), emit: plassembler_assembly, optional: true
     tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.fasta"), emit: plassembler_fasta, optional: true
     tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.gfa"), emit: plassembler_graph
+    tuple val(barcode), val(subset), path("${id}_plassembler_logs"), emit: plassembler_logs, optional: true
 
     script:
     id = subset == null ? barcode : "${barcode}_${subset}"
@@ -28,7 +29,7 @@ process plassembler {
         echo "The .fasta file contains plasmid sequence. Proceeding with output."
     else
         echo "The .fasta file is empty, no plasmids detected. Removing from output."
-        rm -f ${id}_plassembler_assembly/plassembler_plasmids.fasta
+        mv ${id}_plassembler_assembly ${id}_plassembler_logs
     fi
     """
 }
