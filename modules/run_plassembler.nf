@@ -10,7 +10,7 @@ process plassembler {
     output:
     tuple val(barcode), val(subset), path("${id}_plassembler_assembly"), emit: plassembler_assembly, optional: true
     tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.fasta"), emit: plassembler_fasta, optional: true
-    tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.gfa"), emit: plassembler_graph
+    tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.gfa"), emit: plassembler_graph, optional: true
     tuple val(barcode), val(subset), path("${id}_plassembler_logs"), emit: plassembler_logs, optional: true
 
     script:
