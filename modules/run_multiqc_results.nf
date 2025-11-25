@@ -16,7 +16,7 @@ process multiqc_results_report {
 
   script:
   """
-  multiqc -c ${params.multiqc_results_config} .	
+  multiqc -c ${multiqc_results_config} .	
   """
 
 }

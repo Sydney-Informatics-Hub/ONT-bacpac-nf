@@ -29,7 +29,7 @@ process multiqc_report {
         cp "\${dir}" "\${new_path}"    
   done
 
-  multiqc -c ${params.multiqc_config} .	
+  multiqc -c ${multiqc_config} .	
   """
 
 }
