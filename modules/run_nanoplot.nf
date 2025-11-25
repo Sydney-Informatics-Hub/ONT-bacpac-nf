@@ -12,7 +12,7 @@ process nanoplot_summary {
   script: 
   """
   NanoPlot \\
-    --summary ${params.sequencing_summary} \\
+    --summary ${sequencing_summary} \\
     --loglength \\
     -o nanoplot_summary
   """
