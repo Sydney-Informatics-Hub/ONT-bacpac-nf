@@ -74,10 +74,10 @@ if (ncol(amrfinder_heatmap_data) + ncol(abricate_heatmap_data) == 2) {
 
 # Convert to dataframes and set the row names
 amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
-  column_to_rownames(var = sampleID)
+  column_to_rownames(var = "sampleID")
 
 abricate_heatmap_data <- abricate_heatmap_data %>%
-  column_to_rownames(var = sampleID)
+  column_to_rownames(var = "sampleID")
 
 # Match labels ----
 # Find names that already match across data. These are likely the reference seqs. 
