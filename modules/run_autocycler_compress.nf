@@ -13,11 +13,19 @@ process autocycler_compress {
 
   script:
   max_contigs_param = params.max_contigs && params.max_contigs.toString().isInteger() ? "--max_contigs ${params.max_contigs}" : ""
+  plassembler_dir = "${barcode}_plassembler_assembly"
+  plassembler_fasta = "${plassembler_dir}/plassembler_plasmids.fasta"
   """
   mkdir assemblies
   for d in ${assembly_dirs}
   do
-    cp \$d/assembly.fasta assemblies/\$(basename \$d).fasta
+    DNAME="\$(basename \$d)"
+    if [ "\$DNAME" == "${plassembler_dir}" ]
+    then
+      cp ${plassembler_fasta} assemblies/\$DNAME.fasta
+    else
+      cp \$d/assembly.fasta assemblies/\$DNAME.fasta
+    fi
   done
 
   autocycler compress \\
