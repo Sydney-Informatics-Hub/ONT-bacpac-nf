@@ -380,7 +380,9 @@ workflow {
   )
 
   // BAKTA: Annotate plasmid gene features
-  bakta_annotation_plasmids(denovo.out.plassembler_fasta, get_bakta.out.bakta_db)
+  plassembler_fasta = denovo.out.plassembler_fasta
+    .map { barcode, _subset, fasta -> [ barcode, fasta ] }
+  bakta_annotation_plasmids(plassembler_fasta, get_bakta.out.bakta_db)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty
