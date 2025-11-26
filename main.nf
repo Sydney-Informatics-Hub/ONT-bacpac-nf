@@ -363,36 +363,6 @@ workflow {
     abricate_reports
   )
 
-  // // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (AMRFINDERPLUS)
-  // amrfinderplus_chr_reports =
-  //   amrfinderplus_annotation_chromosomes.out.report
-  //   // Filter out de novo plasmids (for now - keep original functionality)
-  //   .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
-  //   .map { _barcode, _assembler, report -> report }
-  //   .collect()
-
-
-  // generate_amrfinderplus_gene_matrix(
-  //   amrfinderplus_chr_reports,
-  //   amrfinderplus_annotation_reference.out.amrfinderplus_annotations,
-  //   barcode_species_table
-  // )
-
-  // // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (ABRICATE)
-  // abricate_chr_reports = 
-  //   abricateVFDB_annotation_chromosomes.out.report
-  //   // Filter out de novo plasmids (for now - keep original functionality)
-  //   .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
-  //   .map { _barcode, _assembler, report -> report }
-  //   .collect()
-
-  // generate_abricate_gene_matrix(
-  //   abricate_chr_reports,
-  //   abricateVFDB_annotation_reference.out.abricate_annotations,
-  //   barcode_species_table
-  // )
-
-
   // BAKTA: Annotate plasmid gene features
   plassembler_fasta = denovo.out.plassembler_fasta
     .map { barcode, _subset, fasta -> [ barcode, fasta ] }
