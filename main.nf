@@ -37,7 +37,7 @@ include { run_orthofinder } from './modules/run_orthofinder'
 include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus_annotation_reference'
 include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
 include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
-include { create_phylogeny_And_Heatmap_image } from './modules/create_phylogeny_And_Heatmap_image'
+include { summarise_phylogeny_and_amr_reports } from './modules/create_phylo_amr_summary'
 include { generate_consensus_warnings } from './modules/generate_consensus_warnings'
 include { multiqc_report } from './modules/run_multiqc'
 include { multiqc_results_report } from './modules/run_multiqc_results'
@@ -328,6 +328,8 @@ workflow {
     bakta_results_dirs
   )
 
+  // barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
+
   // ORTHOFINDER: Infer phylogeny using orthologous genes
   phylogeny_in = create_phylogeny_tree_related_files.out.phylogeny_folder
   run_orthofinder(phylogeny_in)
@@ -342,42 +344,53 @@ workflow {
   // ABRICATE: Annotate VFDB genes
   abricateVFDB_annotation_reference(phylogeny_in)
 
-  // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (AMRFINDERPLUS)
-  amrfinderplus_chr_reports =
-    amrfinderplus_annotation_chromosomes.out.report
-    // Filter out de novo plasmids (for now - keep original functionality)
-    .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
+  // Gather all abricate and amrfinderplus reports
+  amrfinder_reports = amrfinderplus_annotation_chromosomes.out.annotated_report
     .map { _barcode, _assembler, report -> report }
+    .mix(amrfinderplus_annotation_reference.out.annotated_report)
     .collect()
 
-  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
-
-  generate_amrfinderplus_gene_matrix(
-    amrfinderplus_chr_reports,
-    amrfinderplus_annotation_reference.out.amrfinderplus_annotations,
-    barcode_species_table
-  )
-
-  // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (ABRICATE)
-  abricate_chr_reports = 
-    abricateVFDB_annotation_chromosomes.out.report
-    // Filter out de novo plasmids (for now - keep original functionality)
-    .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
+  abricate_reports = abricateVFDB_annotation_chromosomes.out.annotated_report
     .map { _barcode, _assembler, report -> report }
+    .mix(abricateVFDB_annotation_reference.out.annotated_report)
     .collect()
-
-  generate_abricate_gene_matrix(
-    abricate_chr_reports,
-    abricateVFDB_annotation_reference.out.abricate_annotations,
-    barcode_species_table
-  )
 
   // R: Plot phylogeny and heatmap
-  create_phylogeny_And_Heatmap_image(
+  summarise_phylogeny_and_amr_reports(
     run_orthofinder.out.rooted_tree,
-    generate_amrfinderplus_gene_matrix.out.amrfinderplus_gene_matrix,
-    generate_abricate_gene_matrix.out.abricate_gene_matrix
+    amrfinder_reports,
+    abricate_reports
   )
+
+  // // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (AMRFINDERPLUS)
+  // amrfinderplus_chr_reports =
+  //   amrfinderplus_annotation_chromosomes.out.report
+  //   // Filter out de novo plasmids (for now - keep original functionality)
+  //   .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
+  //   .map { _barcode, _assembler, report -> report }
+  //   .collect()
+
+
+  // generate_amrfinderplus_gene_matrix(
+  //   amrfinderplus_chr_reports,
+  //   amrfinderplus_annotation_reference.out.amrfinderplus_annotations,
+  //   barcode_species_table
+  // )
+
+  // // PYTHON: Generate gene matrix for phylogeny-AMR heatmap (ABRICATE)
+  // abricate_chr_reports = 
+  //   abricateVFDB_annotation_chromosomes.out.report
+  //   // Filter out de novo plasmids (for now - keep original functionality)
+  //   .filter { _barcode, assembler, _report -> assembler != 'plassembler' }
+  //   .map { _barcode, _assembler, report -> report }
+  //   .collect()
+
+  // generate_abricate_gene_matrix(
+  //   abricate_chr_reports,
+  //   abricateVFDB_annotation_reference.out.abricate_annotations,
+  //   barcode_species_table
+  // )
+
 
   // BAKTA: Annotate plasmid gene features
   plassembler_fasta = denovo.out.plassembler_fasta
@@ -417,7 +430,7 @@ workflow {
     .ifEmpty([])
 
   phylogeny_heatmap_plot_required_for_multiqc = 
-    create_phylogeny_And_Heatmap_image.out.combined_plot_mqc
+    summarise_phylogeny_and_amr_reports.out.combined_plot_mqc
     .ifEmpty([])
 
   bandage_report = generate_bandage_report.out.bandage_report
