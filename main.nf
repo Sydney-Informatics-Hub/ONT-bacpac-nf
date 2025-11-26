@@ -328,7 +328,7 @@ workflow {
     bakta_results_dirs
   )
 
-  // barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
+  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
 
   // ORTHOFINDER: Infer phylogeny using orthologous genes
   phylogeny_in = create_phylogeny_tree_related_files.out.phylogeny_folder
@@ -358,6 +358,7 @@ workflow {
   // R: Plot phylogeny and heatmap
   summarise_phylogeny_and_amr_reports(
     run_orthofinder.out.rooted_tree,
+    barcode_species_table,
     amrfinder_reports,
     abricate_reports
   )

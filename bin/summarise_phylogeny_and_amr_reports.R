@@ -13,11 +13,17 @@ Sys.setenv(FONTCONFIG_CACHE = "~/.cache/fontconfig")
 args <- commandArgs(trailingOnly = TRUE)
 
 tree_path <- args[1]
-amrfinderplus_report_dir <- args[2]
-abricate_report_dir <- args[3]
+barcode_species_table_file <- args[2]
+amrfinderplus_report_dir <- args[3]
+abricate_report_dir <- args[4]
 
 # Read in phylogenetic tree
 tree <- ggtree::read.tree(tree_path)
+
+# Read in barcode species table and create lookup table
+barcode_species_table <- read_tsv(barcode_species_table_file) %>%
+  unite(tip_name, sampleID, Species, remove = FALSE) %>%
+  dplyr::select(-Species)
 
 # Find all amrfinder reports
 amrfinderplus_report_files <- dir(amrfinderplus_report_dir, pattern = "\\.tsv$", full.names = TRUE)
@@ -72,6 +78,24 @@ if (ncol(amrfinder_heatmap_data) + ncol(abricate_heatmap_data) == 2) {
   stop("No AMR genes detected, plotting phylogeny only")
 }
 
+# Convert the sample IDs to the matching names from the phylo tree
+# using the barcode species table as a lookup
+amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
+  left_join(barcode_species_table, by = "sampleID") %>%
+  mutate(sampleID = case_when(
+    is.na(tip_name) ~ sampleID,
+    .default = tip_name
+  )) %>%
+  dplyr::select(-tip_name)
+
+abricate_heatmap_data <- abricate_heatmap_data %>%
+  left_join(barcode_species_table, by = "sampleID") %>%
+  mutate(sampleID = case_when(
+    is.na(tip_name) ~ sampleID,
+    .default = tip_name
+  )) %>%
+  dplyr::select(-tip_name)
+
 # Convert to dataframes and set the row names
 amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
   column_to_rownames(var = "sampleID")
@@ -79,60 +103,9 @@ amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
 abricate_heatmap_data <- abricate_heatmap_data %>%
   column_to_rownames(var = "sampleID")
 
-# Match labels ----
-# Find names that already match across data. These are likely the reference seqs. 
-# IDing here will ensure matching labels are not manipulated. Also to prevent
-# messy matches with duplicate prefixes
-l <- list(tree$tip.label, row.names(amrfinder_heatmap_data), row.names(abricate_heatmap_data))
-matching_names <- Reduce(intersect, l)
-
-add_prefix <- function(names) {
-  # Create a dataframe with the original sequence names and an extra column 
-  # with the prefix. Prefix will be used to match names across datasets
-  names %>%
-    as.data.frame() %>%
-    mutate(prefix = gsub("_.+", "", .))
-}
-
-# Create dataframes to replace row.names of heatmap data
-tree_names <- 
-  add_prefix(tree$tip.label) %>%
-  rename(tip_name = ".")
-
-heatmap1_names <- 
-  add_prefix(row.names(amrfinder_heatmap_data)) %>%
-  rename(name = ".") %>%
-  # Omit names that do not need modifying
-  dplyr::filter(!name %in% matching_names) %>%
-  left_join(tree_names)
-
-heatmap2_names <- 
-  add_prefix(row.names(abricate_heatmap_data)) %>%
-  rename(name = ".") %>%
-  # Omit names that do not need modifying
-  dplyr::filter(!name %in% matching_names) %>%
-  left_join(tree_names)
-
-# Rename files ----
-# Bit messy, sorry
-idx <- match(rownames(amrfinder_heatmap_data), heatmap1_names$name)
-row.names(amrfinder_heatmap_data) <- ifelse(
-  is.na(idx), 
-  row.names(amrfinder_heatmap_data), 
-  heatmap1_names$tip_name[idx]
-)
-
-idx <- match(rownames(abricate_heatmap_data), heatmap2_names$name)
-row.names(abricate_heatmap_data) <- ifelse(
-  is.na(idx), 
-  row.names(abricate_heatmap_data), 
-  heatmap2_names$tip_name[idx]
-)
-
 # Doesn't matter if either heatmap have null results. If no data in total,
 # plot tree only above
 combined_heatmap <- cbind(amrfinder_heatmap_data, abricate_heatmap_data)
-rm(amrfinder_heatmap_data, abricate_heatmap_data, heatmap1_names, heatmap2_names, tree_names)
 
 # Prepare separate plots ----
 p_heat <- 
