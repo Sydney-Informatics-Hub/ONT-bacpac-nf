@@ -32,7 +32,11 @@ script:
         -db \${db_name} > \${output_file}
 
     # Annotate the report with the reference name
-    awk -v OFS="\t" -v ref="\${base_name}" 'NR == 1 { print \$0, "SAMPLE", "ASSEMBLER" } NR > 1 { print \$0, ref, "REFERENCE" }' \${output_file} >> abricate_reference_report.annotated.tsv
+    if [ ! -f "abricate_reference_report.annotated.tsv" ]
+    then
+      awk -v OFS="\t" -v ref="\${base_name}" 'NR == 1 { print \$0, "SAMPLE", "ASSEMBLER" }' \${output_file}  > abricate_reference_report.annotated.tsv
+    fi
+    awk -v OFS="\t" -v ref="\${base_name}" 'NR > 1 { print \$0, ref, "REFERENCE" }' \${output_file} >> abricate_reference_report.annotated.tsv
    
    done
   

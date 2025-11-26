@@ -31,7 +31,11 @@ script:
        -d ${amrfinderplus_db}/latest > \${output_file} 
 
     # Annotate the report with the reference name
-    awk -v OFS="\t" -v ref="\${base_name}" 'NR == 1 { print "Sample", "Assembler", \$0 } NR > 1 { print ref, "REFERENCE", \$0 }' \${output_file}  >> amrfinderplus_reference_report.annotated.tsv
+    if [ ! -f "amrfinderplus_reference_report.annotated.tsv" ]
+    then
+      awk -v OFS="\t" -v ref="\${base_name}" 'NR == 1 { print "Sample", "Assembler", \$0 }' \${output_file}  > amrfinderplus_reference_report.annotated.tsv
+    fi
+    awk -v OFS="\t" -v ref="\${base_name}" 'NR > 1 { print ref, "REFERENCE", \$0 }' \${output_file}  >> amrfinderplus_reference_report.annotated.tsv
    
    done
   
