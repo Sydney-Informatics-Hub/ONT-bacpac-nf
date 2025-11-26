@@ -10,11 +10,12 @@ process medaka_polish_denovo {
   tuple val(barcode), val(assembler_name), path("consensus.fasta"), emit: assembly
 
   script:
+  fa_path = assembler_name == 'plassembler' ? "${assembly}/plassembler_plasmids.fasta" : "${assembly}/assembly.fasta"
   """
   # ideally the assembly file is passed in directly
   medaka_consensus \\
     -i ${trimmed_fq} \\
-    -d ${assembly}/assembly.fasta \\
+    -d ${fa_path} \\
     -o ./ \\
     -t ${task.cpus}
   """
