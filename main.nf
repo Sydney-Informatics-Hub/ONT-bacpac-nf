@@ -251,7 +251,6 @@ workflow {
     // Gather all jsons for each barcode
     busco_qc_chromosomes.out.json_summary
     .filter { _barcode, assembler, _json -> assembler != 'plassembler' }  // Use chromosome assemblies for comparison
-    .map { barcode, _assembler, json -> [ barcode, json ] }
     .groupTuple()
 
   select_assembly(barcode_busco_jsons)
@@ -315,18 +314,19 @@ workflow {
     .map { _barcode, _assembler, faa -> faa }
     .collect()
 
-  bakta_sample_info =
-    bakta_annotation_chromosomes.out.sample_info
+  bakta_assemblers =
+    bakta_annotation_chromosomes.out.faa
     // Remove de novo plasmid assemblies
     .filter { _barcode, assembler, _info -> assembler != 'plassembler' }
-    .map { _barcode, _assembler, info -> info }
+    .map { _barcode, assembler, _faa -> assembler }
+    .unique()
     .collect()
 
   create_phylogeny_tree_related_files(
     get_ncbi.out.assembly_summary_refseq,
     kraken2_reports,
     bakta_results_faas,
-    bakta_sample_info
+    bakta_assemblers
   )
 
   barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table

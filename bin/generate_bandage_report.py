@@ -46,6 +46,7 @@ def main(args):
         image_data_refined = '\n'.join(image_data_refined)
 
         # Get sample name and assembler
+        # NOTE: Makes the assumption that no assembler name will contain a period
         image_basename = os.path.basename(image)
         image_basename_split = image_basename.split('.')
         sample = image_basename_split[0:-3]

@@ -11,7 +11,6 @@ process bakta_annotation_chromosomes {
   tuple val(barcode), val(assembler), path("${prefix}.faa"), emit: faa
   tuple val(barcode), val(assembler), path("${prefix}.txt"), emit: txt
   tuple val(barcode), val(assembler), path("${prefix}.gff3"), emit: gff
-  tuple val(barcode), val(assembler), path("${prefix}.info.tsv"), emit: sample_info
 
   script:
   prefix = "${barcode}_${assembler}_chr"
@@ -22,8 +21,5 @@ process bakta_annotation_chromosomes {
     --prefix $prefix \\
     --force \\
     --threads ${task.cpus}
-
-  # Print sample information to a TSV file
-  echo -e "${prefix}\t${barcode}\t${assembler}" > ${prefix}.info.tsv
   """
 }

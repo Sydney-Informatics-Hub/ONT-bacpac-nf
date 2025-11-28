@@ -29,6 +29,7 @@ import urllib.request
 import time
 import argparse
 from pathlib import Path
+import re
 
 def download_file(url, output_path):
     try:
@@ -128,9 +129,10 @@ def main():
         help="Path to refseq_summary.txt"
     )
     parser.add_argument(
-        "--bakta_sample_info",
+        "--all_assemblers",
         required=True,
-        help="Path to bakta_sample_info.tsv containing prefix-sample-assembler mappings"
+        help="Comma-separated list of all present assemblers",
+        type=str
     )
     parser.add_argument(
         "--kraken2_reports",
@@ -167,16 +169,9 @@ def main():
 
     os.makedirs("phylogeny", exist_ok=True)
 
-    # Get prefix - sample ID mappings
-    with open(args.bakta_sample_info, 'r') as f:
-        bakta_sample_info = f.readlines()
-
-    bakta_sample_dict = {}
-    for sample in bakta_sample_info:
-        sample_split = sample.split('\t')
-        prefix = sample_split[0]
-        id = sample_split[1]
-        bakta_sample_info[prefix] = id
+    # Create regex for extracting the sample name
+    all_assemblers = args.all_assemblers.replace(',', '|')
+    sample_id_re = rf"^(.*)_({all_assemblers})_chr$"
 
     for bakta_path in args.bakta_results:
         """
@@ -185,7 +180,7 @@ def main():
         path = Path(bakta_path)
         file_name = path[0].name
         sample_prefix = '.'.join(file_name.split('.')[0:-1])
-        sample_id = bakta_sample_dict[sample_prefix]
+        sample_id = re.match(sample_id_re, sample_prefix).group(1)
         present_species = sampleID_species_dic[sample_id]
 
         final_protein_file_name = f"{sample_id}_{present_species}.faa"
