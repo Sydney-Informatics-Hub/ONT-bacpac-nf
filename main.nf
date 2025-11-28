@@ -308,22 +308,25 @@ workflow {
     .map { _barcode, k2_report -> k2_report }
     .collect()
 
-  bakta_results_dirs = 
-    bakta_annotation_chromosomes.out.txt
+  bakta_results_faas =
+    bakta_annotation_chromosomes.out.faa
     // Remove de novo plasmid assemblies
-    .filter { _barcode, assembler, _txt -> assembler != 'plassembler' }
-    // TODO: Currently takes dir as input, amend the phylo building .py file
-    // to take direct inputs
-    .map { _barcode, _assembler, txt -> 
-        Path dir = txt.getParent()
-        return dir
-    }
+    .filter { _barcode, assembler, _faa -> assembler != 'plassembler' }
+    .map { _barcode, _assembler, faa -> faa }
+    .collect()
+
+  bakta_sample_info =
+    bakta_annotation_chromosomes.out.sample_info
+    // Remove de novo plasmid assemblies
+    .filter { _barcode, assembler, _info -> assembler != 'plassembler' }
+    .map { _barcode, _assembler, info -> info }
     .collect()
 
   create_phylogeny_tree_related_files(
     get_ncbi.out.assembly_summary_refseq,
     kraken2_reports,
-    bakta_results_dirs
+    bakta_results_faas,
+    bakta_sample_info
   )
 
   barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table

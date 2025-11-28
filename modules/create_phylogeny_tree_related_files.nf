@@ -6,6 +6,7 @@ process create_phylogeny_tree_related_files {
   path(assembly_summary_refseq)
   path(kraken2_reports)
   path(bakta_results)
+  path(bakta_sample_info_files)
 
   output:
   path("phylogeny"), emit: phylogeny_folder
@@ -13,8 +14,13 @@ process create_phylogeny_tree_related_files {
 
   script: 
   """
+  # Concatenate sample info files together
+  cat ${bakta_sample_info_files} > bakta_sample_info.tsv
+
+  # Prepare phylogenetic tree files
   create_phylogenytree_related_files.py \\
     --assembly_summary_refseq ${assembly_summary_refseq} \\
+    --bakta_sample_info bakta_sample_info.tsv \\
     --kraken2_reports ${kraken2_reports} \\
     --bakta_results ${bakta_results}
   """
