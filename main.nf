@@ -35,8 +35,6 @@ include { create_samplesheet_for_processed } from './modules/create_samplesheet_
 include { create_phylogeny_tree_related_files } from './modules/create_phylogeny_tree_related_files'
 include { run_orthofinder } from './modules/run_orthofinder'
 include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus_annotation_reference'
-include { generate_amrfinderplus_gene_matrix } from './modules/generate_amrfinderplus_gene_matrix'
-include { generate_abricate_gene_matrix } from './modules/generate_abricate_gene_matrix'
 include { summarise_phylogeny_and_amr_reports } from './modules/create_phylo_amr_summary'
 include { generate_consensus_warnings } from './modules/generate_consensus_warnings'
 include { multiqc_report } from './modules/run_multiqc'
