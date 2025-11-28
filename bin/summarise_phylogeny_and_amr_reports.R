@@ -96,16 +96,16 @@ abricate_heatmap_data <- abricate_heatmap_data %>%
   )) %>%
   dplyr::select(-tip_name)
 
+combined_heatmap <- amrfinder_heatmap_data %>%
+  full_join(
+    abricate_heatmap_data,
+    by = "sampleID"
+  ) %>%
+  replace(is.na(.), 0)
+
 # Convert to dataframes and set the row names
-amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
+combined_heatmap <- combined_heatmap %>%
   column_to_rownames(var = "sampleID")
-
-abricate_heatmap_data <- abricate_heatmap_data %>%
-  column_to_rownames(var = "sampleID")
-
-# Doesn't matter if either heatmap have null results. If no data in total,
-# plot tree only above
-combined_heatmap <- cbind(amrfinder_heatmap_data, abricate_heatmap_data)
 
 # Prepare separate plots ----
 p_heat <- 
