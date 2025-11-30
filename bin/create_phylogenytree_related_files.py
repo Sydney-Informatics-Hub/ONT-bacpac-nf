@@ -178,9 +178,11 @@ def main():
         Move .faa files to the phylogeny/ folder
         """
         path = Path(bakta_path)
-        file_name = path[0].name
+        file_name = path.name
         sample_prefix = '.'.join(file_name.split('.')[0:-1])
-        sample_id = re.match(sample_id_re, sample_prefix).group(1)
+        sample_id_match = re.match(sample_id_re, sample_prefix)
+        sample_id = sample_id_match.group(1) if sample_id_match else None
+        assert sample_id is not None, f'Error: could not detect sample ID: invalid prefix: {sample_prefix}'
         present_species = sampleID_species_dic[sample_id]
 
         final_protein_file_name = f"{sample_id}_{present_species}.faa"
