@@ -229,8 +229,10 @@ Define paths to the workflow input variables:
 * `samplesheet=/scratch/<PROJECT>/data/samplesheet.csv` (option 2)
 * `k2db=/scratch/<PROJECT>/databases/kraken2_db`
 * `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
+* `gadi_account=<PROJECT>`
+* `gadi_storage=/scratch/<PROJECT>`
 
-This is the structure of the run script saved in `test/run_test.sh`, modified to run on all files in a specific directory:
+This is the structure of the run script saved in `test/run_test.sh`, modified to run on all files in a specific directory; again, replace all instances of `<PROJECT>` with your project code:
 
 ```bash
 #!/bin/bash
@@ -256,16 +258,20 @@ input_directory= #path to your input directory
 samplesheet= #path to samplesheet
 k2db= #path to predownloaded kraken2 database
 sequencing_summary= #path to sequencing summary file from ONT run 
+gadi_account="<PROJECT>"
+gadi_storage="/scratch/<PROJECT>"
 
 # Run pipeline 
 nextflow run main.nf \
   --input_directory ${input_directory} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
+  --gadi_account ${gadi_account} \
+  --gadi_storage ${gadi_storage} \
   -resume 
 ```
 
-This is the structure of the run script saved in `test/run_test.sh`, modified to run on selected files specified in a samplesheet:
+This is the structure of the run script saved in `test/run_test.sh`, modified to run on selected files specified in a samplesheet; again, replace all instances of `<PROJECT>` with your project code:
 
 ```bash
 #!/bin/bash
@@ -291,12 +297,16 @@ input_directory= #path to your input directory
 samplesheet= #path to samplesheet
 k2db= #path to predownloaded kraken2 database
 sequencing_summary= #path to sequencing summary file from ONT run 
+gadi_account="<PROJECT>"
+gadi_storage="/scratch/<PROJECT>"
 
 # Run pipeline 
 nextflow run main.nf \
   --samplesheet ${samplesheet} \
   --kraken2_db ${k2db} \
   --sequencing_summary ${sequencing_summary} \
+  --gadi_account ${gadi_account} \
+  --gadi_storage ${gadi_storage} \
   -resume 
 ```
 
