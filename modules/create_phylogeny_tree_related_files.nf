@@ -3,14 +3,14 @@ process create_phylogeny_tree_related_files {
   publishDir "${params.outdir}/taxonomy", mode: 'copy'
   
   input:
-  path(assembly_summary_refseq)
-  path(kraken2_reports)
-  path(bakta_results)
-  path(bakta_assemblers)
+  path assembly_summary_refseq
+  path kraken2_reports
+  path bakta_results
+  val bakta_assemblers
 
   output:
-  path("phylogeny"), emit: phylogeny_folder
-  path("barcode_species_table_mqc.txt"), emit: barcode_species_table
+  path "phylogeny", emit: phylogeny_folder
+  path "barcode_species_table_mqc.txt", emit: barcode_species_table
 
   script:
   all_assemblers = bakta_assemblers.join(',')
