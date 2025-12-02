@@ -6,7 +6,6 @@ nextflow.enable.dsl=2
 // Import processes or subworkflows to be run in the workflow
 include { denovo } from './subworkflows/denovo'
 include { unzip_fastqs } from './modules/unzip_fastqs'
-include { concat_fastas } from './modules/concat_fa'
 include { concat_fastqs } from './modules/run_pigz'
 include { porechop } from './modules/run_porechop' 
 include { pycoqc_summary } from './modules/run_pycoqc'
@@ -31,7 +30,6 @@ include { busco_qc_chromosomes } from './modules/run_busco_qc_chromosomes'
 include { abricateVFDB_annotation_chromosomes } from './modules/run_abricateVFDB_annotation_chromosomes'
 include { abricateVFDB_annotation_reference } from './modules/run_abricateVFDB_annotation_reference'
 include { amrfinderplus_annotation_chromosomes } from './modules/run_amrfinderplus_annotation_chromosomes'
-include { create_samplesheet_for_processed } from './modules/create_samplesheet_for_processed'
 include { create_phylogeny_tree_related_files } from './modules/create_phylogeny_tree_related_files'
 include { run_orthofinder } from './modules/run_orthofinder'
 include { amrfinderplus_annotation_reference } from './modules/run_amrfinderplus_annotation_reference'
@@ -209,30 +207,30 @@ workflow {
 
   // DE NOVO GENOME ASSEMBLIES
   denovo_fqs = porechop.out.trimmed_fq
-    .map { barcode, fq -> [ barcode, null, fq ] }
+    .map { sample, fq -> [ sample, null, fq ] }
   denovo(denovo_fqs, plassembler_db)
 
   // RUN AUTOCYCLER
   autocycler(porechop.out.trimmed_fq, denovo.out.assemblies, plassembler_db)
 
-  polished_consensus_per_barcode = autocycler.out.polished_consensus_per_barcode
-  consensus_gfa_per_barcode = autocycler.out.consensus_gfa_per_barcode
+  polished_consensus_per_sample = autocycler.out.polished_consensus_per_sample
+  consensus_gfa_per_sample = autocycler.out.consensus_gfa_per_sample
   autocycler_metrics = autocycler.out.metrics
 
-  // Identify failed barcodes and create a list of their names
-  consensus_successes = polished_consensus_per_barcode
+  // Identify failed samples and create a list of their names
+  consensus_successes = polished_consensus_per_sample
     .ifEmpty([null, null, null])  // Gives us something to join against, will be filtered out below
   consensus_failures = concat_fastqs.out.concat_fq
-    .map { barcode, _fq -> barcode }
+    .map { sample, _fq -> sample }
     .unique()
     .join(consensus_successes, remainder: true)
     .filter { x ->
       x.size() == 2 && !x[1]
     }
-    .map { barcode, _nullval -> barcode }
+    .map { sample, _nullval -> sample }
     .collect()
 
-  // Generate MultiQC-ready YAML file of failed barcodes
+  // Generate MultiQC-ready YAML file of failed samples
   consensus_method = channel.value('autocycler')
   generate_consensus_warnings(consensus_failures, consensus_method)
   consensus_warnings = generate_consensus_warnings.out.mqc_yaml
@@ -242,11 +240,11 @@ workflow {
   // DE NOVO ASSEMBLY GRAPHS
   // AND PLASEMBLER GRAPHS
   denovo_graphs = denovo.out.graphs
-    .map { barcode, _subset, assembler, graph -> [ barcode, assembler, graph ] }
+    .map { sample, _subset, assembler, graph -> [ sample, assembler, graph ] }
   graphs_for_bandage =
     denovo_graphs
-    .mix(consensus_gfa_per_barcode)
-    .filter { _barcode, _assembly, graph ->
+    .mix(consensus_gfa_per_sample)
+    .filter { _sample, _assembly, graph ->
       graph.size() > 0
     }
 
@@ -254,52 +252,52 @@ workflow {
 
   // Generate MultiQC-ready Bandage report
   all_bandage_plots = bandage.out.bandage_plot
-    .map { _barcode, _assembly, plot -> plot }
+    .map { _sample, _assembly, plot -> plot }
     .collect()
   generate_bandage_report(all_bandage_plots)
 
   // MEDAKA: POLISH DE NOVO ASSEMBLIES
   unpolished_denovo_assemblies = denovo.out.assemblies
-    .map { barcode, _subset, assembler, assembly_dir -> [ barcode, assembler, assembly_dir ] }
+    .map { sample, _subset, assembler, assembly_dir -> [ sample, assembler, assembly_dir ] }
     .combine(porechop.out.trimmed_fq, by: 0)
   medaka_polish_denovo(unpolished_denovo_assemblies)
 
   // ASSEMBLY QC
-  all_polished = polished_consensus_per_barcode
+  all_polished = polished_consensus_per_sample
     .mix(medaka_polish_denovo.out.assembly)
 
-  // TODO: probably better to collect all per-barcode assemblies in one quast
+  // TODO: probably better to collect all per-sample assemblies in one quast
   // run to void a parsing/merging step
   quast_qc_chromosomes(all_polished)
   busco_qc_chromosomes(all_polished, busco_db)
   
   // SELECT "BEST" ASSEMBLY
   // TODO: Discuss better approaches. Currently selects the best assembly per
-  // barcode by most Complete BUSCO % 
-  barcode_busco_jsons =
-    // Gather all jsons for each barcode
+  // sample by most Complete BUSCO % 
+  sample_busco_jsons =
+    // Gather all jsons for each sample
     busco_qc_chromosomes.out.json_summary
-    .filter { _barcode, assembler, _json -> assembler != 'plassembler' }  // Use chromosome assemblies for comparison
+    .filter { _sample, assembler, _json -> assembler != 'plassembler' }  // Use chromosome assemblies for comparison
     .groupTuple()
 
-  select_assembly(barcode_busco_jsons)
+  select_assembly(sample_busco_jsons)
   
   best_chr_assembly = 
     select_assembly.out
-    .map { barcode, txt ->
+    .map { sample, txt ->
       // best assembly stored in txt file for pipeline caching
       String best = txt.splitText()[0].strip()  // TODO: Is there a better way to do this?
-      return [barcode, best]
+      return [sample, best]
     }
     .join(all_polished, by: [0, 1])
 
-  // Get plasmids assemblies for barcodes where we are using the de novo assemblies
+  // Get plasmids assemblies for samples where we are using the de novo assemblies
   // (consensus assemblies already include plasmids so we don't need to process these separately)
   denovo_plasmid_assemblies =
-    // Get barcodes for which we are using the de novo assemblies
+    // Get samples for which we are using the de novo assemblies
     best_chr_assembly
-    .filter { _barcode, assembler, _fasta -> assembler != 'consensus' }
-    .map { barcode, _assembler, _fasta -> [ barcode, 'plassembler' ] }
+    .filter { _sample, assembler, _fasta -> assembler != 'consensus' }
+    .map { sample, _assembler, _fasta -> [ sample, 'plassembler' ] }
     .unique()
     // Join with all_polished to get just the plasmid assemblies
     // to be processed in parallel with de novo chromosomes
@@ -312,7 +310,7 @@ workflow {
   // an autocycler assembly (including plassembler output); or
   // a de novo chr assembly + a plassembler assembly (as separate elements)
 
-  // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-BARCODE
+  // ANNOTATE THE BEST CHROMOSOMAL ASSEMBLY PER-SAMPLE
   // BAKTA: Annotate gene features
   bakta_annotation_chromosomes(best_chr_assembly, get_bakta.out.bakta_db)
 
@@ -331,23 +329,23 @@ workflow {
   // phylogenetic trees will only be built from the de novo chromosome asemblies
   // and won't use the plasmid assemblies from plassembler
   kraken2_reports =
-    // Collect all k2 reports and drop barcodes
+    // Collect all k2 reports and drop samples
     kraken2.out
-    .map { _barcode, k2_report -> k2_report }
+    .map { _sample, k2_report -> k2_report }
     .collect()
 
   bakta_results_faas =
     bakta_annotation_chromosomes.out.faa
     // Remove de novo plasmid assemblies
-    .filter { _barcode, assembler, _faa -> assembler != 'plassembler' }
-    .map { _barcode, _assembler, faa -> faa }
+    .filter { _sample, assembler, _faa -> assembler != 'plassembler' }
+    .map { _sample, _assembler, faa -> faa }
     .collect()
 
   bakta_assemblers =
     bakta_annotation_chromosomes.out.faa
     // Remove de novo plasmid assemblies
-    .filter { _barcode, assembler, _info -> assembler != 'plassembler' }
-    .map { _barcode, assembler, _faa -> assembler }
+    .filter { _sample, assembler, _info -> assembler != 'plassembler' }
+    .map { _sample, assembler, _faa -> assembler }
     .unique()
     .collect()
 
@@ -358,7 +356,7 @@ workflow {
     bakta_assemblers
   )
 
-  barcode_species_table = create_phylogeny_tree_related_files.out.barcode_species_table
+  sample_species_table = create_phylogeny_tree_related_files.out.sample_species_table
 
   // ORTHOFINDER: Infer phylogeny using orthologous genes
   phylogeny_in = create_phylogeny_tree_related_files.out.phylogeny_folder
@@ -376,26 +374,26 @@ workflow {
 
   // Gather all abricate and amrfinderplus reports
   amrfinder_reports = amrfinderplus_annotation_chromosomes.out.annotated_report
-    .map { _barcode, _assembler, report -> report }
+    .map { _sample, _assembler, report -> report }
     .mix(amrfinderplus_annotation_reference.out.annotated_report)
     .collect()
 
   abricate_reports = abricateVFDB_annotation_chromosomes.out.annotated_report
-    .map { _barcode, _assembler, report -> report }
+    .map { _sample, _assembler, report -> report }
     .mix(abricateVFDB_annotation_reference.out.annotated_report)
     .collect()
 
   // R: Plot phylogeny and heatmap
   summarise_phylogeny_and_amr_reports(
     run_orthofinder.out.rooted_tree,
-    barcode_species_table,
+    sample_species_table,
     amrfinder_reports,
     abricate_reports
   )
 
   // BAKTA: Annotate plasmid gene features
   plassembler_fasta = denovo.out.plassembler_fasta
-    .map { barcode, _subset, fasta -> [ barcode, fasta ] }
+    .map { sample, _subset, fasta -> [ sample, fasta ] }
   bakta_annotation_plasmids(plassembler_fasta, get_bakta.out.bakta_db)
 
   // SUMMARISE RUN WITH MULTIQC REPORT
@@ -411,28 +409,28 @@ workflow {
 
   kraken2_required_for_multiqc = 
     kraken2.out.kraken2_screen
-    .map { _barcode, report -> report }
+    .map { _sample, report -> report }
     .collect()
     .ifEmpty([])
 
   quast_required_for_multiqc = 
     quast_qc_chromosomes.out.tsv
-    .map { _barcode, _assembler, tsv -> tsv }
+    .map { _sample, _assembler, tsv -> tsv }
     .collect()
 
   bakta_required_for_multiqc =
     bakta_annotation_chromosomes.out.txt
-    .map { _barcode, _assembler, txt -> txt }
+    .map { _sample, _assembler, txt -> txt }
     .collect()
 
   busco_required_for_multiqc =
     busco_qc_chromosomes.out.txt_summary
-    .map { _barcode, _assembler, txt -> txt }
+    .map { _sample, _assembler, txt -> txt }
     .collect()
 
   bakta_plasmids_required_for_multiqc = 
     bakta_annotation_plasmids.out.bakta_annotations
-    .map { _barcode, annotations -> annotations }
+    .map { _sample, annotations -> annotations }
     .collect()
     .ifEmpty([])
 

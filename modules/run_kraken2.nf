@@ -1,23 +1,23 @@
 process kraken2 {
-  tag "DETECTING POSSIBLE CONTAMINATION: ${barcode}"
+  tag "DETECTING POSSIBLE CONTAMINATION: ${sample}"
   container 'quay.io/biocontainers/kraken2:2.1.3--pl5321hdcf5f25_0'
-  publishDir "${params.outdir}/quality_control/${barcode}_kraken2", mode: 'copy'
+  publishDir "${params.outdir}/quality_control/${sample}_kraken2", mode: 'copy'
 
   input:
-  tuple val(barcode), path(trimmed_fq)
+  tuple val(sample), path(trimmed_fq)
   path kraken2_db 
 
   output:
-  tuple val(barcode), path("*.k2report"), emit: kraken2_screen
+  tuple val(sample), path("*.k2report"), emit: kraken2_screen
 
   script:
   """
   kraken2 ${trimmed_fq} \\
     --db ${kraken2_db} \\
-    --report ${barcode}.k2report \\
+    --report ${sample}.k2report \\
     --report-minimizer-data \\
     --minimum-hit-groups 3 \\
     --threads ${task.cpus} \\
-    --output ${barcode}_k2_out.txt 
+    --output ${sample}_k2_out.txt 
   """
 }

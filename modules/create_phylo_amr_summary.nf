@@ -5,7 +5,7 @@ process summarise_phylogeny_and_amr_reports {
   
   input:
   path rooted_tree
-  path barcode_species_table
+  path sample_species_table
   path amrfinderplus_reports, stageAs: "amrfinder_reports/*"
   path abricate_reports, stageAs: "abricate_reports/*"
 
@@ -16,7 +16,7 @@ process summarise_phylogeny_and_amr_reports {
   """
   summarise_phylogeny_and_amr_reports.R \\
     ${rooted_tree} \\
-    ${barcode_species_table} \\
+    ${sample_species_table} \\
     amrfinder_reports/ \\
     abricate_reports/
   """

@@ -3,14 +3,14 @@ process flye_assembly {
     container 'quay.io/biocontainers/flye:2.9.3--py310h2b6aa90_0'
 
     input:
-    tuple val(barcode), val(subset), path(trimmed_fq)
+    tuple val(sample), val(subset), path(trimmed_fq)
 
     output:
-    tuple val(barcode), val(subset), path("${id}_flye_assembly"), emit: flye_assembly
-    tuple val(barcode), val(subset), path("${id}_flye_assembly/assembly_graph.gfa"), emit: flye_graph
+    tuple val(sample), val(subset), path("${id}_flye_assembly"), emit: flye_assembly
+    tuple val(sample), val(subset), path("${id}_flye_assembly/assembly_graph.gfa"), emit: flye_graph
 
     script:
-    id = subset == null ? barcode : "${barcode}_${subset}"
+    id = subset == null ? sample : "${sample}_${subset}"
     """
     flye \\
         --nano-hq ${trimmed_fq} \\

@@ -1,12 +1,12 @@
 process estimate_genome_size_raven {
-  tag "ESTIMATE GENOME SIZE: ${barcode}"
+  tag "ESTIMATE GENOME SIZE: ${sample}"
   container 'quay.io/biocontainers/raven-assembler:1.8.3--h5ca1c30_3'
 
   input:
-  tuple val(barcode), path(trimmed_fq)
+  tuple val(sample), path(trimmed_fq)
 
   output:
-  tuple val(barcode), path("raven.fasta"), emit: raven_fa
+  tuple val(sample), path("raven.fasta"), emit: raven_fa
 
   script:
   """
@@ -15,18 +15,18 @@ process estimate_genome_size_raven {
 }
 
 process estimate_genome_size_seqtk {
-  tag "ESTIMATE GENOME SIZE: ${barcode}"
+  tag "ESTIMATE GENOME SIZE: ${sample}"
   container 'quay.io/biocontainers/seqtk:1.4--h577a1d6_3'
 
   input:
-  tuple val(barcode), path(raven_fa)
+  tuple val(sample), path(raven_fa)
 
   output:
-  tuple val(barcode), path("${barcode}_genome_size.txt"), emit: genome_size
+  tuple val(sample), path("${sample}_genome_size.txt"), emit: genome_size
 
   script:
   """
-  seqtk size ${raven_fa} | cut -f 2 > ${barcode}_genome_size.txt
+  seqtk size ${raven_fa} | cut -f 2 > ${sample}_genome_size.txt
   """
 }
 

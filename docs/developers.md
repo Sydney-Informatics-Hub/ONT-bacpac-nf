@@ -39,7 +39,7 @@ process process_name {
   container '<link to container>'
 
   input:
-	tuple val(barcode), path <input>
+	tuple val(sample), path <input>
 
   output:
   path("*"), emit: process_out

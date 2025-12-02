@@ -4,14 +4,14 @@ process unicycler_assembly {
     //publishDir "${params.outDir}", mode: 'symlink'
 
     input:
-    tuple val(barcode), val(subset), path(trimmed_fq)
+    tuple val(sample), val(subset), path(trimmed_fq)
 
     output:
-    tuple val(barcode), val(subset), path("${id}_unicycler_assembly"), emit: unicycler_assembly
-    tuple val(barcode), val(subset), path("${id}_unicycler_assembly/assembly.gfa"), emit: unicycler_graph
+    tuple val(sample), val(subset), path("${id}_unicycler_assembly"), emit: unicycler_assembly
+    tuple val(sample), val(subset), path("${id}_unicycler_assembly/assembly.gfa"), emit: unicycler_graph
 
     script:
-    id = subset == null ? barcode : "${barcode}_${subset}"
+    id = subset == null ? sample : "${sample}_${subset}"
     """
     unicycler \
         --long ${trimmed_fq} \\

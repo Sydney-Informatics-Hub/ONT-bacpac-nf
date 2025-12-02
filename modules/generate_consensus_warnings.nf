@@ -3,7 +3,7 @@ process generate_consensus_warnings {
   // No container because this runs basic bash code
 
   input:
-  val failed_barcodes
+  val failed_samples
   val consensus_method
 
   output:
@@ -22,7 +22,7 @@ process generate_consensus_warnings {
     '    title: "Status"',
     'data:'
   ]
-  yaml_data += failed_barcodes.collect { x -> "  ${x}:\n    consensus_method: '${consensus_method}'\n    consensus_status: 'Fail'" }
+  yaml_data += failed_samples.collect { x -> "  ${x}:\n    consensus_method: '${consensus_method}'\n    consensus_status: 'Fail'" }
   yaml_data = yaml_data.join('\n')
   """
   echo -e '${yaml_data}' > failed_consensus_mqc.yaml

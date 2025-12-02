@@ -1,15 +1,15 @@
 process autocycler_combine {
-  tag "AUTOCYCLER COMBINE: ${barcode}"
+  tag "AUTOCYCLER COMBINE: ${sample}"
   container 'quay.io/biocontainers/autocycler:0.3.0--h3ab6199_0'
-  publishDir "${params.outdir}/assemblies/${barcode}_consensus", mode: 'copy'
+  publishDir "${params.outdir}/assemblies/${sample}_consensus", mode: 'copy'
 
   input:
-  tuple val(barcode), path(autocycler_cluster_dir, stageAs: "autocycler_cluster_dir"), path(pass_cluster_dirs)
+  tuple val(sample), path(autocycler_cluster_dir, stageAs: "autocycler_cluster_dir"), path(pass_cluster_dirs)
 
   output:
-  tuple val(barcode), path("autocycler_out"), emit: autocycler_out
-  tuple val(barcode), path("autocycler_out/consensus_assembly.fasta"), emit: consensus_assembly
-  tuple val(barcode), path("autocycler_out/consensus_assembly.gfa"), emit: consensus_graph
+  tuple val(sample), path("autocycler_out"), emit: autocycler_out
+  tuple val(sample), path("autocycler_out/consensus_assembly.fasta"), emit: consensus_assembly
+  tuple val(sample), path("autocycler_out/consensus_assembly.gfa"), emit: consensus_graph
 
   script:
   """

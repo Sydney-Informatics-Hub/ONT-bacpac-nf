@@ -13,15 +13,15 @@ Sys.setenv(FONTCONFIG_CACHE = "~/.cache/fontconfig")
 args <- commandArgs(trailingOnly = TRUE)
 
 tree_path <- args[1]
-barcode_species_table_file <- args[2]
+sample_species_table_file <- args[2]
 amrfinderplus_report_dir <- args[3]
 abricate_report_dir <- args[4]
 
 # Read in phylogenetic tree
 tree <- ggtree::read.tree(tree_path)
 
-# Read in barcode species table and create lookup table
-barcode_species_table <- read_tsv(barcode_species_table_file) %>%
+# Read in sample species table and create lookup table
+sample_species_table <- read_tsv(sample_species_table_file) %>%
   unite(tip_name, sampleID, Species, remove = FALSE) %>%
   dplyr::select(-Species)
 
@@ -79,9 +79,9 @@ if (ncol(amrfinder_heatmap_data) + ncol(abricate_heatmap_data) == 2) {
 }
 
 # Convert the sample IDs to the matching names from the phylo tree
-# using the barcode species table as a lookup
+# using the sample species table as a lookup
 amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
-  left_join(barcode_species_table, by = "sampleID") %>%
+  left_join(sample_species_table, by = "sampleID") %>%
   mutate(sampleID = case_when(
     is.na(tip_name) ~ sampleID,
     .default = tip_name
@@ -89,7 +89,7 @@ amrfinder_heatmap_data <- amrfinder_heatmap_data %>%
   dplyr::select(-tip_name)
 
 abricate_heatmap_data <- abricate_heatmap_data %>%
-  left_join(barcode_species_table, by = "sampleID") %>%
+  left_join(sample_species_table, by = "sampleID") %>%
   mutate(sampleID = case_when(
     is.na(tip_name) ~ sampleID,
     .default = tip_name

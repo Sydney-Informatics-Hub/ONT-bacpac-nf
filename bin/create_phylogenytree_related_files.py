@@ -153,13 +153,13 @@ def main():
 
     for k2_path in args.kraken2_reports:
         """
-        Parse sample/barcode IDs from kraken 2 path inputs
+        Parse sample IDs from kraken 2 path inputs
         k2_path = "barcode10.k2report"
         """
         sample_id = '.'.join(k2_path.split('.')[0:-1])
         sampleID_species_dic = get_dominant_species(sample_id, k2_path, sampleID_species_dic, nr_species_list)
 
-    output_sampleID_species_table_path = "barcode_species_table_mqc.txt"
+    output_sampleID_species_table_path = "sample_species_table_mqc.txt"
     with open(output_sampleID_species_table_path, "w") as file_out:
         header = "sampleID\tSpecies"
         file_out.write(f"{header}\n")

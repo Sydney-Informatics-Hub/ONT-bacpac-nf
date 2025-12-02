@@ -10,7 +10,7 @@ include { plassembler } from '../modules/run_plassembler'
 
 workflow denovo {
     take:
-    fastq  // [ barcode, subset, fastq ]; subset can be null
+    fastq  // [ sample, subset, fastq ]; subset can be null
     plassembler_db
 
     main:
@@ -35,11 +35,11 @@ workflow denovo {
 
     // Gather assemblies
     flye_assemblies = flye_assembly.out.flye_assembly
-        .map { barcode, subset, assembly_dir -> [ barcode, subset, 'flye', assembly_dir ] }
+        .map { sample, subset, assembly_dir -> [ sample, subset, 'flye', assembly_dir ] }
     unicycler_assemblies = unicycler_assembly.out.unicycler_assembly
-        .map { barcode, subset, assembly_dir -> [ barcode, subset, 'unicycler', assembly_dir ] }
+        .map { sample, subset, assembly_dir -> [ sample, subset, 'unicycler', assembly_dir ] }
     plassembler_assemblies = plassembler.out.plassembler_assembly
-        .map { barcode, subset, assembly_dir -> [ barcode, subset, 'plassembler', assembly_dir ] }
+        .map { sample, subset, assembly_dir -> [ sample, subset, 'plassembler', assembly_dir ] }
 
     all_assemblies = flye_assemblies
         .mix(unicycler_assemblies)
@@ -47,11 +47,11 @@ workflow denovo {
 
     // Gather graphs
     flye_graphs = flye_assembly.out.flye_graph
-        .map { barcode, subset, assembly_graph -> [ barcode, subset, 'flye', assembly_graph ] }
+        .map { sample, subset, assembly_graph -> [ sample, subset, 'flye', assembly_graph ] }
     unicycler_graphs = unicycler_assembly.out.unicycler_graph
-        .map { barcode, subset, assembly_graph -> [ barcode, subset, 'unicycler', assembly_graph ] }
+        .map { sample, subset, assembly_graph -> [ sample, subset, 'unicycler', assembly_graph ] }
     plassembler_graphs = plassembler.out.plassembler_graph
-        .map { barcode, subset, assembly_graph -> [ barcode, subset, 'plassembler', assembly_graph ] }
+        .map { sample, subset, assembly_graph -> [ sample, subset, 'plassembler', assembly_graph ] }
 
     all_graphs = flye_graphs
         .mix(unicycler_graphs)

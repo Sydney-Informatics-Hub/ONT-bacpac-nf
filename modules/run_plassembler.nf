@@ -4,17 +4,17 @@ process plassembler {
     publishDir "${params.outdir}/assemblies", mode: 'copy'
 
     input:
-    tuple val(barcode), val(subset), path(trimmed_fq), path(flye_assembly)
+    tuple val(sample), val(subset), path(trimmed_fq), path(flye_assembly)
     path plassembler_db 
 
     output:
-    tuple val(barcode), val(subset), path("${id}_plassembler_assembly"), emit: plassembler_assembly, optional: true
-    tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.fasta"), emit: plassembler_fasta, optional: true
-    tuple val(barcode), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.gfa"), emit: plassembler_graph, optional: true
-    tuple val(barcode), val(subset), path("${id}_plassembler_logs"), emit: plassembler_logs, optional: true
+    tuple val(sample), val(subset), path("${id}_plassembler_assembly"), emit: plassembler_assembly, optional: true
+    tuple val(sample), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.fasta"), emit: plassembler_fasta, optional: true
+    tuple val(sample), val(subset), path("${id}_plassembler_assembly/plassembler_plasmids.gfa"), emit: plassembler_graph, optional: true
+    tuple val(sample), val(subset), path("${id}_plassembler_logs"), emit: plassembler_logs, optional: true
 
     script:
-    id = subset == null ? barcode : "${barcode}_${subset}"
+    id = subset == null ? sample : "${sample}_${subset}"
     """
     plassembler long \\
         -d plasmid_db_plassembler \\

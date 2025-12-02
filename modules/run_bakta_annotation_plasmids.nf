@@ -1,23 +1,23 @@
 process bakta_annotation_plasmids {
-  tag "ANNOTATING PLASMIDS: ${barcode}"
+  tag "ANNOTATING PLASMIDS: ${sample}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
-  publishDir "${params.outdir}/annotations/${barcode}/plasmids", mode: 'copy'
+  publishDir "${params.outdir}/annotations/${sample}/plasmids", mode: 'copy'
   
 input:
-  tuple val(barcode), path(plassembler_plasmids)
+  tuple val(sample), path(plassembler_plasmids)
   path(bakta_db)
 
 output:
-  tuple val(barcode), path("${barcode}_bakta/"), emit: bakta_annotations    
-  tuple val(barcode), path("${barcode}_bakta/${barcode}_plasmids.txt"), emit: bakta_annotations_multiqc
+  tuple val(sample), path("${sample}_bakta/"), emit: bakta_annotations    
+  tuple val(sample), path("${sample}_bakta/${sample}_plasmids.txt"), emit: bakta_annotations_multiqc
 
 script:
   """
   bakta \\
     ${plassembler_plasmids} \\
     --db ${bakta_db} \\
-    --output ${barcode}_bakta/ \\
-    --prefix ${barcode}_plasmids \\
+    --output ${sample}_bakta/ \\
+    --prefix ${sample}_plasmids \\
     --force \\
     --threads ${task.cpus}
   """

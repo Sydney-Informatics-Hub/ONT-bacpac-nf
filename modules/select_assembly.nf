@@ -1,12 +1,12 @@
 process select_assembly {
-  tag "${barcode}"  
+  tag "${sample}"  
   container 'python:3.8'
 
   input:
-  tuple val(barcode), val(assemblies), path(busco_jsons)
+  tuple val(sample), val(assemblies), path(busco_jsons)
 
   output:
-  tuple val(barcode), path("best_assembly.txt")
+  tuple val(sample), path("best_assembly.txt")
 
   script:
   all_assemblers = assemblies.join(',')
