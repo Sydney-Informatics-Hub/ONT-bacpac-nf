@@ -387,8 +387,14 @@ workflow {
 
   // SUMMARISE RUN WITH MULTIQC REPORT
   // Ensure all necessary inputs are available for MultiQC, even if some are empty
-  nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary.ifEmpty([])
-  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_json.ifEmpty([])
+  nanoplot_required_for_multiqc = nanoplot_summary.out.nanoplot_summary
+    .map { _batch, summarydir -> summarydir }
+    .collect()
+    .ifEmpty([])
+  pycoqc_required_for_multiqc = pycoqc_summary.out.pycoqc_json
+    .map { _batch, json -> json }
+    .collect()
+    .ifEmpty([])
 
   kraken2_required_for_multiqc = 
     kraken2.out.kraken2_screen

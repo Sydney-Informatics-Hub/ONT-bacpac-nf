@@ -4,17 +4,18 @@ process nanoplot_summary {
   publishDir "${params.outdir}/quality_control", mode: 'copy'
   
   input:
-  path(sequencing_summary)
+  tuple val(batch), path(sequencing_summary)
 
   output:
-  path("*"), emit: nanoplot_summary
+  tuple val(batch), path("nanoplot_summary.${batch}"), emit: nanoplot_summary
 
   script: 
   """
   NanoPlot \\
     --summary ${sequencing_summary} \\
     --loglength \\
-    -o nanoplot_summary
+    -o nanoplot_summary.${batch} \\
+    -p ${batch}
   """
 }
 

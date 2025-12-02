@@ -4,17 +4,17 @@ process pycoqc_summary {
   publishDir "${params.outdir}/quality_control", mode: 'copy'
 
   input:
-  path(sequencing_summary)
+  tuple val(batch), path(sequencing_summary)
 
   output:
-  path("pycoqc_summary.html"), emit: pycoqc_html
-  path("pycoqc_summary.json"), emit: pycoqc_json
+  tuple val(batch), path("${batch}.html"), emit: pycoqc_html
+  tuple val(batch), path("${batch}.json"), emit: pycoqc_json
   
   script: 
   """
   pycoQC \\
     -f ${sequencing_summary} \\
-    -o pycoqc_summary.html \\
-    -j pycoqc_summary.json
+    -o ${batch}.html \\
+    -j ${batch}.json
   """
 }
