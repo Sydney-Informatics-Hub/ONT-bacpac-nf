@@ -181,18 +181,20 @@ If you would prefer to specify selected samples to run through this workflow you
 
 The samplesheet should be a CSV file with the following structure: 
 
-| barcode,batch,file_path                      |
-| --------------------------------------------- |
-barcode01,batch1,/path/to/dataset/barcode01.zip |
-barcode03,batch2,/path/to/dataset/barcode03.zip |
-barcode10,batch1,/path/to/dataset/barcode10.zip | 
-
-See an example of a samplesheet [here](../assets/samplesheet.csv). Keep in mind your header will need to be exactly the same as in the example:
-
 ```csv
-barcode,batch,file_path
+barcode,sample,batch,file_path,sequencing_summary
+barcode01,sample01,batch1,/path/to/dataset/barcode01,/path/to/dataset/sequencing_summary_batch1.txt
+barcode02,sample02,batch1,/path/to/dataset/barcode02,/path/to/dataset/sequencing_summary_batch1.txt
+barcode03,sample03,batch2,/path/to/dataset/barcode03.zip,/path/to/dataset/sequencing_summary_batch2.txt
+barcode04,sample03,batch2,/path/to/dataset/barcode04.zip,/path/to/dataset/sequencing_summary_batch2.txt
 ```
-**Note:** If you're rerunning the pipeline or using an older samplesheet version, make sure to **remove any leading `#` from the header line**.
+
+See [Getting Started](./getting-started.md#samplesheet-method-preferred) for more details on the samplesheet structure. Also see three examples of samplesheet structures in the `assets` directory:
+- [A simple samplesheet with one batch and one library/barcode per sample](../assets/samplesheet.simple.csv)
+- [A single-batch samplesheet with three samples and four libraries/barcodes](../assets/samplesheet.single_batch.csv)
+- [A multi-batch samplesheet with three samples and four libraries/barcodes](../assets/samplesheet.multi_batch.csv)
+
+**Note:** The samplesheet structure has evolved since earlier versions of thispipeline. Please make sure that your samplesheet structure matches those in the examples.
 
 ### Preparing Singularity
 

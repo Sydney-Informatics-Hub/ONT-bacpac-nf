@@ -1,4 +1,0 @@
-barcode,batch,file_path
-barcode01,batch1,/path/to/dataset/barcode01.zip
-barcode03,batch2,/path/to/dataset/barcode03.zip
-barcode10,batch1,/path/to/dataset/barcode10.zip

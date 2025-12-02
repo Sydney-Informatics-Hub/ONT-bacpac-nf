@@ -1,0 +1,5 @@
+barcode,sample,batch,file_path,sequencing_summary
+barcode01,sample01,batch1,/path/to/dataset/barcode01,/path/to/dataset/sequencing_summary_batch1.txt
+barcode02,sample02,batch1,/path/to/dataset/barcode02,/path/to/dataset/sequencing_summary_batch1.txt
+barcode03,sample03,batch2,/path/to/dataset/barcode03.zip,/path/to/dataset/sequencing_summary_batch2.txt
+barcode04,sample03,batch2,/path/to/dataset/barcode04.zip,/path/to/dataset/sequencing_summary_batch2.txt

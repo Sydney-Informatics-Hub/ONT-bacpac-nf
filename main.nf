@@ -140,13 +140,13 @@ workflow {
       // VALIDATE INPUT DIRECTORY 
       log.info "USING INPUT DIRECTORY `${params.input_directory}`"
       zipped_fqs = channel.fromPath(params.input_directory + '/*.zip')
-        .map { f -> [ f.baseName, f ] }
+        .map { f -> [ f.baseName, f.baseName, 'batch0', f ] }
       pre_unzipped_fq_dirs = channel.fromPath(params.input_directory + '/*/*.{fq,fastq}.gz')  // For now we need to require .gz FASTQs due to requirements of pigz
-        .map { f -> [ f.parent.baseName, f.parent ] }
+        .map { f -> [ f.parent.baseName, f.parent.baseName, 'batch0', f.parent ] }
         .unique()
       // Get the sequencing summary file
       sequencing_summary = channel.fromPath(params.sequencing_summary, checkIfExists: true)
-        .map { summary -> [ null, summary ] }
+        .map { summary -> [ 'batch0', summary ] }
     } else {
       // VALIDATE SAMPLESHEET
       log.info "READING ZIPPED FASTQS FROM SAMPLESHEET `${params.samplesheet}`"

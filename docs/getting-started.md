@@ -21,13 +21,15 @@ We recommend pre-downloading a Kraken2 database as it can be quite slow to downl
 
 ## Sequencing summary
 
-ONT sequencing runs will generate a sequencing summary text file, named something like `sequencing_summary_*.txt`. This file is used by multiple quality control steps of the pipeline and must be supplied with the `--sequencing_summary` parameter.
+ONT sequencing runs will generate a sequencing summary text file, named something like `sequencing_summary_*.txt`. This file is used by multiple quality control steps of the pipeline. The way you supply it to the pipeline depends on whether you run the workflow using an input directory or a samplesheet (see the [next section](#running-the-workflow)).
 
 ## Running the workflow
 
 The pipeline takes either a sequencing data directory or a CSV samplesheet as its input.
 
-A sequencing data directory should contain FASTQs for one or more samples, with each sample's FASTQs either organised into a separate subdirectory or compressed as a `.zip` file. Each sample may have multiple FASTQ files associated with it. For example, in the following example, the sequencing directory `/example/sequencing/directory` contains the data for `barcode01` and `barocde02` within subdirectories, and `barcode03` and `barcode04` as `.zip` files:
+### Input directory method (single batch, one sample per library/barcode)
+
+If you are working with a single batch of data from one flow cell, and if every library/barcode is associated with a single sample, then you can use the sequencing data directory method. A sequencing data directory should contain FASTQs for one or more samples, with each sample's FASTQs either organised into a separate subdirectory or compressed as a `.zip` file. Each sample may have multiple FASTQ files associated with it. For example, in the following example, the sequencing directory `/example/sequencing/directory` contains the data for `barcode01` and `barocde02` within subdirectories, and `barcode03` and `barcode04` as `.zip` files:
 
 ```bash
 tree /example/sequencing/directory
@@ -45,23 +47,33 @@ tree /example/sequencing/directory
 └── barcode04.zip
 ```
 
-You can specify to process all the samples within a directory like this with the `--input_directory` parameter:
+You can specify to process all the samples within a directory with the `--input_directory` parameter, and simultaneously pass the sequencing summary file with the `--sequencing_summary` parameter:
 
 ```bash
-nextflow run main.nf --input_directory /path/to/dataset [...]
+nextflow run main.nf --input_directory /path/to/dataset --sequencing_summary /path/to/sequencing_summary.txt [...]
 ```
 
-If a samplesheet is provided, it should be formatted as follows:
+### Samplesheet method (preferred)
+
+If you wish to run multiple batches (i.e. multiple flow cells) of data through the pipeline in one run, or have multiple libraries/barcodes associated with a single sample (possibly spread across multiple batches), then you will need to use a samplesheet to provide the input information to the pipeline.
+
+A samplesheet is a `.csv` file that should be formatted as follows:
 
 ```csv
-barcode,batch,file_path
-barcode01,batch1,/path/to/dataset/barcode01
-barcode02,batch1,/path/to/dataset/barcode02
-barcode03,batch2,/path/to/dataset/barcode03.zip
-barcode04,batch2,/path/to/dataset/barcode04.zip
+barcode,sample,batch,file_path,sequencing_summary
+barcode01,sample01,batch1,/path/to/dataset/barcode01,/path/to/dataset/sequencing_summary_batch1.txt
+barcode02,sample02,batch1,/path/to/dataset/barcode02,/path/to/dataset/sequencing_summary_batch1.txt
+barcode03,sample03,batch2,/path/to/dataset/barcode03.zip,/path/to/dataset/sequencing_summary_batch2.txt
+barcode04,sample03,batch2,/path/to/dataset/barcode04.zip,/path/to/dataset/sequencing_summary_batch2.txt
 ```
 
-In this case, the path to the directory or `.zip` file containing a sample's FASTQs is provided under the `file_path` column.
+In this case, the path to the directory or `.zip` file containing a sample's FASTQs is provided under the `file_path` column and the path to each batch's sequencing summary file is provided under the `sequencing_summary` column.
+
+If you only have a single batch of data, you can omit the `batch` column and your data will be given the default batch ID of `batch0`.
+
+If each sample is only associated with a single library/barcode, you can also omit the `sample` column, and the `barcode` value will be used as the `sample` value.
+
+If you have multiple barcodes associated with a sample (for example, `barcode03` and `barcode04` in the above example), the FASTQs for these libraries will be concatenated together into a single FASTQ for genome assembly and analysis. You should only combine libraries like this if you are sure they are of similar quality, as poor quality libraries will be detrimental to genome assembly and downstream analysis.
 
 To use a samplesheet, you can use the `--samplesheet` parameter:
 
@@ -69,11 +81,7 @@ To use a samplesheet, you can use the `--samplesheet` parameter:
 nextflow run main.nf --samplesheet /path/to/samplesheet.csv [...]
 ```
 
-The sequencing summary file should be supplied with:
-
-```bash
-nextflow run main.nf --sequencing_summary /path/to/sequencing_summary.txt [...]
-```
+### Databases
 
 If supplying a pre-downloaded Kraken2 database, use the `--kraken2_db` parameter to provide the directory containing the database files (i.e. `hash.k2d`, `ktaxonomy.tsv`, `opts.k2d`, and `taxo.k2d`):
 
@@ -128,7 +136,7 @@ Note that this may fix the issue in some cases, but for highly fragmented assemb
 
 ### Putting it together
 
-A typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, a sequencing summary file at `/scratch/ab01/dataset/sequencing_summary.txt`, and high-accuracy basecalling, we would do the following:
+A typical run might look like the following. Assuming a run on gadi, with a pre-downloaded Kraken2 database at `/scratch/ab01/kraken_db`, a samplesheet at `/scratch/ab01/samplesheet.csv`, and high-accuracy basecalling, we would do the following:
 
 ```bash
 module load nextflow/24.04.1
@@ -137,7 +145,6 @@ module load singularity
 nextflow run main.nf \
     --samplesheet /scratch/ab01/samplesheet.csv \
     --kraken2_db /scratch/ab01/kraken_db \
-    --sequencing_summary /scratch/ab01/dataset/sequencing_summary.txt \
     --gadi_account ab01 \
     --gadi_storage scratch/ab01 \
     -profile gadi,high_accuracy \
