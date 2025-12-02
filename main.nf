@@ -182,8 +182,15 @@ workflow {
       .mix(pre_unzipped_fq_dirs)
   }
 
+  // TODO: Pre-concat QC; check if we should be merging or not
+
+  // Gather all FASTQs per sample to concatenate together
+  fastqs_to_concat = unzipped_fq_dirs
+    .map { _barcode, sample, _batch, fqdir -> [ sample, fqdir ] }
+    .groupTuple()
+
   // CONCATENATE FQS PER SAMPLE
-  concat_fastqs(unzipped_fq_dirs)
+  concat_fastqs(fastqs_to_concat)
 
   nanoplot_summary(sequencing_summary)
   pycoqc_summary(sequencing_summary)

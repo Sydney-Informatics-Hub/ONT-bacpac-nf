@@ -3,16 +3,17 @@ process concat_fastqs {
   container 'quay.io/biocontainers/pigz:2.8'
     
   input:
-  tuple val(barcode), path(unzip_dir)
+  tuple val(barcode), path(unzip_dirs)
 
   output:
   tuple val(barcode), path("${barcode}_concat.fq.gz"), emit: concat_fq
 
   script:
+  def dirs_to_search = unzip_dirs instanceof Collection ? unzip_dirs.collect { p -> "'${p.toString()}'" }.join(' ') : "'${unzip_dirs.toString()}'"
   // TODO explore error tracing. Pigz can fail to run but reports exit status 0
   """
-  UNCMPFQS=\$(find -L '${unzip_dir}' -type f -name "*.fastq" -o -name "*.fq" | sort)
-  CMPFQS=\$(find -L '${unzip_dir}' -type f -name "*.fastq.gz" -o -name "*.fq.gz" | sort)
+  UNCMPFQS=\$(find -L ${dirs_to_search} -type f -name "*.fastq" -o -name "*.fq" | sort)
+  CMPFQS=\$(find -L ${dirs_to_search} -type f -name "*.fastq.gz" -o -name "*.fq.gz" | sort)
 
   pigz -dc \${CMPFQS} | cat - \${UNCMPFQS} | pigz -p ${task.cpus} > ${barcode}_concat.fq.gz
   """
