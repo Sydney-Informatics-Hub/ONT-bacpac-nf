@@ -157,13 +157,15 @@ workflow {
         .map { row -> {
           def barcode = row.barcode
           def sample = row.sample ? row.sample : barcode
-          [ barcode, sample, row.batch, file(row.file_path, checkIfExists: true) ] 
+          // Either batch column isn't present in samplesheet OR batch column is non-empty for all barcodes
+          assert !row.containsKey("batch") || !!row.batch : "Error: If batch column is present in samplesheet, all barcodes must have a batch ID."
+          def batch_id = row.batch ? row.batch : "batch0"  // Default batch ID when column not present
+          [ barcode, sample, batch_id, file(row.file_path, checkIfExists: true), row.sequencing_summary ] 
         }}
       // Get the sequencing summary file for each batch
       // Allow users to only have to enter the file path once per batch
-      sequencing_summary = channel.fromPath(params.samplesheet).first()
-        .splitCsv( header: true )
-        .map { row -> [ row.batch, row.sequencing_summary ] }
+      sequencing_summary = samplesheet
+        .map { _barcode, _sample, batch, _file_path, seq_summary -> [ batch, seq_summary ] }
         .groupTuple()
         .map { batch, summary_list -> {
           def filtered_summary_list = summary_list.findAll { s -> !!s }.unique()
@@ -171,6 +173,9 @@ workflow {
           assert filtered_summary_list.size() == 1 : "Error: More than one sequencing summary file provided for batch '${batch}'. Ensure each batch has exactly one summary file defined, and that multiple batches have unique names."
           return [ batch, file(filtered_summary_list[0], checkIfExists: true) ]
         }}
+
+      samplesheet = samplesheet
+        .map { barcode, sample, batch_id, file_path, _seq_summary -> [ barcode, sample, batch_id, file_path ] }
 
       zipped_fqs = samplesheet
         .filter { _barcode, _sample, _batch, f -> f.isFile() && f.name.endsWith('.zip') }
