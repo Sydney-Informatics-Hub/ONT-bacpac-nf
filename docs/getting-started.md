@@ -15,6 +15,16 @@ At a minimum, you will require the following installed on your system:
 
 The workflow has been designed to primarily run on NCI's [gadi](https://nci.org.au/our-systems/hpc-systems) high performance computing infrastructure.
 
+## Cloning the workflow
+
+To pull the pipeline to your local working directory, simply run:
+
+```bash
+git clone https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf.git
+```
+
+This workflow is still being actively maintained and developed, so updates are being made regularly. To run a newer version of the pipeline, we recommend creating a new working directory and pulling the workflow again with `git clone` rather than updating an existing working directory, to ensure you don't run into any potential version conflicts or incompatibilities between versions.
+
 ## Pre-downloading the Kraken2 database
 
 We recommend pre-downloading a Kraken2 database as it can be quite slow to download as part of the pipeline. You can find links to these databases [here](https://benlangmead.github.io/aws-indexes/k2). We have tested this pipeline with the [Standard Kraken2 database from 12 January 2024](https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20240112.tar.gz).
@@ -172,3 +182,9 @@ For detailed information about interpreting the pipeline results, see [docs/inte
 ## Next steps
 
 This pipeline has been primarily developed for use on NCI's gadi. For more information about running the pipeline at scale on that system, see [docs/gadi-execution.md](docs/gadi-execution.md).
+
+## Feedback and updates
+
+Bugs, as well as suggested enhancements and new features can be reported and tracked in the [issues](https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf/issues) section of the GitHub repository.
+
+Please add any features or issues you would like to see addressed to the issues section.

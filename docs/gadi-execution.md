@@ -8,49 +8,42 @@
 * [Examine the results](#examine-the-results)
 * [Troubleshooting errors](#troubleshooting-errors)
 
-### Quickstart Repository testing 
+### Setting up the workspace 
 
-As we configure the pipeline on Gadi, we are going to be iteratively testing and developing the codebase. Bugs, enhancements, and new features can be tracked in the [issues](https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf/issues) section of the repository's website.
-
-Please add any features or issues you would like to see addressed to the issues section.
-
-After adjustments have been made to the codebase stored remotely on GitHub, we will need to pull the changes to our local workspaces on Gadi in order to test their functionality. 
-
-To do this, navigate to the directory where you have cloned the repository and run the following command: 
+To set up the workspace for the pipeline, first navigate to a suitable working directory and clone the GitHub repository. We suggest working on your project's scratch space on Gadi. In the following examples, we use the bash variable `${PROJECT}`, which refers to your default Gadi project. If you wish to use a different project ID, replace `${PROJECT}` with that ID; e.g. `cd /scratch/ab01`:
 
 ```bash
-cd /scratch/<project>/ONT-bacpac-nf
+cd /scratch/${PROJECT}
+WORK_DIR=my_experiment  # This will be your working directory; you can name this whatever you like
+mkdir ${WORK_DIR}
+cd ${WORK_DIR}
 ```
-```bash
-git pull origin main 
-```
-
-Alternatively, you can delete your local copy of the repository and clone it again: 
 
 ```bash
 git clone https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf.git
 ```
 
-We have created a test script in the `test/` directory, called `run_test.sh`. This script will run the pipeline on all files in a directory **OR** a provided samplesheet. Unhash (i.e. remove the `#` prefixing each line of the command)the relevant command in the script and hash (i.e. prefix each line of the command with `#`) the command you don't want to run. 
-
-To execute the test script, start a [persistent session](https://opus.nci.org.au/display/Help/Persistent+Sessions) on Gadi with the following command, providing your project code and a name for the session: 
+To start the pipeline and keep it running even when you are disconnected from Gadi, you can set up a [persistent session](https://opus.nci.org.au/display/Help/Persistent+Sessions). Run the following command, providing your project code and a name for the session:
 
 ```bash
-persistent-sessions start  -p <project> <name>
+NAME=bacpac  # Name this whatever you like
+persistent-sessions start  -p ${PROJECT} ${NAME}
 ```
-You'll see a ssh command provided on the screen. Enter the session by running that command. For example:
+
+You'll see an ssh command provided on the screen. Enter the session by running that command. For example:
 
 ```bash
-ssh <name>.<user>.<project>.ps.gadi.nci.org.au
+ssh ${NAME}.${USER}.${PROJECT}.ps.gadi.nci.org.au
 ```
 
 You'll need to navigate back to the directory where you have cloned the repository. For example: 
 
 ```bash
-cd /scratch/<project>/ONT-bacpac-nf
+cd /scratch/${PROJECT}/${WORK_DIR}/ONT-bacpac-nf
 ```
 
 ---
+
 **NOTE ON PERSISTENT SESSIONS**
 
 You can check the status of your persistent session by running the following command: 
@@ -69,41 +62,13 @@ To determine the UUID of the session you want to kill, use the list command as d
 
 ---
 
-Run the following command from the base directory of the repository (`ONT-bacpac-nf`): 
+### Obtain required input files
 
-```bash
-bash test/run_test.sh
-```
-
-If you'd prefer to leave the job running and avoid potential interruption, you can run the head nextflow run command as a PBS job: 
-
-```bash
-qsub test/run_test.sh
-```
-
-
-### Set up 
-
-Navigate to your working directory on NCI Gadi: 
-
-```bash
-cd /scratch/<project>
-```
-
-Clone the repository and move into it: 
-
-```bash
-git clone https://github.com/Sydney-Informatics-Hub/ONT-bacpac-nf.git
-cd ONT-bacpac-nf
-```
-
-Make a directory for your raw data files: 
+First, make a directory for your raw data files: 
 
 ```bash
 mkdir data
 ```
-
-### Obtain required input files 
 
 Transfer your files to the working directory on Gadi from their original source: 
 
@@ -203,14 +168,14 @@ This workflow executes different tools for each step as containers. This means y
 You will also need to set the `SINGULARITY_CACHEDIR` environment variable. This tells Singularity to use this directory temporarily when pulling images. If this is not set, a directory in your home directory will be used and may run into storage quota limits.
 
 ```bash
-export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/<USER>/.singularity
+export SINGULARITY_CACHEDIR=/scratch/${PROJECT}/${USER}/.singularity
 ```
 
 To avoid having to reset this variable before each run, you can add the export command to your `~/.bashrc` file: 
   
 ```bash
 # Add the following line to your .bashrc file
-echo 'export SINGULARITY_CACHEDIR=/scratch/<PROJECT>/<USER>/.singularity' >> ~/.bashrc
+echo 'export SINGULARITY_CACHEDIR=/scratch/${PROJECT}/${USER}/.singularity' >> ~/.bashrc
 
 # Reload your .bashrc file to apply the changes
 source ~/.bashrc
@@ -218,28 +183,13 @@ source ~/.bashrc
 
 ### Execute the workflow
 
-A template run script has been provided in this repository at `test/run_test.sh`. It will need to be modified to suit your specific project requirements.
+Two template run scripts have been provided in this repository at `example/run.*.gadi.sh`. One is for running the pipeline in the input directory mode (`example/run.input_dir.gadi.sh`), and the other is to run the pipeline using a samplesheet (`example/run.samplesheet.gadi.sh`).
 
-Replace `<PROJECT>` with your project code in the following lines of the script: 
-
-* `#PBS -P <PROJECT>`
-* `#PBS -l storage=scratch/<PROJECT>`
-
-Define paths to the workflow input variables: 
-
-* `input_directory=/scratch/<PROJECT>/data` (option 1)
-* `samplesheet=/scratch/<PROJECT>/data/samplesheet.csv` (option 2)
-* `k2db=/scratch/<PROJECT>/databases/kraken2_db`
-* `sequencing_summary=/scratch/<PROJECT>/data/sequencing_summary.txt`
-* `gadi_account=<PROJECT>`
-* `gadi_storage=/scratch/<PROJECT>`
-
-This is the structure of the run script saved in `test/run_test.sh`, modified to run on all files in a specific directory; again, replace all instances of `<PROJECT>` with your project code:
+The input directory version of the script looks like this:
 
 ```bash
 #!/bin/bash
-
-#PBS -P <PROJECT> 
+#PBS -P <PROJECT>
 #PBS -l walltime=10:00:00
 #PBS -l ncpus=1
 #PBS -l mem=5GB
@@ -249,36 +199,31 @@ This is the structure of the run script saved in `test/run_test.sh`, modified to
 #PBS -l storage=scratch/<PROJECT>
 #PBS -l jobfs=100GB
 
-## RUN FROM PROJECT DIRECTORY: bash test/run_test.sh
+# Load Nextflow and Singularity
+module load nextflow/24.04.1
+module load singularity
 
-# Load version of nextflow with plug-in functionality enabled 
-module load nextflow/24.04.1 
-module load singularity 
+# Define inputs
+input_directory=/path/to/input/directory  # TODO: Replace this with the path to your data
+sequencing_summary=/path/to/sequencing_summary.txt  # TODO: Replace this with the path to your sequencing_summary_*.txt file from your ONT run
+k2db=/path/to/kraken2/database  # TODO: Replace this with the path to your local copy of the Kraken2 database
+gadi_account=${PROJECT}  # TODO: Change this if you want to use a project other than your default Gadi project
+gadi_storage=scratch/${PROJECT}  # TODO: Change this if you want to use a different storage location on Gadi
 
-# Define inputs 
-input_directory= #path to your input directory
-samplesheet= #path to samplesheet
-k2db= #path to predownloaded kraken2 database
-sequencing_summary= #path to sequencing summary file from ONT run 
-gadi_account="<PROJECT>"
-gadi_storage="/scratch/<PROJECT>"
-
-# Run pipeline 
 nextflow run main.nf \
-  --input_directory ${input_directory} \
-  --kraken2_db ${k2db} \
-  --sequencing_summary ${sequencing_summary} \
-  --gadi_account ${gadi_account} \
-  --gadi_storage ${gadi_storage} \
-  -resume 
+    --input_directory ${input_directory} \
+    --sequencing_summary ${sequencing_summary} \
+    --kraken2_db ${k2db} \
+    --gadi_account ${gadi_account} \
+    --gadi_storage ${gadi_storage} \
+    -resume -profile gadi,high_accuracy  # NOTE: you can remove ',high_accuracy' if you want to run fast basecalling samples
 ```
 
-This is the structure of the run script saved in `test/run_test.sh`, modified to run on selected files specified in a samplesheet; again, replace all instances of `<PROJECT>` with your project code:
+The samplesheet version looks like this:
 
 ```bash
 #!/bin/bash
-
-#PBS -P <PROJECT> 
+#PBS -P <PROJECT>
 #PBS -l walltime=10:00:00
 #PBS -l ncpus=1
 #PBS -l mem=5GB
@@ -288,40 +233,62 @@ This is the structure of the run script saved in `test/run_test.sh`, modified to
 #PBS -l storage=scratch/<PROJECT>
 #PBS -l jobfs=100GB
 
-## RUN FROM PROJECT DIRECTORY: bash test/run_test.sh
+# Load Nextflow and Singularity
+module load nextflow/24.04.1
+module load singularity
 
-# Load version of nextflow with plug-in functionality enabled 
-module load nextflow/24.04.1 
-module load singularity 
+# Define inputs
+samplesheet=/path/to/samplesheet.csv  # TODO: Replace this with the path to your samplesheet
+k2db=/path/to/kraken2/database  # TODO: Replace this with the path to your local copy of the Kraken2 database
+gadi_account=${PROJECT}  # TODO: Change this if you want to use a project other than your default Gadi project
+gadi_storage=scratch/${PROJECT}  # TODO: Change this if you want to use a different storage location on Gadi
 
-# Define inputs 
-input_directory= #path to your input directory
-samplesheet= #path to samplesheet
-k2db= #path to predownloaded kraken2 database
-sequencing_summary= #path to sequencing summary file from ONT run 
-gadi_account="<PROJECT>"
-gadi_storage="/scratch/<PROJECT>"
-
-# Run pipeline 
 nextflow run main.nf \
-  --samplesheet ${samplesheet} \
-  --kraken2_db ${k2db} \
-  --sequencing_summary ${sequencing_summary} \
-  --gadi_account ${gadi_account} \
-  --gadi_storage ${gadi_storage} \
-  -resume 
+    --samplesheet ${samplesheet} \
+    --kraken2_db ${k2db} \
+    --gadi_account ${gadi_account} \
+    --gadi_storage ${gadi_storage} \
+    -resume -profile gadi,high_accuracy  # NOTE: you can remove ',high_accuracy' if you want to run fast basecalling samples
 ```
 
-To execute the pipeline and observe its progress, please run the following command: 
+These scripts have several placeholder values that will need to be modified to suit your specific project requirements prior to running.
+
+First, replace the placeholder string `<PROJECT>` within the header comment lines with your NCI project code:
 
 ```bash
-bash test/run_test.sh
+#!/bin/bash
+#PBS -P <PROJECT>
+...
+#PBS -l storage=scratch/<PROJECT>
 ```
 
-You can also run the pipeline with the following command: 
+Next, define the bash variables that will be passed to the pipeline parameters:
+
+- `input_directory`: **Only for running from an _input directory_**. Set this to the path to your data.
+- `sequencing_summary`: **Only for running from an _input directory_**. Set this to the path to your sequencing_summary_*.txt file from your ONT run
+- `samplesheet`: **Only for running from a _samplesheet_**. Set this to the path to your samplesheet CSV file
+- `k2db`: Set this to the path to your local copy of the Kraken2 database
+- `gadi_account`: Change this line **only if** you want to use a project other than your default Gadi project
+- `gadi_storage`:  Change this line **only if** you want to use a different storage location on Gadi
+
+To execute the pipeline and observe its progress, please run **one** of the following commands.
+
+To run the input directory version of the pipeline:
 
 ```bash
-qsub test/run_test.sh
+bash example/run.input_dir.gadi.sh
+```
+
+To run the samplesheet version of the pipeline:
+
+```bash
+bash example/run.samplesheet.gadi.sh
+```
+
+You can also submit the run script to the HPC scheduler with the `qsub` command:
+
+```bash
+qsub example/run.samplesheet.gadi.sh
 ```
 
 ### Monitor your execution

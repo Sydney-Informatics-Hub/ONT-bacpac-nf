@@ -10,7 +10,7 @@ qsub -I -P <PROJECT> -lwalltime=2:00:00 -lmem=190GB -lncpus=24 -qnormal -lstorag
 Once the session starts, you'll need to move back to your `ONT-bacpac-nf` directory. Execute the pipeline with:
 
 ```bash
-bash test/run_test.sh
+bash example/run.samplesheet.gadi.sh
 ```
 
 Keep in mind: 
