@@ -410,8 +410,8 @@ workflow {
   autocycler_metrics_for_mqc = autocycler_metrics
     .ifEmpty([])
 
-  multiqc_config = channel.value("${projectDir}/assets/multiqc_config.yml")  // params.multiqc_config
-  multiqc_results_config = channel.value("${projectDir}/assets/multiqc_results_config.yml")  // params.multiqc_results_config
+  multiqc_config = channel.value("${projectDir}/assets/multiqc_config.yml")
+  multiqc_results_config = channel.value("${projectDir}/assets/multiqc_results_config.yml")
 
   // Run MultiQC with the gathered inputs
   // QC report

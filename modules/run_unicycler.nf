@@ -1,7 +1,6 @@
 process unicycler_assembly {
     tag "ASSEMBLING GENOME WITH UNICYCLER: ${id}"
     container 'quay.io/biocontainers/unicycler:0.4.8--py38h8162308_3'
-    //publishDir "${params.outDir}", mode: 'symlink'
 
     input:
     tuple val(barcode), val(subset), path(trimmed_fq)
