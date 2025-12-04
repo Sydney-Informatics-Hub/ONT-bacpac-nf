@@ -134,10 +134,10 @@
   },
   "allOf": [
     {
-      "$ref": "#/$defs/trycycler_settings"
+      "$ref": "#/$defs/input_output_options"
     },
     {
-      "$ref": "#/$defs/input_output_options"
+      "$ref": "#/$defs/assembly_options"
     },
     {
       "$ref": "#/$defs/nci_gadi_configuration"
@@ -147,6 +147,9 @@
     },
     {
       "$ref": "#/$defs/databases"
+    },
+    {
+      "$ref": "#/$defs/other"
     }
   ]
 }
