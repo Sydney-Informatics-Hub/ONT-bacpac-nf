@@ -12,3 +12,5 @@ bin/*.e
 run_test.*
 /data/
 test/kraken2_db
+.nf-test.log
+.nf-test/
