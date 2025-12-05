@@ -1,0 +1,25 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        "example_sample_concat.fq.gz:md5,77be035841be3245e51b4bea2e32c656"
+                    ]
+                ],
+                "concat_fq": [
+                    [
+                        "example_sample",
+                        "example_sample_concat.fq.gz:md5,77be035841be3245e51b4bea2e32c656"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-05T15:39:51.387987493"
+    }
+}
