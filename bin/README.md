@@ -22,7 +22,3 @@ process example {
     """
 }
 ```
-
-### Example: custom samplesheet checker
-
-In this template, we have used an example `samplesheetchecker.py` script which is executed by the process `modules/check_input.nf`. This script checks the input samplesheet. 
