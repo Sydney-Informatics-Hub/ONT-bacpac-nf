@@ -29,6 +29,7 @@ import urllib.request
 import time
 import argparse
 from pathlib import Path
+import re
 
 def download_file(url, output_path):
     try:
@@ -72,7 +73,7 @@ def get_dominant_species(sampleID, present_sampleid_k2path, sampleID_species_dic
     return sampleID_species_dic
 
 
-def get_available_species_genome_details_dic(assembly_summary_refseq, species_name, species_name_abbreviation):
+def get_available_species_genome_details_dic(assembly_summary_refseq, species_name):
     """
     Download protein fasta files for a complete reference genome
     """
@@ -128,6 +129,12 @@ def main():
         help="Path to refseq_summary.txt"
     )
     parser.add_argument(
+        "--all_assemblers",
+        required=True,
+        help="Comma-separated list of all present assemblers",
+        type=str
+    )
+    parser.add_argument(
         "--kraken2_reports",
         nargs='+',
         required=True,
@@ -137,7 +144,7 @@ def main():
         "--bakta_results",
         nargs='+',
         required=True,
-        help="Paths to bakta result dirs"
+        help="Paths to bakta result .faa files"
     )
     args = parser.parse_args()
 
@@ -149,7 +156,7 @@ def main():
         Parse sample/barcode IDs from kraken 2 path inputs
         k2_path = "barcode10.k2report"
         """
-        sample_id = k2_path.split('.')[0]
+        sample_id = '.'.join(k2_path.split('.')[0:-1])
         sampleID_species_dic = get_dominant_species(sample_id, k2_path, sampleID_species_dic, nr_species_list)
 
     output_sampleID_species_table_path = "barcode_species_table_mqc.txt"
@@ -162,32 +169,31 @@ def main():
 
     os.makedirs("phylogeny", exist_ok=True)
 
+    # Create regex for extracting the sample name
+    all_assemblers = args.all_assemblers.replace(',', '|')
+    sample_id_re = rf"^(.*)_({all_assemblers})_chr$"
+
     for bakta_path in args.bakta_results:
         """
-        Parse sample/barcode IDs from kraken 2 path inputs
-        bakta_path = [nextflow_output_hash]
-
-        Has to look for a txt file in the bakta dir to get the sample/barcode
-        id. Not great. But should raise an error if not in sampleID_species_dic
-
-        txt file because that what is passed in main.nf currently.
+        Move .faa files to the phylogeny/ folder
         """
-        path = list(Path(bakta_path).glob("*.txt"))
-        file_name = path[0].name
-        sample_id = file_name.split('_')[0]
+        path = Path(bakta_path)
+        file_name = path.name
+        sample_prefix = '.'.join(file_name.split('.')[0:-1])
+        sample_id_match = re.match(sample_id_re, sample_prefix)
+        sample_id = sample_id_match.group(1) if sample_id_match else None
+        assert sample_id is not None, f'Error: could not detect sample ID: invalid prefix: {sample_prefix}'
         present_species = sampleID_species_dic[sample_id]
 
         final_protein_file_name = f"{sample_id}_{present_species}.faa"
 
-        find_and_cpy_cmd = f'find {bakta_path}/ -type f -name "*.faa" ! -name "*hypotheticals*.faa" -exec cp {{}} "phylogeny/{final_protein_file_name}" \\;'
-        os.system(find_and_cpy_cmd)
+        cpy_cmd = f'cp {bakta_path} "phylogeny/{final_protein_file_name}"'
+        os.system(cpy_cmd)
 
     species_list = list(set(sampleID_species_dic.values()))
 
     for species_name in species_list:
-        species_name_abbreviation_sp = species_name.split("_")
-        species_name_abbreviation = f"{species_name_abbreviation_sp[0][0]}{species_name_abbreviation_sp[1][0]}"
-        get_available_species_genome_details_dic(args.assembly_summary_refseq, species_name, species_name_abbreviation)
+        get_available_species_genome_details_dic(args.assembly_summary_refseq, species_name)
 
     return
 

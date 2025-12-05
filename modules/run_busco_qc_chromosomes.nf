@@ -10,7 +10,7 @@ process busco_qc_chromosomes {
   output:
   tuple val(barcode), val(assembler), path("${prefix}"), emit: results
   tuple val(barcode), val(assembler), path("${prefix}/short_summary.*.txt"), emit: txt_summary
-  tuple val(barcode), path("${prefix}/short_summary.*.json"), emit: json_summary
+  tuple val(barcode), val(assembler), path("${prefix}/short_summary.*.json"), emit: json_summary
 
   script:
   prefix = "${barcode}_${assembler}_busco"

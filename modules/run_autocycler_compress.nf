@@ -6,7 +6,7 @@ process autocycler_compress {
   errorStrategy { task.exitStatus == 1 ? 'ignore' : 'finish' }
 
   input:
-  tuple val(barcode), path(assembly_fastas)
+  tuple val(barcode), path(assembly_dirs)
 
   output:
   tuple val(barcode), path("autocycler_compress_out"), emit: compressed
@@ -15,9 +15,15 @@ process autocycler_compress {
   max_contigs_param = params.max_contigs && params.max_contigs.toString().isInteger() ? "--max_contigs ${params.max_contigs}" : ""
   """
   mkdir assemblies
-  for d in ${assembly_fastas}
+  for d in ${assembly_dirs}
   do
-    cp \$d/assembly.fasta assemblies/\$(basename \$d).fasta
+    DNAME="\$(basename \$d)"
+    if [[ "\$DNAME" =~ ^${barcode}(_[0-9]+)?_plassembler_assembly\$ ]]
+    then
+      cp \$d/plassembler_plasmids.fasta assemblies/\$DNAME.fasta
+    else
+      cp \$d/assembly.fasta assemblies/\$DNAME.fasta
+    fi
   done
 
   autocycler compress \\

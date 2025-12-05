@@ -1,7 +1,7 @@
 process bakta_annotation_chromosomes {
   tag "GENE FEATURES: ${barcode}: ${assembler}"
   container 'quay.io/biocontainers/bakta:1.9.2--pyhdfd78af_0'
-  publishDir "${params.outdir}/annotations/${barcode}/bakta", mode: 'copy'
+  publishDir "${params.outdir}/annotations/${prefix}/bakta", mode: 'copy'
 
   input:
   tuple val(barcode), val(assembler), path(polished_fasta)

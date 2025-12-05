@@ -13,7 +13,7 @@ process pycoqc_summary {
   script: 
   """
   pycoQC \\
-    -f ${params.sequencing_summary} \\
+    -f ${sequencing_summary} \\
     -o pycoqc_summary.html \\
     -j pycoqc_summary.json
   """

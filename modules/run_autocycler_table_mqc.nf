@@ -1,5 +1,5 @@
 process autocycler_table_mqc {
-  tag "AUTOCYCLER TABLE MQC PREP: ${barcode}"
+  tag "AUTOCYCLER TABLE MQC PREP"
   container 'quay.io/biocontainers/pandas:2.2.1'
   publishDir "${params.outdir}/report/autocycler", mode: 'copy'
 

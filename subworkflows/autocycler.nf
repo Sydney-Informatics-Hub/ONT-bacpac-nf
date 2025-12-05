@@ -4,10 +4,9 @@
 nextflow.enable.dsl=2
 
 // Import processes or subworkflows to be run in the workflow
-include { estimate_genome_size } from '../subworkflows/estimate_genome_size'
+include { estimate_genome_size } from './estimate_genome_size'
+include { denovo } from './denovo'
 include { autocycler_subsample } from '../modules/run_autocycler_subsample'
-include { flye_assembly_subset } from '../modules/run_flye_subset'
-include { unicycler_assembly_subset } from '../modules/run_unicycler_subset'
 include { autocycler_compress } from '../modules/run_autocycler_compress'
 include { autocycler_cluster } from '../modules/run_autocycler_cluster'
 include { autocycler_trim } from '../modules/run_autocycler_trim'
@@ -20,30 +19,40 @@ include { medaka_polish_consensus } from '../modules/run_medaka_polish_consensus
 
 workflow autocycler {
     take:
-    trimmed_fq
+    fastq  // [ barcode, fastq ]
+    denovo_assemblies  // [ barcode, subset, assembler, assembly_dir ]
+    plassembler_db
 
     main:
-    // ESTIMATE GENOME SIZE
-    estimate_genome_size(trimmed_fq)
+    // SUBSAMPLE FASTQ FILES - IF REQUESTED
+    if (params.subsamples.toInteger() > 1) {
+        // ESTIMATE GENOME SIZE
+        estimate_genome_size(fastq)
 
-    autocycler_inputs = trimmed_fq
-        .join(estimate_genome_size.out.genome_size, by:0)
+        // PERFORM SUBSAMPLING
+        autocycler_inputs = fastq
+            .join(estimate_genome_size.out.genome_size, by:0)
+        autocycler_subsample(autocycler_inputs)
 
-    // SUBSAMPLE FASTQ FILES
-    autocycler_subsample(autocycler_inputs)
+        // Expand the multiple FASTQs per barcode to one tuple per subset and get the subsample ID
+        subsets = autocycler_subsample.out.subsets
+            .transpose()
+            .map { barcode, fq -> [ barcode, fq.baseName.tokenize('_')[-1], fq ] }
 
-    // Expand the multiple FASTQs per barcode to one tuple per subset
-    subsets = autocycler_subsample.out.subsets.transpose()
+        // DE NOVO GENOME ASSEMBLIES
+        denovo(subsets, plassembler_db)
 
-    // DE NOVO GENOME ASSEMBLIES
-    flye_assembly_subset(subsets)
-    unicycler_assembly_subset(subsets)
+        all_assembly_dirs = denovo.out.assemblies
+    } else {
+        log.info "WARNING: Running autocycler without subsampling; this is not recommended unless subsampling is causing errors."
+        all_assembly_dirs = denovo_assemblies
+    }
 
-    all_assembly_dirs = flye_assembly_subset.out.flye_assembly
-        .mix(unicycler_assembly_subset.out.unicycler_assembly)
-        .groupTuple(by:0)
+    grouped_assembly_dirs = all_assembly_dirs
+        .map { barcode, _subset, _assembler, assembly_dir -> [ barcode, assembly_dir ] }
+        .groupTuple(by: 0)
 
-    autocycler_compress(all_assembly_dirs)
+    autocycler_compress(grouped_assembly_dirs)
 
     autocycler_cluster(autocycler_compress.out.compressed)
 
@@ -63,7 +72,7 @@ workflow autocycler {
 
     autocycler_combine_inputs = autocycler_cluster.out.cluster_out
         .join(autocycler_resolve_out, by:0)
-        .map { barcode, autocycler_cluster_dir, cluster_ids, pass_cluster_dirs ->
+        .map { barcode, autocycler_cluster_dir, _cluster_ids, pass_cluster_dirs ->
             [ barcode, autocycler_cluster_dir, pass_cluster_dirs ]
         }
 
@@ -72,21 +81,19 @@ workflow autocycler {
     autocycler_table(autocycler_combine.out.autocycler_out)
 
     all_autocycler_metrics = autocycler_table.out.metrics
-        .map { barcode, tsv -> tsv }
+        .map { _barcode, tsv -> tsv }
         .collect()
 
     autocycler_table_mqc(all_autocycler_metrics)
 
     consensus =
-        autocycler_combine.out.autocycler_out
-        .map { barcode, autocycler_dir ->
-            def assembler = "consensus"
-            def consensus_fa = autocycler_dir / "consensus_assembly.fasta"
-            return [barcode, assembler, consensus_fa]
+        autocycler_combine.out.consensus_assembly
+        .map { barcode, consensus_fa ->
+            return [barcode, "consensus", consensus_fa]
         }
 
     consensus_to_polish = consensus
-        .join(trimmed_fq)
+        .join(fastq)
         .map { barcode, _assembler, consensus_fa, input_fq -> [ barcode, input_fq, consensus_fa ]}
     
     medaka_polish_consensus(consensus_to_polish)
@@ -96,11 +103,9 @@ workflow autocycler {
         .map { barcode, consensus_fa -> [ barcode, "consensus", consensus_fa ]}
 
     consensus_gfa =
-        autocycler_combine.out.autocycler_out
-        .map { barcode, autocycler_dir ->
-            def assembler = "consensus"
-            def consensus_gfa = autocycler_dir / "consensus_assembly.gfa"
-            return [barcode, assembler, consensus_gfa]
+        autocycler_combine.out.consensus_graph
+        .map { barcode, consensus_gfa ->
+            return [barcode, "consensus", consensus_gfa]
         }
 
     emit:
