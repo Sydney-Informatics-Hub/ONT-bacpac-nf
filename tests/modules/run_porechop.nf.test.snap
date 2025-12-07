@@ -1,0 +1,25 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        "example_sample_trimmed.fastq.gz:md5,bdb2e635c502c890abc6b4fa89e7666a"
+                    ]
+                ],
+                "trimmed_fq": [
+                    [
+                        "example_sample",
+                        "example_sample_trimmed.fastq.gz:md5,bdb2e635c502c890abc6b4fa89e7666a"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2025-12-08T08:35:20.113678386"
+    }
+}
