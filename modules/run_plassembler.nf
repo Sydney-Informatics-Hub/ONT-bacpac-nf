@@ -16,14 +16,28 @@ process plassembler {
     script:
     id = subset == null ? barcode : "${barcode}_${subset}"
     """
+    set +e
     plassembler long \\
         -d plasmid_db_plassembler \\
         -l ${trimmed_fq} \\
         --flye_assembly ${flye_assembly}/assembly.fasta \\
         --flye_info ${flye_assembly}/assembly_info.txt \\
         -o ${id}_plassembler_assembly \\
-        -t ${task.cpus} -f
-  
+        -t ${task.cpus} -f 2> _plassembler.stderr
+
+    EXITCODE="\$?"
+    set -e
+
+    cat _plassembler.stderr >&2
+    NOCHROM=\$(grep " ERROR " _plassembler.stderr | tail -n 1 | grep -c "No chromosome was identified")
+
+    if [ "\$EXITCODE" == "1" ] && [ "\$NOCHROM" == "1" ]; then
+        echo "WARN: Plassembler didn't find any chromosomes. Ignoring."
+    elif [ ! "\$EXITCODE" == "0" ]; then
+        echo "ERROR: Plassembler failed. Exiting."
+        exit 1
+    fi
+
     # Check if the resulting .fasta file is empty
     if [ -s ${id}_plassembler_assembly/plassembler_plasmids.fasta ]; then
         echo "The .fasta file contains plasmid sequence. Proceeding with output."
