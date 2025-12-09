@@ -14,3 +14,4 @@ run_test.*
 test/kraken2_db
 .nf-test.log
 .nf-test/
+.nf-test*

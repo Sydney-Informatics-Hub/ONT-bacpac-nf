@@ -13,7 +13,7 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = [ "example_sample", file("${projectDir}/tests/data") ]
+                input[0] = [ "example_sample", file("${projectDir}/tests/data/concat_fqs") ]
                 """
             }
         }
