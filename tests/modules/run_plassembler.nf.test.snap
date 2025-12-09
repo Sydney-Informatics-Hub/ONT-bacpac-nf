@@ -1,0 +1,141 @@
+{
+    "Should run without failures and produce a plasmid assembly": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        null,
+                        [
+                            [
+                                "assembly.fasta:md5,01c2dadffff28ddd3a4d49aca9e06015",
+                                "assembly_info.txt:md5,33b40f30cb9a329f693712a316f30b28"
+                            ],
+                            [
+                                "canu__correct_637e22922807b7a31ad4a113a485e31714b57670dd7f02e8c1e38591670d8a10.err:md5,e386c4f80fe77742a704792858769d1d",
+                                "canu__correct_637e22922807b7a31ad4a113a485e31714b57670dd7f02e8c1e38591670d8a10.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "chopper.err:md5,54e1a043d37e76dd4020d26318f9a4cf",
+                                "mash_2e04c146e1a0cbc3704d04243fb8ca683ef78882746ad4909bedbe1b7bdd28a3.err:md5,c0f74de571af91820f3b703a2c9f8d95",
+                                "mash_7875551c14d25ae50f743d83d6abe26e8b29901011466a2eb18f2c5781674c34.err:md5,2c184eff657e792e898eebd4d7a0d302",
+                                "mash_7875551c14d25ae50f743d83d6abe26e8b29901011466a2eb18f2c5781674c34.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "minimap2_0b913d5ba40509c27c7bc135a9191cbea416337b4e761ca27eb9015788acd545.err:md5,05a392223f6072512c1dfcd3a19299d3",
+                                "minimap2_150536e74f7ea90c353ff5cf7c2306cdc422fe34622cc21031945c97370b5976.err:md5,abc05d0dc2ae7ed76869d86eecc3822f",
+                                "samtools_b7ada1cafaf2fa58ed8209e7a5e2f3f0ac6dbad71721ca2d45fe768bb1200ebd.err:md5,0f0b97a599f407d6c1057b71df27367f",
+                                "samtools_b7ada1cafaf2fa58ed8209e7a5e2f3f0ac6dbad71721ca2d45fe768bb1200ebd.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "unicycler_e472b675e2fe4983daabe0ac940d52a4ac26594f0fc19da5994aba23865a2781.err:md5,bcb8490caa42b34601dec2c3439aa8f3",
+                                "unicycler_e472b675e2fe4983daabe0ac940d52a4ac26594f0fc19da5994aba23865a2781.out:md5,3e2d1e7200084bdcdf29d4dc1cc59749"
+                            ],
+                            "plassembler_1765245258.2407231.log:md5,1266b3cec52be827c7cbe481a1aeec01",
+                            "plassembler_plasmids.fasta:md5,cabbc6274cbf7560ebed23c8b645745a",
+                            "plassembler_plasmids.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                            "plassembler_summary.tsv:md5,333f81f885e5cb30a3cb9d5b13c46aa2",
+                            [
+                                "001_spades_graph_k027.gfa:md5,3736a9553cd11debf8715dee06bc870d",
+                                "001_spades_graph_k053.gfa:md5,4ef5a30830446a6f49b0e82be420c3d7",
+                                "001_spades_graph_k071.gfa:md5,19577c1875e6280550f127b1db994943",
+                                "001_spades_graph_k087.gfa:md5,c87c04a7162f28c4bac3fbce990a481c",
+                                "001_spades_graph_k099.gfa:md5,4f3e72cba1ae1665f6dec787b1917fb0",
+                                "001_spades_graph_k111.gfa:md5,8c6f700bc69f476de50737b56e882637",
+                                "001_spades_graph_k119.gfa:md5,ce7d1538ae535d14513563b7a39dee7f",
+                                "001_spades_graph_k127.gfa:md5,0442ded477963d039846799c7b1d6f15",
+                                "002_depth_filter.gfa:md5,5532eb24f535ed8fbe48a3f982b7a9f2",
+                                "003_overlaps_removed.gfa:md5,fe6568365af368cd0267490ec1e820e2",
+                                "004_bridges_applied.gfa:md5,2ddd85006cda3323978193980670aeab",
+                                "005_final_clean.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                                "assembly.fasta:md5,3061548d6d9f7f1d9a2d28bd963e1c68",
+                                "assembly.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                                "unicycler.log:md5,e0676d414e8f1b16040ef4e8ee35d1be"
+                            ]
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        "example_sample",
+                        null,
+                        "plassembler_plasmids.fasta:md5,cabbc6274cbf7560ebed23c8b645745a"
+                    ]
+                ],
+                "2": [
+                    [
+                        "example_sample",
+                        null,
+                        "plassembler_plasmids.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1"
+                    ]
+                ],
+                "3": [
+                    
+                ],
+                "plassembler_assembly": [
+                    [
+                        "example_sample",
+                        null,
+                        [
+                            [
+                                "assembly.fasta:md5,01c2dadffff28ddd3a4d49aca9e06015",
+                                "assembly_info.txt:md5,33b40f30cb9a329f693712a316f30b28"
+                            ],
+                            [
+                                "canu__correct_637e22922807b7a31ad4a113a485e31714b57670dd7f02e8c1e38591670d8a10.err:md5,e386c4f80fe77742a704792858769d1d",
+                                "canu__correct_637e22922807b7a31ad4a113a485e31714b57670dd7f02e8c1e38591670d8a10.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "chopper.err:md5,54e1a043d37e76dd4020d26318f9a4cf",
+                                "mash_2e04c146e1a0cbc3704d04243fb8ca683ef78882746ad4909bedbe1b7bdd28a3.err:md5,c0f74de571af91820f3b703a2c9f8d95",
+                                "mash_7875551c14d25ae50f743d83d6abe26e8b29901011466a2eb18f2c5781674c34.err:md5,2c184eff657e792e898eebd4d7a0d302",
+                                "mash_7875551c14d25ae50f743d83d6abe26e8b29901011466a2eb18f2c5781674c34.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "minimap2_0b913d5ba40509c27c7bc135a9191cbea416337b4e761ca27eb9015788acd545.err:md5,05a392223f6072512c1dfcd3a19299d3",
+                                "minimap2_150536e74f7ea90c353ff5cf7c2306cdc422fe34622cc21031945c97370b5976.err:md5,abc05d0dc2ae7ed76869d86eecc3822f",
+                                "samtools_b7ada1cafaf2fa58ed8209e7a5e2f3f0ac6dbad71721ca2d45fe768bb1200ebd.err:md5,0f0b97a599f407d6c1057b71df27367f",
+                                "samtools_b7ada1cafaf2fa58ed8209e7a5e2f3f0ac6dbad71721ca2d45fe768bb1200ebd.out:md5,d41d8cd98f00b204e9800998ecf8427e",
+                                "unicycler_e472b675e2fe4983daabe0ac940d52a4ac26594f0fc19da5994aba23865a2781.err:md5,bcb8490caa42b34601dec2c3439aa8f3",
+                                "unicycler_e472b675e2fe4983daabe0ac940d52a4ac26594f0fc19da5994aba23865a2781.out:md5,3e2d1e7200084bdcdf29d4dc1cc59749"
+                            ],
+                            "plassembler_1765245258.2407231.log:md5,1266b3cec52be827c7cbe481a1aeec01",
+                            "plassembler_plasmids.fasta:md5,cabbc6274cbf7560ebed23c8b645745a",
+                            "plassembler_plasmids.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                            "plassembler_summary.tsv:md5,333f81f885e5cb30a3cb9d5b13c46aa2",
+                            [
+                                "001_spades_graph_k027.gfa:md5,3736a9553cd11debf8715dee06bc870d",
+                                "001_spades_graph_k053.gfa:md5,4ef5a30830446a6f49b0e82be420c3d7",
+                                "001_spades_graph_k071.gfa:md5,19577c1875e6280550f127b1db994943",
+                                "001_spades_graph_k087.gfa:md5,c87c04a7162f28c4bac3fbce990a481c",
+                                "001_spades_graph_k099.gfa:md5,4f3e72cba1ae1665f6dec787b1917fb0",
+                                "001_spades_graph_k111.gfa:md5,8c6f700bc69f476de50737b56e882637",
+                                "001_spades_graph_k119.gfa:md5,ce7d1538ae535d14513563b7a39dee7f",
+                                "001_spades_graph_k127.gfa:md5,0442ded477963d039846799c7b1d6f15",
+                                "002_depth_filter.gfa:md5,5532eb24f535ed8fbe48a3f982b7a9f2",
+                                "003_overlaps_removed.gfa:md5,fe6568365af368cd0267490ec1e820e2",
+                                "004_bridges_applied.gfa:md5,2ddd85006cda3323978193980670aeab",
+                                "005_final_clean.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                                "assembly.fasta:md5,3061548d6d9f7f1d9a2d28bd963e1c68",
+                                "assembly.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1",
+                                "unicycler.log:md5,e0676d414e8f1b16040ef4e8ee35d1be"
+                            ]
+                        ]
+                    ]
+                ],
+                "plassembler_fasta": [
+                    [
+                        "example_sample",
+                        null,
+                        "plassembler_plasmids.fasta:md5,cabbc6274cbf7560ebed23c8b645745a"
+                    ]
+                ],
+                "plassembler_graph": [
+                    [
+                        "example_sample",
+                        null,
+                        "plassembler_plasmids.gfa:md5,8dd576ab5f5a5b85d70b17fc457e37f1"
+                    ]
+                ],
+                "plassembler_logs": [
+                    
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2025-12-09T12:40:02.23683219"
+    }
+}

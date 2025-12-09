@@ -4,7 +4,7 @@ nextflow_process {
     script "modules/run_plassembler.nf"
     process "plassembler"
 
-    test("Should run without failures") {
+    test("Should run without failures and produce a plasmid assembly") {
 
         setup {
             run("get_plassembler") {
@@ -31,6 +31,7 @@ nextflow_process {
                 """
                 plassembler_input = channel.from([[ "example_sample", null, file("${projectDir}/tests/data/subset2000.fq.gz") ]])
                     .join(flye_assembly.out.flye_assembly, by: [0, 1])
+                    .map { barcode, subset, fq, fa -> [ barcode, subset, fq, fa, 400000 ] }
                 input[0] = plassembler_input
                 input[1] = get_plassembler.out.plassembler_db
                 """

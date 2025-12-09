@@ -31,6 +31,9 @@ workflow denovo {
     // Run plasmid assembly
     plassembler_input = fastq
         .join(flye_assembly.out.flye_assembly, by: [0, 1])
+        // Add null for chrom_length input value
+        // TODO: Get chrom_length value from samplesheet
+        .map { barcode, subset, fq, fa -> [ barcode, subset, fq, fa, null ] }
     plassembler(plassembler_input, plassembler_db)
 
     // Gather assemblies

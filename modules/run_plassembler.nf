@@ -4,7 +4,7 @@ process plassembler {
     publishDir "${params.outdir}/assemblies", mode: 'copy'
 
     input:
-    tuple val(barcode), val(subset), path(trimmed_fq), path(flye_assembly)
+    tuple val(barcode), val(subset), path(trimmed_fq), path(flye_assembly), val(chrom_length)
     path plassembler_db 
 
     output:
@@ -15,6 +15,7 @@ process plassembler {
 
     script:
     id = subset == null ? barcode : "${barcode}_${subset}"
+    min_chrom_length_param = chrom_length && chrom_length.toString().isInteger() ? "-c ${chrom_length}" : ""
     """
     set +e
     plassembler long \\
@@ -22,14 +23,16 @@ process plassembler {
         -l ${trimmed_fq} \\
         --flye_assembly ${flye_assembly}/assembly.fasta \\
         --flye_info ${flye_assembly}/assembly_info.txt \\
+        ${min_chrom_length_param} \\
         -o ${id}_plassembler_assembly \\
         -t ${task.cpus} -f 2> _plassembler.stderr
 
     EXITCODE="\$?"
-    set -e
 
     cat _plassembler.stderr >&2
     NOCHROM=\$(grep " ERROR " _plassembler.stderr | tail -n 1 | grep -c "No chromosome was identified")
+
+    set -e
 
     if [ "\$EXITCODE" == "1" ] && [ "\$NOCHROM" == "1" ]; then
         echo "WARN: Plassembler didn't find any chromosomes. Ignoring."
