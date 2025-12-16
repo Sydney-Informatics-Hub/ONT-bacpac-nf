@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process flye_assembly"
+    script "modules/run_flye.nf"
+    process "flye_assembly"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {
+                """
+                input[0] = channel.from([[ "example_sample", null, file("${projectDir}/tests/data/subset2000.fq.gz") ]])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

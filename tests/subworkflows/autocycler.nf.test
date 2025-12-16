@@ -1,0 +1,37 @@
+nextflow_workflow {
+
+    name "Test Workflow autocycler"
+    script "subworkflows/autocycler.nf"
+    workflow "autocycler"
+
+    test("Should run without failures") {
+
+        setup {
+            run("get_plassembler") {
+                script "modules/get_plassembler.nf"
+                process {}
+            }
+        }
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            workflow {
+                """
+                input[0] = channel.from([[ "example_sample", file("${projectDir}/tests/data/subset2000.fq.gz") ]])
+                input[1] = channel.empty()
+                input[2] = get_plassembler.out.plassembler_db
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+}

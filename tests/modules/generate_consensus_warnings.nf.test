@@ -1,0 +1,29 @@
+nextflow_process {
+
+    name "Test Process generate_consensus_warnings"
+    script "modules/generate_consensus_warnings.nf"
+    process "generate_consensus_warnings"
+
+    test("Should generate warnings for 'barcode01' and 'barcode09'") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {
+                """
+                input[0] = channel.of(['barcode01', 'barcode09'])
+                input[2] = channel.value('autocycler')
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
