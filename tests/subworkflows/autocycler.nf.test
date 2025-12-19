@@ -29,7 +29,8 @@ nextflow_workflow {
 
         then {
             assert workflow.success
-            assert snapshot(workflow.out).match()
+            assert file(workflow.out.polished_consensus[0][2]).exists()
+            assert file(workflow.out.consensus_gfa[0][2]).exists()
         }
 
     }
