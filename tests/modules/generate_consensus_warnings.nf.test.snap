@@ -1,0 +1,19 @@
+{
+    "Should generate warnings for 'barcode01' and 'barcode09'": {
+        "content": [
+            {
+                "0": [
+                    "failed_consensus_mqc.yaml:md5,0df353abb03d667e72b155147053cfb2"
+                ],
+                "mqc_yaml": [
+                    "failed_consensus_mqc.yaml:md5,0df353abb03d667e72b155147053cfb2"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2025-12-19T13:15:31.802277048"
+    }
+}
