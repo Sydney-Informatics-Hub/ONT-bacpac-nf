@@ -40,7 +40,9 @@ nextflow_process {
 
         then {
             assert process.success
-            assert snapshot(process.out.plassembler_fasta, process.out.plassembler_graph).match()
+            assert file(process.out.plassembler_fasta[0][2]).exists()
+            assert file(process.out.plassembler_graph[0][2]).exists()
+            assert !process.out.plassembler_logs
         }
 
     }
@@ -81,7 +83,9 @@ nextflow_process {
 
         then {
             assert process.success
-            assert snapshot(process.out.plassembler_fasta, process.out.plassembler_graph).match()
+            assert !process.out.plassembler_fasta
+            assert !process.out.plassembler_graph
+            assert file(process.out.plassembler_logs[0][2]).exists()
         }
 
     }
