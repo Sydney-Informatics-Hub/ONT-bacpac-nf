@@ -1,0 +1,19 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "bandage_mqc.html:md5,f8ecf26e2dd8e95d3ce4060365c35315"
+                ],
+                "bandage_report": [
+                    "bandage_mqc.html:md5,f8ecf26e2dd8e95d3ce4060365c35315"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-01-06T10:46:36.57508613"
+    }
+}
