@@ -1,0 +1,49 @@
+nextflow_process {
+
+    name "Test Process medaka_polish_denovo"
+    script "modules/run_medaka_polish_denovo.nf"
+    process "medaka_polish_denovo"
+
+    test("Test polishing flye output") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {
+                """
+                input[0] = channel.from([[ "example_sample", "flye", file("${projectDir}/tests/data/flye"), file("${projectDir}/tests/data/subset2000.fq.gz") ]])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert file(process.out.assembly[0][2]).exists()
+        }
+
+    }
+
+    test("Test polishing plassembler output") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {
+                """
+                input[0] = channel.from([[ "example_sample", "plassembler", file("${projectDir}/tests/data/plassembler"), file("${projectDir}/tests/data/subset2000.fq.gz") ]])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert file(process.out.assembly[0][2]).exists()
+        }
+
+    }
+
+}
