@@ -1,0 +1,19 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        "best_assembly.txt:md5,d75725041812bd6ea17c943b3fc8bd90"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-01-07T14:02:32.833116049"
+    }
+}

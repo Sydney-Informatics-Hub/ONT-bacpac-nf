@@ -1,0 +1,51 @@
+nextflow_process {
+
+    name "Test Process select_assembly"
+    script "modules/select_assembly.nf"
+    process "select_assembly"
+
+    test("Should run without failures") {
+
+        setup {
+            run("get_busco") {
+                script "modules/get_busco.nf"
+                process {}
+            }
+
+            run("busco_qc_chromosomes") {
+                script "modules/run_busco_qc_chromosomes.nf"
+                process {
+                    """
+                    assemblies_for_busco = channel.from([
+                        [ "example_sample", "flye", file("${projectDir}/tests/data/flye/assembly.fasta") ],
+                        [ "example_sample", "unicycler", file("${projectDir}/tests/data/unicycler/assembly.fasta") ]
+                    ])
+                    input[0] = assemblies_for_busco
+                    input[1] = get_busco.out.busco_db
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {
+                """
+                busco_json_summaries = busco_qc_chromosomes.out.json_summary
+                    .groupTuple()
+                input[0] = busco_json_summaries
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
