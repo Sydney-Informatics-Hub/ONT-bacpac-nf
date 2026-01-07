@@ -1,0 +1,24 @@
+nextflow_process {
+
+    name "Test Process get_busco"
+    script "modules/get_busco.nf"
+    process "get_busco"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {}
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
