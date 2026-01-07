@@ -1,0 +1,16 @@
+{
+    "Should run without failures": {
+        "content": [
+            [
+                "example_sample",
+                "flye",
+                "example_sample_flye.tsv:md5,7fde79667b64f016613bd22e9072702f"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-01-07T13:30:50.122522025"
+    }
+}
