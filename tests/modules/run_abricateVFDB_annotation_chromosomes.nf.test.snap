@@ -1,0 +1,41 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.tsv:md5,c41e3d9c1a23143d5091707abf1e9cdb"
+                    ]
+                ],
+                "1": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.annotated.tsv:md5,f9fcf7fc48e8ae8b505b7f854b76450c"
+                    ]
+                ],
+                "annotated_report": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.annotated.tsv:md5,f9fcf7fc48e8ae8b505b7f854b76450c"
+                    ]
+                ],
+                "report": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.tsv:md5,c41e3d9c1a23143d5091707abf1e9cdb"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-01-08T10:24:32.021312978"
+    }
+}
