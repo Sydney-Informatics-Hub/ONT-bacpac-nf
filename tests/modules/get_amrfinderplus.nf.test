@@ -1,0 +1,24 @@
+nextflow_process {
+
+    name "Test Process get_amrfinderplus"
+    script "modules/get_amrfinderplus.nf"
+    process "get_amrfinderplus"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {}
+        }
+
+        then {
+            assert process.success
+            assert file(process.out.amrfinderplus_db[0]).exists()
+        }
+
+    }
+
+}
