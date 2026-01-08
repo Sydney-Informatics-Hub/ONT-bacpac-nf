@@ -1,0 +1,24 @@
+nextflow_process {
+
+    name "Test Process get_bakta"
+    script "modules/get_bakta.nf"
+    process "get_bakta"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                // define parameters here. Example:
+                // outdir = "tests/results"
+            }
+            process {}
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

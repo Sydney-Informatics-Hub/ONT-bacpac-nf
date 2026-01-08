@@ -1,0 +1,55 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.faa:md5,58b68a16a9f6ec7ecf43584df3d0848c"
+                    ]
+                ],
+                "1": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.txt:md5,20a99735207e75d4608f71b5ade78e4b"
+                    ]
+                ],
+                "2": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.gff3:md5,b48e04472905830d53448b7159e2fed1"
+                    ]
+                ],
+                "faa": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.faa:md5,58b68a16a9f6ec7ecf43584df3d0848c"
+                    ]
+                ],
+                "gff": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.gff3:md5,b48e04472905830d53448b7159e2fed1"
+                    ]
+                ],
+                "txt": [
+                    [
+                        "example_sample",
+                        "flye",
+                        "example_sample_flye_chr.txt:md5,20a99735207e75d4608f71b5ade78e4b"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-01-08T11:20:45.551280845"
+    }
+}
